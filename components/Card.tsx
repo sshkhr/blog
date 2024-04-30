@@ -38,7 +38,7 @@ const Card = ({ title, description, imgSrc, href, techStack }) => {
               return (
                 <div
                   key={t}
-                  className=":border-white flex items-center justify-center gap-2 rounded-md border bg-black p-1 px-2 text-sm font-bold text-white md:text-base"
+                  className=":border-white flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
                 >
                   {t}
                   <div>
