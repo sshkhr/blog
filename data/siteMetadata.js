@@ -2,8 +2,8 @@
 const siteMetadata = {
   title: 'Shashank Shekhar',
   author: 'Shashank Shekhar',
-  headerTitle: 'TailwindBlog',
-  description: 'Shashank Shekhar\'s personal blog and portfolio',
+  headerTitle: 'shashankStack',
+  description: 'My experiments with code and learning.',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://shashankshekhar.vercel.app',
