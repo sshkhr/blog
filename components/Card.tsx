@@ -5,7 +5,7 @@ import Image from './Image'
 import Link from './Link'
 import { DevIcons } from './DevIcons'
 
-const Card = ({ title, description, imgSrc, href, techStack }) => {
+const Card = ({ title, description, imgSrc, href, techStack, topics, languages }) => {
   // to solve hydration mismatch error
   const [isMounted, setIsMounted] = useState(false)
 
@@ -32,6 +32,32 @@ const Card = ({ title, description, imgSrc, href, techStack }) => {
           </div>
         )}
         <div className="flex-grow p-3">
+          <div className="mb-2">
+            {topics.map((topic) => (
+              <span
+                key={topic}
+                className="mb-2 mr-2 inline-block rounded-md bg-gray-300 px-3 py-1 text-sm font-bold text-white md:text-base"
+              >
+                {topic}
+              </span>
+            ))}
+          </div>
+          <div className="mb-5 flex flex-wrap gap-2">
+            {languages.map((t) => {
+              const Icon = DevIcons[t]
+              return (
+                <div
+                  key={t}
+                  className=":border-white flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
+                >
+                  {t}
+                  <div>
+                    <Icon />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
           <div className="mb-5 flex flex-wrap gap-2">
             {techStack.map((t) => {
               const Icon = DevIcons[t]

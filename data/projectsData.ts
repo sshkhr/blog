@@ -1,4 +1,6 @@
 import { TechStack } from '@/components/TechStack'
+import { Topics } from '@/components/ProjectTopics'
+import { Languages } from '@/components/Languages'
 
 interface Project {
   title: string
@@ -6,6 +8,8 @@ interface Project {
   href?: string
   imgSrc?: string
   techStack: TechStack[]
+  topics: Topics[]
+  languages: Languages[]
 }
 
 const projectsData: Project[] = [
@@ -16,7 +20,9 @@ const projectsData: Project[] = [
     train and evaluate machine learning models.`,
     imgSrc: '/static/images/PUG.png',
     href: 'https://pug.metademolab.com/',
-    techStack: ['Python', 'PyTorch', 'UnrealEngine'],
+    techStack: ['PyTorch', 'UnrealEngine'],
+    topics: ['Machine Learning', 'Computer Vision', 'Computer Graphics'],
+    languages: ['Python'],
   },
   {
     title: 'PyTorch Multiverse',
@@ -25,7 +31,20 @@ const projectsData: Project[] = [
     Unreal Engine fork available publicly.`,
     imgSrc: '/static/images/TorchMultiverse.png',
     href: 'https://github.com/facebookresearch/PUG/tree/main/torchmultiverse',
-    techStack: ['Python', 'PyTorch', 'Git'],
+    techStack: ['PyTorch', 'Git'],
+    topics: ['Machine Learning', 'Data Engineering'],
+    languages: ['Python'],
+  },
+  {
+    title: 'arXiv Redirector',
+    description: `Arxiv Redirector streamlines your arXiv browsing by auto-redirecting external links 
+    to your chosen default view: Abstract, PDF, or HTML. In case the HTML version is not available from
+    arXiv, it will re-direct you to arXiv vanity automatically.`,
+    imgSrc: '/static/images/arxiv-redirector-banner.jpg',
+    href: 'https://github.com/sshkhr/arxiv-redirector',
+    techStack: ['Chrome', 'Firefox'],
+    topics: ['Frontend', 'Networking'],
+    languages: ['JavaScript'],
   },
 ]
 

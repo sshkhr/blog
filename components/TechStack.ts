@@ -1,8 +1,4 @@
 export type TechStack =
-  | 'Python'
-  | 'TypeScript'
-  | 'JavaScript'
-  //| 'Java'
   | 'React'
   | 'NextJS'
   //| 'Svelte'
@@ -19,12 +15,10 @@ export type TechStack =
   | 'Git'
   | 'Prisma'
   | 'UnrealEngine'
+  | 'Chrome'
+  | 'Firefox'
 
-export const techStack: TechStack[] = [
-  'Python',
-  'TypeScript',
-  'JavaScript',
-  //'Java',
+export const techStackArray: TechStack[] = [
   'React',
   'NextJS',
   //'Svelte',
@@ -41,4 +35,6 @@ export const techStack: TechStack[] = [
   'Git',
   'Prisma',
   'UnrealEngine',
+  'Chrome',
+  'Firefox',
 ]

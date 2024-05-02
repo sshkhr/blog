@@ -4,31 +4,54 @@ import { useState } from 'react'
 import projectsData from '@/data/projectsData'
 import Card from '@/components/Card'
 // import { genPageMetadata } from 'app/seo'
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button,
+  cn,
+} from '@nextui-org/react'
 import { DevIcons } from '@/components/DevIcons'
-import { TechStack, techStack as techStackArray } from '@/components/TechStack'
+import { TechStack, techStackArray } from '@/components/TechStack'
+import { Topics, topicsArray } from '@/components/ProjectTopics'
+import { Languages, languageArray } from '@/components/Languages'
 
 // export const metadata = genPageMetadata({ title: 'Projects' })
 
 export default function Projects() {
-  // State to hold the current filter
-  const [selectedTechStacks, setSelectedTechStacks] = useState<TechStack[]>([])
+  /// States to hold the current filters
+  const [selectedTechStacks, setSelectedTechStacks] = useState<TechStack[]>(techStackArray)
+  const [selectedTopics, setSelectedTopics] = useState<Topics[]>(topicsArray)
+  const [selectedLanguages, setSelectedLanguages] = useState<Languages[]>(languageArray)
 
   // Function to toggle tech stack selection
-  const toggleTechStack = (stack: TechStack) => {
-    setSelectedTechStacks((prev) => {
-      if (prev.includes(stack)) {
-        return prev.filter((s) => s !== stack)
-      } else {
-        return [...prev, stack]
-      }
-    })
+  const toggleTechStackSelection = (keys: Set<TechStack>) => {
+    // Convert set of keys to an array
+    const selectedKeys = Array.from(keys)
+    setSelectedTechStacks(selectedKeys)
   }
 
-  // Filter projects based on the selected tech stacks
+  // Function to toggle topic selection
+  const toggleTopicSelection = (keys: Set<Topics>) => {
+    // Convert set of keys to an array
+    const selectedKeys = Array.from(keys)
+    setSelectedTopics(selectedKeys)
+  }
+
+  // Function to toggle language selection
+  const toggleLanguageSelection = (keys: Set<Languages>) => {
+    // Convert set of keys to an array
+    const selectedKeys = Array.from(keys)
+    setSelectedLanguages(selectedKeys)
+  }
+
+  // Filter projects based on the selected tech stacks and topics
   const filteredProjects = projectsData.filter(
     (project) =>
-      selectedTechStacks.length === 0 ||
-      project.techStack.some((t) => selectedTechStacks.includes(t))
+      (selectedTechStacks.length === 0 ||
+        project.techStack.some((t) => selectedTechStacks.includes(t))) &&
+      (selectedTopics.length === 0 || project.topics.some((t) => selectedTopics.includes(t)))
   )
 
   return (
@@ -41,28 +64,79 @@ export default function Projects() {
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
             I like to build things. Here are some of the things I've built.
           </p>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            You can filter the projects by tech stack used by clicking on the corresponding buttons.
-          </p>
           {/* Tech stack filter buttons with icons */}
-          <div className="mb-5 flex flex-wrap gap-2">
-            {techStackArray.map((stack) => {
-              const isActive = selectedTechStacks.includes(stack)
-              const IconComponent = DevIcons[stack] // Store the icon component
-              const buttonClass = isActive
-                ? 'bg-white text-black border-primary-700 bg-primary-700 hover:bg-gray-700' // Active state
-                : 'bg-white text-black bg-black hover:bg-gray-700' // Inactive state
-              return (
-                <button
-                  key={stack}
-                  className={`flex items-center justify-center gap-2 rounded-md border p-1 px-2 text-sm font-bold ${buttonClass}`}
-                  onClick={() => toggleTechStack(stack)}
-                >
-                  {stack}
-                  {IconComponent && <IconComponent />}
-                </button>
-              )
-            })}
+          {/* Dropdowns for filtering */}
+          <div className="mb-5 flex flex-col content-center gap-4 text-gray-500 dark:text-gray-400 md:flex-row">
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered" className="font-bold capitalize">
+                  {'Topic'}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Customizable multiple selection dropdown"
+                variant="flat"
+                closeOnSelect={false}
+                disallowEmptySelection
+                selectionMode="multiple"
+                selectedKeys={selectedTopics}
+                onSelectionChange={toggleTopicSelection}
+              >
+                {topicsArray.map((item, index) => (
+                  <DropdownItem key={index}>{item}</DropdownItem>
+                ))}
+              </DropdownMenu>
+            </Dropdown>
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered" className="capitalize">
+                  {'Tech Stack'}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Customizable multiple selection dropdown"
+                variant="flat"
+                closeOnSelect={false}
+                disallowEmptySelection
+                selectionMode="multiple"
+                selectedKeys={selectedTechStacks}
+                onSelectionChange={toggleTechStackSelection}
+              >
+                {techStackArray.map((item, index) => {
+                  const Icon = DevIcons[item]
+                  return (
+                    <DropdownItem key={index} startContent={<Icon />}>
+                      {item}
+                    </DropdownItem>
+                  )
+                })}
+              </DropdownMenu>
+            </Dropdown>
+            <Dropdown>
+              <DropdownTrigger>
+                <Button variant="bordered" className="capitalize">
+                  {'Language'}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Customizable multiple selection dropdown"
+                variant="flat"
+                closeOnSelect={false}
+                disallowEmptySelection
+                selectionMode="multiple"
+                selectedKeys={selectedLanguages}
+                onSelectionChange={toggleLanguageSelection}
+              >
+                {languageArray.map((item, index) => {
+                  const Icon = DevIcons[item]
+                  return (
+                    <DropdownItem key={index} startContent={<Icon />}>
+                      {item}
+                    </DropdownItem>
+                  )
+                })}
+              </DropdownMenu>
+            </Dropdown>
           </div>
         </div>
         <div className="py-5">
@@ -75,6 +149,8 @@ export default function Projects() {
                 imgSrc={d.imgSrc}
                 href={d.href}
                 techStack={d.techStack}
+                topics={d.topics}
+                languages={d.languages}
               />
             ))}
           </div>
