@@ -36,6 +36,7 @@ export default function Projects() {
   const toggleTopicSelection = (keys: Set<Topics>) => {
     // Convert set of keys to an array
     const selectedKeys = Array.from(keys)
+    console.log(selectedKeys)
     setSelectedTopics(selectedKeys)
   }
 
@@ -51,7 +52,9 @@ export default function Projects() {
     (project) =>
       (selectedTechStacks.length === 0 ||
         project.techStack.some((t) => selectedTechStacks.includes(t))) &&
-      (selectedTopics.length === 0 || project.topics.some((t) => selectedTopics.includes(t)))
+      (selectedTopics.length === 0 || project.topics.some((t) => selectedTopics.includes(t))) &&
+      (selectedLanguages.length === 0 ||
+        project.languages.some((t) => selectedLanguages.includes(t)))
   )
 
   return (
@@ -62,50 +65,59 @@ export default function Projects() {
             Projects
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            I like to build things. Here are some of the things I've built.
+            I like to build things. Here are some of the things I've built. You can filter them by:
           </p>
           {/* Tech stack filter buttons with icons */}
           {/* Dropdowns for filtering */}
           <div className="mb-5 flex flex-col content-center gap-4 text-gray-500 dark:text-gray-400 md:flex-row">
             <Dropdown>
               <DropdownTrigger>
-                <Button variant="bordered" className="font-bold capitalize">
+                <Button variant="bordered" className="border border-gray-300 capitalize">
                   {'Topic'}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
                 aria-label="Customizable multiple selection dropdown"
                 variant="flat"
-                closeOnSelect={false}
+                closeOnSelect={true}
                 disallowEmptySelection
                 selectionMode="multiple"
                 selectedKeys={selectedTopics}
                 onSelectionChange={toggleTopicSelection}
               >
                 {topicsArray.map((item, index) => (
-                  <DropdownItem key={index}>{item}</DropdownItem>
+                  <DropdownItem
+                    key={item}
+                    className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
+                  >
+                    {item}
+                  </DropdownItem>
                 ))}
               </DropdownMenu>
             </Dropdown>
             <Dropdown>
               <DropdownTrigger>
-                <Button variant="bordered" className="capitalize">
+                <Button variant="bordered" className="border border-gray-300 capitalize">
                   {'Tech Stack'}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
                 aria-label="Customizable multiple selection dropdown"
                 variant="flat"
-                closeOnSelect={false}
+                closeOnSelect={true}
                 disallowEmptySelection
                 selectionMode="multiple"
                 selectedKeys={selectedTechStacks}
                 onSelectionChange={toggleTechStackSelection}
               >
                 {techStackArray.map((item, index) => {
-                  const Icon = DevIcons[item]
+                  const Icon = DevIcons[item.toString()]
                   return (
-                    <DropdownItem key={index} startContent={<Icon />}>
+                    <DropdownItem
+                      key={item}
+                      startContent={<Icon />}
+                      className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
+                    >
                       {item}
                     </DropdownItem>
                   )
@@ -114,23 +126,27 @@ export default function Projects() {
             </Dropdown>
             <Dropdown>
               <DropdownTrigger>
-                <Button variant="bordered" className="capitalize">
+                <Button variant="bordered" className="border border-gray-300 capitalize">
                   {'Language'}
                 </Button>
               </DropdownTrigger>
               <DropdownMenu
                 aria-label="Customizable multiple selection dropdown"
                 variant="flat"
-                closeOnSelect={false}
+                closeOnSelect={true}
                 disallowEmptySelection
                 selectionMode="multiple"
                 selectedKeys={selectedLanguages}
                 onSelectionChange={toggleLanguageSelection}
               >
                 {languageArray.map((item, index) => {
-                  const Icon = DevIcons[item]
+                  const Icon = DevIcons[item.toString()]
                   return (
-                    <DropdownItem key={index} startContent={<Icon />}>
+                    <DropdownItem
+                      key={item}
+                      startContent={<Icon />}
+                      className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
+                    >
                       {item}
                     </DropdownItem>
                   )
