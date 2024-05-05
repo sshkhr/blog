@@ -4,14 +4,7 @@ import { useState } from 'react'
 import projectsData from '@/data/projectsData'
 import Card from '@/components/Card'
 // import { genPageMetadata } from 'app/seo'
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Button,
-  cn,
-} from '@nextui-org/react'
+import Select from 'react-select'
 import { DevIcons } from '@/components/DevIcons'
 import { TechStack, techStackArray } from '@/components/TechStack'
 import { Topics, topicsArray } from '@/components/ProjectTopics'
@@ -25,26 +18,43 @@ export default function Projects() {
   const [selectedTopics, setSelectedTopics] = useState<Topics[]>(topicsArray)
   const [selectedLanguages, setSelectedLanguages] = useState<Languages[]>(languageArray)
 
+  // Generate options from the topicArray
+  const techstackoptions = techStackArray.map((techstack) => ({
+    value: techstack,
+    label: techstack.toString(),
+  }))
+
   // Function to toggle tech stack selection
-  const toggleTechStackSelection = (keys: Set<TechStack>) => {
+  const toggleTechStackSelection = (selected) => {
     // Convert set of keys to an array
-    const selectedKeys = Array.from(keys)
-    setSelectedTechStacks(selectedKeys)
+    const values = selected ? selected.map((option) => option.value) : []
+    setSelectedTechStacks(values)
   }
+
+  // Generate options from the topicArray
+  const topicoptions = topicsArray.map((topic) => ({
+    value: topic,
+    label: topic.toString(),
+  }))
 
   // Function to toggle topic selection
-  const toggleTopicSelection = (keys: Set<Topics>) => {
-    // Convert set of keys to an array
-    const selectedKeys = Array.from(keys)
-    console.log(selectedKeys)
-    setSelectedTopics(selectedKeys)
+  const toggleTopicSelection = (selected) => {
+    // Convert set of keys to array
+    const values = selected ? selected.map((option) => option.value) : []
+    setSelectedTopics(values)
   }
 
+  // Generate options from the languageArray
+  const languageoptions = languageArray.map((language) => ({
+    value: language,
+    label: language.toString(),
+  }))
+
   // Function to toggle language selection
-  const toggleLanguageSelection = (keys: Set<Languages>) => {
-    // Convert set of keys to an array
-    const selectedKeys = Array.from(keys)
-    setSelectedLanguages(selectedKeys)
+  const toggleLanguageSelection = (selected) => {
+    // Convert set of keys to array
+    const values = selected ? selected.map((option) => option.value) : []
+    setSelectedLanguages(values)
   }
 
   // Filter projects based on the selected tech stacks and topics
@@ -70,89 +80,39 @@ export default function Projects() {
           {/* Tech stack filter buttons with icons */}
           {/* Dropdowns for filtering */}
           <div className="mb-5 flex flex-col content-center gap-4 text-gray-500 dark:text-gray-400 md:flex-row">
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered" className="border border-gray-300 capitalize">
-                  {'Topic'}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Customizable multiple selection dropdown"
-                variant="flat"
-                closeOnSelect={true}
-                disallowEmptySelection
-                selectionMode="multiple"
-                selectedKeys={selectedTopics}
-                onSelectionChange={toggleTopicSelection}
-              >
-                {topicsArray.map((item, index) => (
-                  <DropdownItem
-                    key={item}
-                    className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
-                  >
-                    {item}
-                  </DropdownItem>
-                ))}
-              </DropdownMenu>
-            </Dropdown>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered" className="border border-gray-300 capitalize">
-                  {'Tech Stack'}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Customizable multiple selection dropdown"
-                variant="flat"
-                closeOnSelect={true}
-                disallowEmptySelection
-                selectionMode="multiple"
-                selectedKeys={selectedTechStacks}
-                onSelectionChange={toggleTechStackSelection}
-              >
-                {techStackArray.map((item, index) => {
-                  const Icon = DevIcons[item.toString()]
-                  return (
-                    <DropdownItem
-                      key={item}
-                      startContent={<Icon />}
-                      className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
-                    >
-                      {item}
-                    </DropdownItem>
-                  )
-                })}
-              </DropdownMenu>
-            </Dropdown>
-            <Dropdown>
-              <DropdownTrigger>
-                <Button variant="bordered" className="border border-gray-300 capitalize">
-                  {'Language'}
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Customizable multiple selection dropdown"
-                variant="flat"
-                closeOnSelect={true}
-                disallowEmptySelection
-                selectionMode="multiple"
-                selectedKeys={selectedLanguages}
-                onSelectionChange={toggleLanguageSelection}
-              >
-                {languageArray.map((item, index) => {
-                  const Icon = DevIcons[item.toString()]
-                  return (
-                    <DropdownItem
-                      key={item}
-                      startContent={<Icon />}
-                      className="bg-gray-500 p-1 px-2 text-sm font-bold text-white md:text-base"
-                    >
-                      {item}
-                    </DropdownItem>
-                  )
-                })}
-              </DropdownMenu>
-            </Dropdown>
+            <Select
+              isMulti
+              name="Topic"
+              options={topicoptions}
+              defaultValue={[]}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              onChange={toggleTopicSelection}
+              value={topicoptions.filter((option) => selectedTopics.includes(option.value))}
+              placeholder="Filter by Topic..."
+            />
+            <Select
+              isMulti
+              name="Language"
+              options={languageoptions}
+              defaultValue={[]}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              onChange={toggleLanguageSelection}
+              value={languageoptions.filter((option) => selectedLanguages.includes(option.value))}
+              placeholder="Filter By Language..."
+            />
+            <Select
+              isMulti
+              name="Tech Stack"
+              options={techstackoptions}
+              defaultValue={[]}
+              className="basic-multi-select"
+              classNamePrefix="select"
+              onChange={toggleTechStackSelection}
+              value={techstackoptions.filter((option) => selectedTechStacks.includes(option.value))}
+              placeholder="Filter By Tech Stack..."
+            />
           </div>
         </div>
         <div className="py-5">
