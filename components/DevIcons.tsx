@@ -631,14 +631,14 @@ export const Firefox = () => {
             gradientUnits="userSpaceOnUse"
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, -2.998711, -0.009424)"
           >
-            <stop offset="0.048" stop-color="#fff44f" />
-            <stop offset="0.111" stop-color="#ffe847" />
-            <stop offset="0.225" stop-color="#ffc830" />
-            <stop offset="0.368" stop-color="#ff980e" />
-            <stop offset="0.401" stop-color="#ff8b16" />
-            <stop offset="0.462" stop-color="#ff672a" />
-            <stop offset="0.534" stop-color="#ff3647" />
-            <stop offset="0.705" stop-color="#e31587" />
+            <stop offset="0.048" stopColor="#fff44f" />
+            <stop offset="0.111" stopColor="#ffe847" />
+            <stop offset="0.225" stopColor="#ffc830" />
+            <stop offset="0.368" stopColor="#ff980e" />
+            <stop offset="0.401" stopColor="#ff8b16" />
+            <stop offset="0.462" stopColor="#ff672a" />
+            <stop offset="0.534" stopColor="#ff3647" />
+            <stop offset="0.705" stopColor="#e31587" />
           </linearGradient>
           <radialGradient
             id="b"
@@ -648,15 +648,15 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.129" stop-color="#ffbd4f" />
-            <stop offset="0.186" stop-color="#ffac31" />
-            <stop offset="0.247" stop-color="#ff9d17" />
-            <stop offset="0.283" stop-color="#ff980e" />
-            <stop offset="0.403" stop-color="#ff563b" />
-            <stop offset="0.467" stop-color="#ff3750" />
-            <stop offset="0.71" stop-color="#f5156c" />
-            <stop offset="0.782" stop-color="#eb0878" />
-            <stop offset="0.86" stop-color="#e50080" />
+            <stop offset="0.129" stopColor="#ffbd4f" />
+            <stop offset="0.186" stopColor="#ffac31" />
+            <stop offset="0.247" stopColor="#ff9d17" />
+            <stop offset="0.283" stopColor="#ff980e" />
+            <stop offset="0.403" stopColor="#ff563b" />
+            <stop offset="0.467" stopColor="#ff3750" />
+            <stop offset="0.71" stopColor="#f5156c" />
+            <stop offset="0.782" stopColor="#eb0878" />
+            <stop offset="0.86" stopColor="#e50080" />
           </radialGradient>
           <radialGradient
             id="c"
@@ -666,11 +666,11 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.3" stop-color="#960e18" />
-            <stop offset="0.351" stop-color="#b11927" stop-opacity=".74" />
-            <stop offset="0.435" stop-color="#db293d" stop-opacity=".343" />
-            <stop offset="0.497" stop-color="#f5334b" stop-opacity=".094" />
-            <stop offset="0.53" stop-color="#ff3750" stop-opacity="0" />
+            <stop offset="0.3" stopColor="#960e18" />
+            <stop offset="0.351" stopColor="#b11927" stopOpacity=".74" />
+            <stop offset="0.435" stopColor="#db293d" stopOpacity=".343" />
+            <stop offset="0.497" stopColor="#f5334b" stopOpacity=".094" />
+            <stop offset="0.53" stopColor="#ff3750" stopOpacity="0" />
           </radialGradient>
           <radialGradient
             id="d"
@@ -680,10 +680,10 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.132" stop-color="#fff44f" />
-            <stop offset="0.252" stop-color="#ffdc3e" />
-            <stop offset="0.506" stop-color="#ff9d12" />
-            <stop offset="0.526" stop-color="#ff980e" />
+            <stop offset="0.132" stopColor="#fff44f" />
+            <stop offset="0.252" stopColor="#ffdc3e" />
+            <stop offset="0.506" stopColor="#ff9d12" />
+            <stop offset="0.526" stopColor="#ff980e" />
           </radialGradient>
           <radialGradient
             id="e"
@@ -693,10 +693,10 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.353" stop-color="#3a8ee6" />
-            <stop offset="0.472" stop-color="#5c79f0" />
-            <stop offset="0.669" stop-color="#9059ff" />
-            <stop offset="1" stop-color="#c139e6" />
+            <stop offset="0.353" stopColor="#3a8ee6" />
+            <stop offset="0.472" stopColor="#5c79f0" />
+            <stop offset="0.669" stopColor="#9059ff" />
+            <stop offset="1" stopColor="#c139e6" />
           </radialGradient>
           <radialGradient
             id="f"
@@ -706,10 +706,10 @@ export const Firefox = () => {
             gradientTransform="matrix(3.214113, -0.777075, 0.909343, 3.763025, 33365.913535, 25904.013598)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.206" stop-color="#9059ff" stop-opacity="0" />
-            <stop offset="0.278" stop-color="#8c4ff3" stop-opacity=".064" />
-            <stop offset="0.747" stop-color="#7716a8" stop-opacity=".45" />
-            <stop offset="0.975" stop-color="#6e008b" stop-opacity=".6" />
+            <stop offset="0.206" stopColor="#9059ff" stopOpacity="0" />
+            <stop offset="0.278" stopColor="#8c4ff3" stopOpacity=".064" />
+            <stop offset="0.747" stopColor="#7716a8" stopOpacity=".45" />
+            <stop offset="0.975" stopColor="#6e008b" stopOpacity=".6" />
           </radialGradient>
           <radialGradient
             id="g"
@@ -719,12 +719,12 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0" stop-color="#ffe226" />
-            <stop offset="0.121" stop-color="#ffdb27" />
-            <stop offset="0.295" stop-color="#ffc82a" />
-            <stop offset="0.502" stop-color="#ffa930" />
-            <stop offset="0.732" stop-color="#ff7e37" />
-            <stop offset="0.792" stop-color="#ff7139" />
+            <stop offset="0" stopColor="#ffe226" />
+            <stop offset="0.121" stopColor="#ffdb27" />
+            <stop offset="0.295" stopColor="#ffc82a" />
+            <stop offset="0.502" stopColor="#ffa930" />
+            <stop offset="0.732" stopColor="#ff7e37" />
+            <stop offset="0.792" stopColor="#ff7139" />
           </radialGradient>
           <radialGradient
             id="h"
@@ -734,11 +734,11 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.113" stop-color="#fff44f" />
-            <stop offset="0.456" stop-color="#ff980e" />
-            <stop offset="0.622" stop-color="#ff5634" />
-            <stop offset="0.716" stop-color="#ff3647" />
-            <stop offset="0.904" stop-color="#e31587" />
+            <stop offset="0.113" stopColor="#fff44f" />
+            <stop offset="0.456" stopColor="#ff980e" />
+            <stop offset="0.622" stopColor="#ff5634" />
+            <stop offset="0.716" stopColor="#ff3647" />
+            <stop offset="0.904" stopColor="#e31587" />
           </radialGradient>
           <radialGradient
             id="i"
@@ -748,14 +748,14 @@ export const Firefox = () => {
             gradientTransform="matrix(0.347204, 3.290167, -2.159276, 0.228162, -15491.59662, 28008.376464)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0" stop-color="#fff44f" />
-            <stop offset="0.06" stop-color="#ffe847" />
-            <stop offset="0.168" stop-color="#ffc830" />
-            <stop offset="0.304" stop-color="#ff980e" />
-            <stop offset="0.356" stop-color="#ff8b16" />
-            <stop offset="0.455" stop-color="#ff672a" />
-            <stop offset="0.57" stop-color="#ff3647" />
-            <stop offset="0.737" stop-color="#e31587" />
+            <stop offset="0" stopColor="#fff44f" />
+            <stop offset="0.06" stopColor="#ffe847" />
+            <stop offset="0.168" stopColor="#ffc830" />
+            <stop offset="0.304" stopColor="#ff980e" />
+            <stop offset="0.356" stopColor="#ff8b16" />
+            <stop offset="0.455" stopColor="#ff672a" />
+            <stop offset="0.57" stopColor="#ff3647" />
+            <stop offset="0.737" stopColor="#e31587" />
           </radialGradient>
           <radialGradient
             id="j"
@@ -765,11 +765,11 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.137" stop-color="#fff44f" />
-            <stop offset="0.48" stop-color="#ff980e" />
-            <stop offset="0.592" stop-color="#ff5634" />
-            <stop offset="0.655" stop-color="#ff3647" />
-            <stop offset="0.904" stop-color="#e31587" />
+            <stop offset="0.137" stopColor="#fff44f" />
+            <stop offset="0.48" stopColor="#ff980e" />
+            <stop offset="0.592" stopColor="#ff5634" />
+            <stop offset="0.655" stopColor="#ff3647" />
+            <stop offset="0.904" stopColor="#e31587" />
           </radialGradient>
           <radialGradient
             id="k"
@@ -779,10 +779,10 @@ export const Firefox = () => {
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, 26367.937522, 28186.305366)"
             gradientUnits="userSpaceOnUse"
           >
-            <stop offset="0.094" stop-color="#fff44f" />
-            <stop offset="0.231" stop-color="#ffe141" />
-            <stop offset="0.509" stop-color="#ffaf1e" />
-            <stop offset="0.626" stop-color="#ff980e" />
+            <stop offset="0.094" stopColor="#fff44f" />
+            <stop offset="0.231" stopColor="#ffe141" />
+            <stop offset="0.509" stopColor="#ffaf1e" />
+            <stop offset="0.626" stopColor="#ff980e" />
           </radialGradient>
           <linearGradient
             id="l"
@@ -793,10 +793,10 @@ export const Firefox = () => {
             gradientUnits="userSpaceOnUse"
             gradientTransform="matrix(3.3067, 0, 0, 3.3067, -2.998711, -0.009424)"
           >
-            <stop offset="0.167" stop-color="#fff44f" stop-opacity=".8" />
-            <stop offset="0.266" stop-color="#fff44f" stop-opacity=".634" />
-            <stop offset="0.489" stop-color="#fff44f" stop-opacity=".217" />
-            <stop offset="0.6" stop-color="#fff44f" stop-opacity="0" />
+            <stop offset="0.167" stopColor="#fff44f" stopOpacity=".8" />
+            <stop offset="0.266" stopColor="#fff44f" stopOpacity=".634" />
+            <stop offset="0.489" stopColor="#fff44f" stopOpacity=".217" />
+            <stop offset="0.6" stopColor="#fff44f" stopOpacity="0" />
           </linearGradient>
         </defs>
         <g>
