@@ -14,9 +14,9 @@ import { Languages, languageArray } from '@/components/Languages'
 
 export default function Projects() {
   /// States to hold the current filters
-  const [selectedTechStacks, setSelectedTechStacks] = useState<TechStack[]>(techStackArray)
-  const [selectedTopics, setSelectedTopics] = useState<Topics[]>(topicsArray)
-  const [selectedLanguages, setSelectedLanguages] = useState<Languages[]>(languageArray)
+  const [selectedTechStacks, setSelectedTechStacks] = useState<TechStack[]>([])
+  const [selectedTopics, setSelectedTopics] = useState<Topics[]>([])
+  const [selectedLanguages, setSelectedLanguages] = useState<Languages[]>([])
 
   // Generate options from the topicArray
   const techstackoptions = techStackArray.map((techstack) => ({
