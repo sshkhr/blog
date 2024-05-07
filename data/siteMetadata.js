@@ -9,7 +9,7 @@ const siteMetadata = {
   siteUrl: 'https://shashankshekhar.vercel.app',
   siteRepo: 'https://github.com/sshkhr/blog',
   siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
+  socialBanner: '/static/images/shashankStack.png',
   // mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'contactshashankshekhar@gmail.com',
   github: 'https://github.com/sshkhr',
