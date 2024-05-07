@@ -18,14 +18,14 @@ const Card = ({ title, description, imgSrc, href, techStack, topics, languages }
   }
 
   return (
-    <a href={href} className="md max-w-[500px] p-4 md:w-3/4">
+    <a href={href} className="w-full max-w-[500px] p-4 md:w-1/2">
       <div className="flex h-full flex-col overflow-hidden rounded-xl border-2 border-zinc-300 p-[6px] hover:border-black dark:border-zinc-700 hover:dark:border-white/90">
         {imgSrc && (
-          <div className="flex-shrink-0 object-none">
+          <div className="flex-shrink-0">
             <Image
               alt={title}
               src={imgSrc}
-              className="object-cover object-center md:h-72 lg:h-72"
+              className="w-full object-cover object-center"
               width={500}
               height={300}
             />
