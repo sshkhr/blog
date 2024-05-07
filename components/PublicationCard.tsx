@@ -15,11 +15,11 @@ const PublicationCard = ({
   return (
     <div className="mx-auto my-4 flex w-full max-w-4xl overflow-hidden bg-white shadow-md dark:bg-gray-800">
       {imgSrc && (
-        <div className="w-2/5">
+        <div className="w-1/2">
           <Image
             alt={`Cover image for ${title}`}
             src={imgSrc}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain object-center"
             width={500}
             height={300}
           />
