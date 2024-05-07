@@ -1,13 +1,8 @@
-import projectsData from '@/data/projectsData'
-import Card from '@/components/Card'
-// import { genPageMetadata } from 'app/seo'
-import Select from 'react-select'
-import { DevIcons } from '@/components/DevIcons'
-import { TechStack, techStackArray } from '@/components/TechStack'
-import { Topics, topicsArray } from '@/components/ProjectTopics'
-import { Languages, languageArray } from '@/components/Languages'
+import publicationsData from '@/data/publicationsData'
+import PublicationCard from '@/components/PublicationCard'
+import { genPageMetadata } from 'app/seo'
 
-// export const metadata = genPageMetadata({ title: 'Projects' })
+export const metadata = genPageMetadata({ title: 'Projects' })
 
 export default function Projects() {
   return (
@@ -25,16 +20,17 @@ export default function Projects() {
         </div>
         <div className="w-full py-5">
           <div className="flex flex-wrap justify-center gap-0">
-            {projectsData.map((d) => (
-              <Card
+            {publicationsData.map((d) => (
+              <PublicationCard
                 key={d.title}
                 title={d.title}
-                description={d.description}
+                venue={d.venue}
+                authors={d.authors}
+                abstract={d.abstract}
                 imgSrc={d.imgSrc}
-                href={d.href}
-                techStack={d.techStack}
-                topics={d.topics}
-                languages={d.languages}
+                arxivURL={d.arxivURL}
+                pdfURL={d.pdfURL}
+                websiteURL={d.websiteURL}
               />
             ))}
           </div>
