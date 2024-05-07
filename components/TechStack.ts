@@ -17,6 +17,7 @@ export type TechStack =
   | 'UnrealEngine'
   | 'Chrome'
   | 'Firefox'
+  | 'TailwindCSS'
 
 export const techStackArray: TechStack[] = [
   'React',
@@ -37,4 +38,5 @@ export const techStackArray: TechStack[] = [
   'UnrealEngine',
   'Chrome',
   'Firefox',
+  'TailwindCSS',
 ]

@@ -14,6 +14,27 @@ interface Project {
 
 const projectsData: Project[] = [
   {
+    title: 'arXiv Redirector',
+    description: `Arxiv Redirector streamlines your arXiv browsing by auto-redirecting external links 
+    to your chosen default view: Abstract, PDF, or HTML. In case the HTML version is not available from
+    arXiv, it will re-direct you to arXiv vanity automatically.`,
+    imgSrc: '/static/images/arxiv-redirector-banner.jpg',
+    href: 'https://github.com/sshkhr/arxiv-redirector',
+    techStack: ['Chrome', 'Firefox'],
+    topics: ['Frontend', 'Networking'],
+    languages: ['JavaScript'],
+  },
+  {
+    title: 'shashankStack',
+    description: `Portfolio website and blog. Developed using NextJS, TailwindCSS, and TypeScript using the
+    Tailwind Nextjs Starter Blog template (tailwind-nextjs-starter-blog.vercel.app).`,
+    imgSrc: '/static/images/shashankStack.png',
+    href: 'https://github.com/facebookresearch/PUG/tree/main/torchmultiverse',
+    techStack: ['NextJS', 'React', 'TailwindCSS'],
+    topics: ['Frontend', 'Fullstack'],
+    languages: ['TypeScript'],
+  },
+  {
     title: 'Photorealistic Unreal Graphics (PUG)',
     description: `We use the Unreal Engine to create photorealistic interactive environments from which 
     we can easily sample images with given specifications. The synethetic data generated can be used to 
@@ -34,17 +55,6 @@ const projectsData: Project[] = [
     techStack: ['PyTorch', 'Git'],
     topics: ['Machine Learning', 'Data Engineering'],
     languages: ['Python'],
-  },
-  {
-    title: 'arXiv Redirector',
-    description: `Arxiv Redirector streamlines your arXiv browsing by auto-redirecting external links 
-    to your chosen default view: Abstract, PDF, or HTML. In case the HTML version is not available from
-    arXiv, it will re-direct you to arXiv vanity automatically.`,
-    imgSrc: '/static/images/arxiv-redirector-banner.jpg',
-    href: 'https://github.com/sshkhr/arxiv-redirector',
-    techStack: ['Chrome', 'Firefox'],
-    topics: ['Frontend', 'Networking'],
-    languages: ['JavaScript'],
   },
 ]
 

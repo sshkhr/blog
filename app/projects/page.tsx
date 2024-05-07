@@ -75,7 +75,7 @@ export default function Projects() {
             Projects
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            I like to build things. Here are some of the things I've built. You can filter them by:
+            I like to build things. Here are some of the things I've built.
           </p>
           {/* Tech stack filter buttons with icons */}
           {/* Dropdowns for filtering */}
@@ -115,8 +115,8 @@ export default function Projects() {
             />
           </div>
         </div>
-        <div className="py-5">
-          <div className="flex flex-wrap justify-center gap-8">
+        <div className="w-full py-5">
+          <div className="flex flex-wrap justify-center gap-0">
             {filteredProjects.map((d) => (
               <Card
                 key={d.title}
