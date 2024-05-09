@@ -31,6 +31,9 @@ export default function Projects() {
                 arxivURL={d.arxivURL}
                 pdfURL={d.pdfURL}
                 websiteURL={d.websiteURL}
+                githubURL={d.githubURL}
+                dataURL={d.dataURL}
+                award={d.award}
               />
             ))}
           </div>

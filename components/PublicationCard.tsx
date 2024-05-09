@@ -1,6 +1,6 @@
 import Image from './Image'
-import { FaFilePdf, FaGlobeAmericas } from 'react-icons/fa'
-import { AiOutlineFile } from 'react-icons/ai'
+import { FaFilePdf, FaGlobeAmericas, FaGithub, FaDatabase, FaTrophy } from 'react-icons/fa'
+import { SiArxiv } from 'react-icons/si'
 
 const PublicationCard = ({
   title,
@@ -11,38 +11,83 @@ const PublicationCard = ({
   arxivURL,
   pdfURL,
   websiteURL,
+  githubURL,
+  dataURL,
+  award,
 }) => {
   return (
-    <div className="mx-auto my-4 flex w-full max-w-4xl overflow-hidden bg-white shadow-md dark:bg-gray-800">
+    <div className="relative mx-auto my-4 flex w-full max-w-4xl overflow-hidden bg-white shadow-md dark:bg-gray-800">
       {imgSrc && (
-        <div className="w-1/2">
+        <div className="flex w-1/2 items-center justify-center">
           <Image
             alt={`Cover image for ${title}`}
             src={imgSrc}
-            className="h-full w-full object-contain object-center"
+            className="h-full w-auto object-contain object-center"
             width={500}
             height={300}
+            style={{ maxHeight: '200px' }} // Fixed height
           />
         </div>
       )}
       <div className="w-4/5 p-4">
+        {award && (
+          <div className="absolute bottom-0 right-0 m-2 flex items-center text-red-500">
+            <FaTrophy className="mr-2" />
+            <span>{award}</span>
+          </div>
+        )}
         <h3 className="text-xl font-bold">{title}</h3>
         <p className="text-md text-gray-800 dark:text-gray-200">{authors}</p>
         <p className="text-sm text-gray-600 dark:text-gray-400">{venue}</p>
-        <div className="mt-4 flex justify-end space-x-4">
+        <div className="mb-5 mt-4 flex flex-wrap gap-2">
           {arxivURL && (
-            <a href={arxivURL} aria-label="Arxiv link">
-              <AiOutlineFile className="h-6 w-6 text-blue-500 hover:text-blue-600" />
+            <a
+              href={arxivURL}
+              aria-label="Arxiv link"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              arXiv
+              <SiArxiv />
             </a>
           )}
           {pdfURL && (
-            <a href={pdfURL} aria-label="PDF link">
-              <FaFilePdf className="h-6 w-6 text-red-500 hover:text-red-600" />
+            <a
+              href={pdfURL}
+              aria-label="PDF link"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              PDF
+              <FaFilePdf />
             </a>
           )}
           {websiteURL && (
-            <a href={websiteURL} aria-label="Website link">
-              <FaGlobeAmericas className="h-6 w-6 text-green-500 hover:text-green-600" />
+            <a
+              href={websiteURL}
+              aria-label="Website link"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              Website
+              <FaGlobeAmericas />
+            </a>
+          )}
+          {githubURL && (
+            <a
+              href={githubURL}
+              aria-label="GitHub link"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              GitHub
+              <FaGithub />
+            </a>
+          )}
+          {dataURL && (
+            <a
+              href={dataURL}
+              aria-label="Data link"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              Dataset
+              <FaDatabase />
             </a>
           )}
         </div>
