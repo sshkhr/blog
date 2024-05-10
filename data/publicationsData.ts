@@ -92,7 +92,6 @@ const publicationsData: Publication[] = [
     imgSrc: '/static/images/publications/scaling_law_theory-1.png',
     arxivURL: 'https://arxiv.org/abs/2206.14486',
     pdfURL: 'https://arxiv.org/pdf/2206.14486',
-    websiteURL: 'https://example.com',
     githubURL: 'https://github.com/rgeirhos/dataset-pruning-metrics',
     dataURL: 'https://github.com/rgeirhos/dataset-pruning-metrics/tree/master/metric-scores',
     award: 'Outstanding Paper Award',
