@@ -16,9 +16,9 @@ const PublicationCard = ({
   award,
 }) => {
   return (
-    <div className="relative mx-auto my-4 flex w-full max-w-4xl overflow-hidden bg-white shadow-md dark:bg-gray-800">
+    <div className="relative mx-auto my-4 flex w-full max-w-4xl flex-col overflow-hidden bg-white shadow-md dark:bg-gray-800 lg:flex-row">
       {imgSrc && (
-        <div className="flex w-1/2 items-center justify-center">
+        <div className="flex w-full items-center justify-center lg:w-1/2">
           <Image
             alt={`Cover image for ${title}`}
             src={imgSrc}
@@ -29,7 +29,7 @@ const PublicationCard = ({
           />
         </div>
       )}
-      <div className="w-4/5 p-4">
+      <div className="w-full p-4 lg:w-4/5">
         {award && (
           <div className="absolute bottom-0 right-0 m-2 flex items-center text-red-500">
             <FaTrophy className="mr-2" />
