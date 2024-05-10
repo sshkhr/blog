@@ -10,6 +10,7 @@ interface Publication {
   githubURL?: string
   dataURL?: string
   award?: string
+  year: number
 }
 
 const publicationsData: Publication[] = [
@@ -37,6 +38,7 @@ const publicationsData: Publication[] = [
     pdfURL: 'https://arxiv.org/pdf/2308.03977.pdf',
     githubURL: 'https://github.com/facebookresearch/PUG',
     dataURL: 'https://pug.metademolab.com/datasets.html',
+    year: 2023,
   },
   {
     title: 'A Cookbook Of Self-Supervised Learning',
@@ -53,6 +55,7 @@ const publicationsData: Publication[] = [
     websiteURL: 'https://ai.meta.com/blog/self-supervised-learning-practical-guide/',
     arxivURL: 'https://arxiv.org/abs/2304.12210',
     pdfURL: 'https://arxiv.org/pdf/2304.12210.pdf',
+    year: 2023,
   },
   {
     title:
@@ -65,6 +68,7 @@ const publicationsData: Publication[] = [
     arxivURL: 'https://arxiv.org/abs/2304.13089',
     pdfURL: 'https://arxiv.org/pdf/2304.13089',
     award: 'Spotlight',
+    year: 2023,
   },
   {
     title: 'Beyond Neural Scaling Laws: Beating Power Law Scaling Via Data Pruning',
@@ -88,10 +92,10 @@ const publicationsData: Publication[] = [
     imgSrc: '/static/images/publications/scaling_law_theory-1.png',
     arxivURL: 'https://arxiv.org/abs/2206.14486',
     pdfURL: 'https://arxiv.org/pdf/2206.14486',
-    websiteURL: 'https://example.com',
     githubURL: 'https://github.com/rgeirhos/dataset-pruning-metrics',
     dataURL: 'https://github.com/rgeirhos/dataset-pruning-metrics/tree/master/metric-scores',
     award: 'Outstanding Paper Award',
+    year: 2022,
   },
   {
     title:
@@ -114,6 +118,7 @@ const publicationsData: Publication[] = [
       'Neural Information Processing Systems (NeurIPS) 2022 Workshop: Self-Supervised Learning - Theory and Practice',
     imgSrc: '/static/images/publications/ssl_neuripsw.png',
     pdfURL: 'https://sslneurips22.github.io/paper_pdfs/paper_50.pdf',
+    year: 2022,
   },
   {
     title: 'Inductive Biases for Higher-Order Visual Cognition',
@@ -125,6 +130,7 @@ const publicationsData: Publication[] = [
       'https://atrium.lib.uoguelph.ca/bitstreams/9815e57d-5e5e-43f2-a959-3321df0d7701/download',
     websiteURL: 'https://atrium.lib.uoguelph.ca/items/8d42d7d7-c0ca-411f-9b26-c3b682f47e16',
     award: 'CAIAC Outstanding Thesis Nominee',
+    year: 2022,
   },
   {
     title:
@@ -153,6 +159,7 @@ const publicationsData: Publication[] = [
     imgSrc: '/static/images/publications/nrt-wiley.png',
     pdfURL: 'https://onlinelibrary.wiley.com/doi/pdf/10.1002/ail2.48',
     dataURL: 'https://borealisdata.ca/dataset.xhtml?persistentId=doi:10.5683/SP2/OQU7QG',
+    year: 2021,
   },
   {
     title: 'Neural Structure Mapping For Learning Abstract Visual Analogies',
@@ -175,6 +182,7 @@ const publicationsData: Publication[] = [
     pdfURL:
       'https://openaccess.thecvf.com/content/ICCV2021/papers/Lu_Context-Aware_Scene_Graph_Generation_With_Seq2Seq_Transformers_ICCV_2021_paper.pdf',
     websiteURL: 'https://example.com',
+    year: 2021,
   },
   {
     title: 'Context-aware scene graph generation with seq2seq transformers',
@@ -197,6 +205,7 @@ const publicationsData: Publication[] = [
     pdfURL:
       'https://openaccess.thecvf.com/content/ICCV2021/papers/Lu_Context-Aware_Scene_Graph_Generation_With_Seq2Seq_Transformers_ICCV_2021_paper.pdf',
     githubURL: 'https://github.com/layer6ai-labs/SGG-Seq2Seq',
+    year: 2021,
   },
   {
     title: 'Response Time Analysis for Explainability of Visual Processing in CNNs',
@@ -216,6 +225,7 @@ const publicationsData: Publication[] = [
     pdfURL:
       'https://openaccess.thecvf.com/content_CVPRW_2020/papers/w26/Taylor_Response_Time_Analysis_for_Explainability_of_Visual_Processing_in_CNNs_CVPRW_2020_paper.pdf',
     award: 'Oral',
+    year: 2020,
   },
   {
     title:
@@ -242,6 +252,7 @@ const publicationsData: Publication[] = [
     arxivURL: 'https://arxiv.org/abs/1807.07295',
     pdfURL: 'https://arxiv.org/pdf/1807.07295',
     websiteURL: 'https://example.com',
+    year: 2019,
   },
   {
     title: 'From Strings to Things: Knowledge-Enabled VQA Model That Can Read and Reason',
@@ -264,6 +275,7 @@ const publicationsData: Publication[] = [
     websiteURL: 'https://textkvqa.github.io/',
     dataURL: 'https://textkvqa.github.io/',
     award: 'Oral',
+    year: 2019,
   },
   {
     title: 'OCR-VQA: Visual Question Answering by Reading Text in Images',
@@ -294,6 +306,7 @@ const publicationsData: Publication[] = [
     pdfURL: 'https://anandmishra22.github.io/files/mishra-OCR-VQA.pdf',
     websiteURL: 'https://ocr-vqa.github.io/',
     dataURL: 'https://drive.google.com/drive/folders/1_GYPY5UkUy7HIcR0zq3ZCFgeZN7BAfm_?usp=sharing',
+    year: 2019,
   },
   {
     title:
@@ -305,6 +318,7 @@ const publicationsData: Publication[] = [
     arxivURL: 'https://arxiv.org/abs/1811.04535',
     pdfURL: 'https://arxiv.org/pdf/1811.04535',
     githubURL: 'https://github.com/sshkhr/BigDataCup18_Submission',
+    year: 2018,
   },
 ]
 
