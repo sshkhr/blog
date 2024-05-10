@@ -47,7 +47,7 @@ export default function Research() {
             Research
           </h1>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            Here is a list of my research publications.
+            Listed are my research works. Click on the years to navigate around.
           </p>
         </div>
       </div>
@@ -57,12 +57,12 @@ export default function Research() {
         <div className="sticky">
           {' '}
           {/* Adjust width as needed */}
-          <YearScrollspy years={years} onYearClick={handleYearClick} />
+          <YearScrollspy years={years} onYearClick={handleYearClick} activeYear={activeYear} />
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-grow p-4 pl-8"> {/* Adjust left padding to give space for the scroll spy */}
-          <div className="relative py-5">
+        <div className="flex-grow px-4 pl-2">
+          <div className="relative pb-5">
             <div className="flex flex-wrap justify-center gap-0">
               {publicationsData.map((d, index) => (
                 <div

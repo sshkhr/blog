@@ -16,7 +16,7 @@ const PublicationCard = ({
   award,
 }) => {
   return (
-    <div className="relative mx-auto my-4 flex w-full max-w-4xl flex-col overflow-hidden bg-white shadow-md dark:bg-gray-800 lg:flex-row">
+    <div className="relative mx-auto mb-8 flex w-full max-w-4xl flex-col overflow-hidden rounded-xl border-2 border-zinc-300 bg-white shadow-md dark:border-zinc-700 dark:bg-gray-800 lg:flex-row">
       {imgSrc && (
         <div className="flex w-full items-center justify-center lg:w-1/2">
           <Image
