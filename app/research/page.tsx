@@ -11,16 +11,21 @@ export default function Research() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrolledY = window.scrollY + window.innerHeight / 2 // Middle of the screen
+      const scrolledY = window.scrollY //+ window.innerHeight / 2 // Middle of the screen
       const years = Object.keys(yearRefs.current)
         .map(Number)
         .sort((a, b) => b - a) // Convert keys to numbers and sort
-      for (let i = 0; i < years.length; i++) {
+
+      let foundActiveYear = false
+      for (let i = 0; i < years.length && !foundActiveYear; i++) {
         const year = years[i]
-        if (yearRefs.current[year].offsetTop <= scrolledY) {
+        const yearStart = yearRefs.current[year].offsetTop
+        const yearEnd = yearStart + yearRefs.current[year].offsetHeight // End of the year section
+
+        if (yearStart <= scrolledY && scrolledY <= yearEnd) {
           if (year !== activeYear) {
             setActiveYear(year)
-            break
+            foundActiveYear = true // Prevent unnecessary state updates
           }
         }
       }

@@ -32,7 +32,8 @@ const publicationsData: Publication[] = [
         (Photorealistic Unreal Graphics) environments and datasets for representation learning. Using PUG for evaluation and 
         fine-tuning, we demonstrate the potential of PUG to both enable more rigorous evaluations and to improve model training.`,
     imgSrc: '/static/images/PUG.png',
-    venue: 'Neural Information Processing Systems (NeurIPS) 2023: Datasets and Benchmark Track',
+    venue:
+      'Neural Information Processing Systems (NeurIPS) Conference, 2023: Datasets and Benchmark Track',
     websiteURL: 'https://pug.metademolab.com/',
     arxivURL: 'https://arxiv.org/abs/2308.03977',
     pdfURL: 'https://arxiv.org/pdf/2308.03977.pdf',
@@ -51,7 +52,7 @@ const publicationsData: Publication[] = [
     of methods, understand the role of the various knobs, and gain the know-how required to explore how delicious SSL can be.`,
     imgSrc: '/static/images/publications/SSLCookbook.png',
     venue:
-      'International Conference on Machine Learning (ICML) 2023 Tutorial:\nSelf-Supervised Learning in Vision: from Research Advances to Best Practices',
+      'International Conference on Machine Learning (ICML) Tutorial, 2023:\nSelf-Supervised Learning in Vision: from Research Advances to Best Practices',
     websiteURL: 'https://ai.meta.com/blog/self-supervised-learning-practical-guide/',
     arxivURL: 'https://arxiv.org/abs/2304.12210',
     pdfURL: 'https://arxiv.org/pdf/2304.12210.pdf',
@@ -63,7 +64,7 @@ const publicationsData: Publication[] = [
     authors: 'Shashank Shekhar, Florian Bordes, Pascal Vincent, Ari Morcos',
     abstract: `Joint-embedding based learning (e.g., SimCLR, MoCo, DINO) and reconstruction-based learning (e.g., BEiT, SimMIM, MAE) are the two leading paradigms for self-supervised learning of vision transformers, but they differ substantially in their transfer performance. Here, we aim to explain these differences by analyzing the impact of these objectives on the structure and transferability of the learned representations. Our analysis reveals that reconstruction-based learning features are significantly dissimilar to joint-embedding based learning features and that models trained with similar objectives learn similar features even across architectures. These differences arise early in the network and are primarily driven by attention and normalization layers. We find that joint-embedding features yield better linear probe transfer for classification because the different objectives drive different distributions of information and invariances in the learned representation. These differences explain opposite trends in transfer performance for downstream tasks that require spatial specificity in features. Finally, we address how fine-tuning changes reconstructive representations to enable better transfer, showing that fine-tuning re-organizes the information to be more similar to pre-trained joint embedding models.`,
     venue:
-      'International Conference on Learning Representations (ICLR) 2023:\nWorkshop on Mathematical and Empirical Understanding of Foundation Models',
+      'International Conference on Learning Representations (ICLR), 2023:\nWorkshop on Mathematical and Empirical Understanding of Foundation Models',
     imgSrc: '/static/images/publications/objectives.png',
     arxivURL: 'https://arxiv.org/abs/2304.13089',
     pdfURL: 'https://arxiv.org/pdf/2304.13089',
@@ -88,7 +89,7 @@ const publicationsData: Publication[] = [
     demonstrates comparable performance to the best supervised metrics. Overall, our work suggests that the 
     discovery of good data-pruning metrics may provide a viable path forward to substantially improved neural 
     scaling laws, thereby reducing the resource costs of modern deep learning.`,
-    venue: 'Neural Information Processing Systems (NeurIPS) 2022 Conference',
+    venue: 'Neural Information Processing Systems (NeurIPS) Conference, 2022',
     imgSrc: '/static/images/publications/scaling_law_theory-1.png',
     arxivURL: 'https://arxiv.org/abs/2206.14486',
     pdfURL: 'https://arxiv.org/pdf/2206.14486',
@@ -115,16 +116,16 @@ const publicationsData: Publication[] = [
     Finally, we analyze how fine-tuning affects these representational differences, and discover that a 
     fine-tuned reconstructive model becomes more similar to a pre-trained contrastive model.`,
     venue:
-      'Neural Information Processing Systems (NeurIPS) 2022 Workshop: Self-Supervised Learning - Theory and Practice',
+      'Neural Information Processing Systems (NeurIPS) Workshop, 2022: Self-Supervised Learning - Theory and Practice',
     imgSrc: '/static/images/publications/ssl_neuripsw.png',
     pdfURL: 'https://sslneurips22.github.io/paper_pdfs/paper_50.pdf',
     year: 2022,
   },
   {
-    title: 'Inductive Biases for Higher-Order Visual Cognition',
+    title: "Inductive Biases for Higher-Order Visual Cognition (Master's Thesis)",
     authors: 'Shashank Shekhar',
-    abstract: `Widely observed neural scaling laws, in which error falls off as a power of the training set size, model size, or both, have driven substantial performance improvements in deep learning. However, these improvements through scaling alone require considerable costs in compute and energy. Here we focus on the scaling of error with dataset size and show how in theory we can break beyond power law scaling and potentially even reduce it to exponential scaling instead if we have access to a high-quality data pruning metric that ranks the order in which training examples should be discarded to achieve any pruned dataset size. We then test this improved scaling prediction with pruned dataset size empirically, and indeed observe better than power law scaling in practice on ResNets trained on CIFAR-10, SVHN, and ImageNet. Next, given the importance of finding high-quality pruning metrics, we perform the first large-scale benchmarking study of ten different data pruning metrics on ImageNet. We find most existing high performing metrics scale poorly to ImageNet, while the best are computationally intensive and require labels for every image. We therefore developed a new simple, cheap and scalable self-supervised pruning metric that demonstrates comparable performance to the best supervised metrics. Overall, our work suggests that the discovery of good data-pruning metrics may provide a viable path forward to substantially improved neural scaling laws, thereby reducing the resource costs of modern deep learning.`,
-    venue: "Master's Thesis, University of Guelph, 2022",
+    abstract: ``,
+    venue: 'University of Guelph Library Atrium, 2022',
     imgSrc: '/static/images/publications/thesis.png',
     pdfURL:
       'https://atrium.lib.uoguelph.ca/bitstreams/9815e57d-5e5e-43f2-a959-3321df0d7701/download',
@@ -155,7 +156,7 @@ const publicationsData: Publication[] = [
     Finally, we show that RT profiles bear specificity for class
     identity and therefore the features that define classes. These results cast light
     on the model's feature space without opening the black box.`,
-    venue: 'Applied AI Letters 2021',
+    venue: 'Wiley Applied AI Letters, 2021',
     imgSrc: '/static/images/publications/nrt-wiley.png',
     pdfURL: 'https://onlinelibrary.wiley.com/doi/pdf/10.1002/ail2.48',
     dataURL: 'https://borealisdata.ca/dataset.xhtml?persistentId=doi:10.5683/SP2/OQU7QG',
@@ -177,11 +178,10 @@ const publicationsData: Publication[] = [
     benchmark datasets demonstrate that our Seq2Seq learning approach achieves strong empirical performance, outperforming previous state-of-the-art,
      while remaining efficient in terms of training and inference time.`,
     venue:
-      'Neural Information Processing Systems (NeurIPS) 2021:\nWorkshop on Shared Visual Representations in Humans and Machines',
+      'Neural Information Processing Systems (NeurIPS) Workshop, 2021:\nShared Visual Representations in Humans and Machines',
     imgSrc: '/static/images/publications/nsm.png',
-    pdfURL:
-      'https://openaccess.thecvf.com/content/ICCV2021/papers/Lu_Context-Aware_Scene_Graph_Generation_With_Seq2Seq_Transformers_ICCV_2021_paper.pdf',
-    websiteURL: 'https://example.com',
+    arxivURL: 'https://openreview.net/forum?id=By5Uwd_xzNF',
+    pdfURL: 'https://openreview.net/pdf?id=By5Uwd_xzNF',
     year: 2021,
   },
   {
@@ -219,8 +219,7 @@ const publicationsData: Publication[] = [
     the ObjectNet test set, as well as the human phenomenon of scene grammar, where object recognition depends on intrascene 
     object-object relationships. These results cast light on MSDNet’s feature space without opening the black box
     and illustrate the promise of RT methods for XAI.`,
-    venue:
-      'Conference on Computer Vision and Pattern Recognition (CVPR) 2020:\n Workshop: Minds vs Machines',
+    venue: 'Computer Vision and Pattern Recognition (CVPR) Workshop, 2020:\nMinds vs Machines',
     imgSrc: '/static/images/publications/rt-cc.png',
     pdfURL:
       'https://openaccess.thecvf.com/content_CVPRW_2020/papers/w26/Taylor_Response_Time_Analysis_for_Explainability_of_Visual_Processing_in_CNNs_CVPRW_2020_paper.pdf',
@@ -247,11 +246,10 @@ const publicationsData: Publication[] = [
     popular feature fusion schemes. Additionally, we conduct a comparative subject-based study of human operator
     performance. The superior operator performance enabled by our approach makes a compelling case for its 
     integration into deployable video-surveillance systems.`,
-    venue: 'IEEE Transactions on Information Forensics and Security, 2019',
+    venue: 'IEEE Transactions on Information Forensics and Security (TIFS), 2019',
     imgSrc: '/static/images/publications/reid.png',
     arxivURL: 'https://arxiv.org/abs/1807.07295',
     pdfURL: 'https://arxiv.org/pdf/1807.07295',
-    websiteURL: 'https://example.com',
     year: 2019,
   },
   {
@@ -268,7 +266,7 @@ const publicationsData: Publication[] = [
     multi-relational graph, (iii) reasoning module to perform a
     novel gated graph neural network based reasoning on this
     graph.`,
-    venue: 'International Conference On Computer Vision, 2019',
+    venue: 'International Conference On Computer Vision (ICCV), 2019',
     imgSrc: '/static/images/publications/tkvqa.png',
     pdfURL:
       'https://openaccess.thecvf.com/content_ICCV_2019/papers/Singh_From_Strings_to_Things_Knowledge-Enabled_VQA_Model_That_Can_Read_ICCV_2019_paper.pdf',
@@ -301,7 +299,7 @@ const publicationsData: Publication[] = [
     optimistic that this new task along with compiled dataset will
     open-up many exciting research avenues both for the document
     image analysis and the VQA communities.`,
-    venue: 'International Conference on Document Analysis and Recognition (ICDAR) 2019',
+    venue: 'International Conference on Document Analysis and Recognition (ICDAR), 2019',
     imgSrc: '/static/images/publications/ocr-vqa.png',
     pdfURL: 'https://anandmishra22.github.io/files/mishra-OCR-VQA.pdf',
     websiteURL: 'https://ocr-vqa.github.io/',

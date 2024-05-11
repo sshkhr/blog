@@ -29,13 +29,7 @@ const PublicationCard = ({
           />
         </div>
       )}
-      <div className="w-full p-4 lg:w-4/5">
-        {award && (
-          <div className="absolute bottom-0 right-0 m-2 flex items-center text-red-500">
-            <FaTrophy className="mr-2" />
-            <span>{award}</span>
-          </div>
-        )}
+      <div className="flex w-full flex-col justify-between p-4 lg:w-4/5">
         <h3 className="text-xl font-bold">{title}</h3>
         <p className="text-md text-gray-800 dark:text-gray-200">{authors}</p>
         <p className="text-sm text-gray-600 dark:text-gray-400">{venue}</p>
@@ -89,6 +83,12 @@ const PublicationCard = ({
               Dataset
               <FaDatabase />
             </a>
+          )}
+          {award && (
+            <div className="absolute bottom-0 right-0 m-2 flex items-center text-red-500">
+              <FaTrophy className="mr-2" />
+              <span>{award}</span>
+            </div>
           )}
         </div>
       </div>
