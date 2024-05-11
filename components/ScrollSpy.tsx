@@ -6,7 +6,7 @@ function YearScrollspy({ years, onYearClick, activeYear }) {
         <button
           key={year}
           onClick={() => onYearClick(year)}
-          className="text-s ${year === activeYear ? 'font-black' : 'font-medium'} block w-full p-1 text-left text-gray-500 hover:font-bold dark:text-gray-400"
+          className={`text-s ${year === activeYear ? 'font-bold' : 'font-thin'} block w-full p-1 text-left text-gray-500 hover:font-bold dark:text-gray-400`}
         >
           {year}
         </button>
