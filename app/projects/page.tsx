@@ -123,10 +123,11 @@ export default function Projects() {
                 title={d.title}
                 description={d.description}
                 imgSrc={d.imgSrc}
-                href={d.href}
                 techStack={d.techStack}
                 topics={d.topics}
                 languages={d.languages}
+                websiteURL={d.websiteURL}
+                githubURL={d.githubURL}
               />
             ))}
           </div>
