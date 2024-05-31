@@ -15,6 +15,27 @@ interface Project {
 
 const projectsData: Project[] = [
   {
+    title: 'DLAI Companion',
+    description: `Comprehensive notes and reviews for various courses offered by DeepLearning.AI on 
+    topics related to ML Engineering and MLOps.`,
+    imgSrc: '/static/images/dlai-companion.png',
+    techStack: ['MkDocs', 'MaterialforMkDocs'],
+    topics: ['Frontend', 'Machine Learning'],
+    languages: ['Markdown'],
+    githubURL: 'https://github.com/sshkhr/dlai-companion',
+    websiteURL: 'https://dlai-companion.shashankshekhar.com/',
+  },
+  {
+    title: 'Awesome MLSS',
+    description: `A community project to keep track of deadlines for Machine Learning Summer Schools (MLSS) as well as other related fields around the world`,
+    imgSrc: '/static/images/awesome-MLSS.png',
+    techStack: ['Jekyll', 'Bootstrap'],
+    topics: ['Frontend', 'Fullstack'],
+    languages: ['JavaScript', 'Markdown'],
+    githubURL: 'https://github.com/sshkhr/awesome-mlss',
+    websiteURL: 'https://awesome-mlss.com',
+  },
+  {
     title: 'arXiv Redirector',
     description: `Arxiv Redirector streamlines your arXiv browsing by auto-redirecting external links 
     to your chosen default view: Abstract, PDF, or HTML. In case the HTML version is not available from
@@ -29,8 +50,7 @@ const projectsData: Project[] = [
   },
   {
     title: 'shashankStack',
-    description: `Portfolio website and blog. Developed using NextJS, TailwindCSS, and TypeScript using the
-    Tailwind Nextjs Starter Blog template (tailwind-nextjs-starter-blog.vercel.app).`,
+    description: `Portfolio website and blog. Developed using NextJS, TailwindCSS, and TypeScript.`,
     imgSrc: '/static/images/shashankStack.png',
     techStack: ['NextJS', 'React', 'TailwindCSS'],
     topics: ['Frontend', 'Fullstack'],

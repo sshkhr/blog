@@ -18,6 +18,10 @@ export type TechStack =
   | 'Chrome'
   | 'Firefox'
   | 'TailwindCSS'
+  | 'Jekyll'
+  | 'Bootstrap'
+  | 'MkDocs'
+  | 'MaterialforMkDocs'
 
 export const techStackArray: TechStack[] = [
   'React',
@@ -39,4 +43,8 @@ export const techStackArray: TechStack[] = [
   'Chrome',
   'Firefox',
   'TailwindCSS',
+  'Jekyll',
+  'Bootstrap',
+  'MkDocs',
+  'MaterialforMkDocs',
 ]
