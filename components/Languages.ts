@@ -7,6 +7,7 @@ export type Languages =
   | 'Go'
   | 'Java'
   | 'C'
+  | 'Markdown'
 
 export const languageArray: Languages[] = [
   'Python',
@@ -17,4 +18,5 @@ export const languageArray: Languages[] = [
   'Go',
   'Java',
   'C',
+  'Markdown',
 ]
