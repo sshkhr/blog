@@ -1,0 +1,65 @@
+---
+title: 'On toolboxes, and starting where you are'
+date: '2024-06-03'
+tags: ['writing', 'personal growth', 'webdev', 'side project']
+draft: false
+summary: 'Thoughts on taking up projects - both major as well as side projects, and the importance of starting with your current skillset.'
+---
+
+In his memoir/guidebook on writing, aptly titled *On Writing*, Stephen King brings up the allegory of his grandpa's carpenter toolbox. The idea, relevant for writing as well as life, is that you need to build up a toolbox of (literary) skills that you carry around with you. Whenever you start working on something new, you bring your trusty toolbox with you.
+
+In the beginning, your toolbox might be small and limited. But as you keep working on your craft, you keep adding new tools to it. You learn new techniques, new ways of thinking, new ways of approaching problems. As you keep carrying your toolbox around for new projects, your toolbox hopefully grows as you come across unseen problems where new tools are required. And you build up muscle from carrying a heavier toolbox - so not only is your toolbox more diverse, you become stronger and better equipped to carry it around.
+
+The metaphor applies to almost every aspect of life as I know it. When I read the book earlier this year, I found it almost reassuring to hear from one of the most prolific writers to ever live that you can start with a small toolbox and then build upon it. One of things I notice is that when starting on a new thing (such as this blog) as an adult, it is easy for me to be bogged down by expectations of quality that I have for things that I have developed over years of practice. 
+
+## A small toolbox
+
+Around March-April of this year, I found myself anguishing over web development. My friend and I had started a new company, [dice.health](https://dice.health), and we had been heads down building our MVP i.e. the first useful version of our app. At this point, I have been a machine learning researcher/engineer for close to 5 or so years, and prior to that I was at university for electronics engineering and worked briefly as a middleware developer for consumer hardware. So I was proficient with programming, but had never really developed web applications outside of my own website [sshkhr.github.io](https://sshkhr.github.io/) and another small dev blog [esc from tutorial hell](https://escapefromtutorialhell.netlify.app/) that I never kept up with. 
+
+However, both these projects were small static websites, built with templating engines [Jekyll](https://jekyllrb.com/) and [Hugo](https://gohugo.io/). For those not familiar with web development, templating engines abstract away most of the pain of frontend development (the stuff the user sees on a website), and static sites tend to have no backend (the business logic of websites like ChatGPT or Twitter). So these were small projects, and I was sufficiently abstracted away from web technologies to the point where I did not really have to deal with anything like programming languages, styling frameworks, or browser APIs.
+
+Coming back to our MVP, it was easy for us to build a prototype using Python based web frameworks like [Streamlit](https://streamlit.io/) or as a simple one page app with HTML and CSS. But we needed bigger web frameworks for our MVP to handle the various features we wanted to implement. It ended up taking my friend and I longer than we would have like to build the app finally, and we also ended up getting some outside help for it. It was a humbling experience.
+
+## Adding new tools, building new muscles
+
+After we finished up our MVP, I found myself with some more downtime while we beta tested our app with end users. I decided to utilize this time to work on some side projects that would involve web development. 
+
+![arXiv redirector](public/static/images/arxiv-redirector-banner.jpg "arXiv redirector")
+
+The first project I did was wrapping up a browser extension called [arXiv redirector](https://github.com/sshkhr/arxiv-redirector), which I wrote mostly for myself over the winter break in 2023. I decided to revive and publish it because I mentioned arxiv-redirector to some friends from my grad school lab in March, and one of them passingly said I should publish it and they might use it. So, I cleaned it up and published it on the Chrome and Firefox web store. I ended up never sharin it with grad school friends out of hesitation, but the extension now has 7 users. [Make something people want](https://paulgraham.com/good.html).
+
+I learned about really simple stuff like webpage DOMs, how browser APIs use callbacks on HTML elements, and web routing in the process of building this extension. As an aside, I found it interesting that while both Google Chrome and Mozilla Firefox are based on the open-source Chromium browser, they have different sets of browser APIs available - largely due to the nature of the 
+
+![this blog](public/static/images/shashankStack.png "this blog")
+
+Next up was this blog. I had wanted to redo my website for some time, for some unknown reasons. Every few years or so, I go through a cycle of redoing my personal website. For the last decade, it had been build on Jekyll. Since our MVP was built with NextJS (among other stuff), I decided it would be a good idea to redo my website with NextJS. But I didn't start from scratch - it usually doesn't make sense to start from scratch. After going through a few options, I landed upon the [NextJS Tailwind CSS blog starter template](https://github.com/timlrx/tailwind-nextjs-starter-blog). I made some modifications, mostly to the projects page and the publications page. But it was overall a good learning experience, I especially learned a few things about ReactJS in particular.
+
+One small but cool component I implemented for this website is the [scroll spy](https://getbootstrap.com/docs/4.0/components/scrollspy/), which is the navigation bar with years on it that you see on the [research](/research) page. While I did implement other stuff like the project cards and publication cards, I really enjoyed implementing both the logic and the UI of this little scroll spy component from scratch myself.
+
+![DeepLearning.AI companion website](public/static/images/dlai-companion.png "DeepLearning.AI companion website")
+
+The next project I worked on was a [companion website for DeepLearning.AI](https://dlai-companion.shashankshekhar.com/). For those of you who haven't heard of DeepLearning.AI, they are a company who create online courses related to the field of artificial intelligence. Their [Deep Learning specialization on Coursera](https://www.coursera.org/specializations/deep-learning) is the first thing I did (from January-March of 2018) when I switched careers from electrical and systems engineering to data science. 
+
+They have recently launched focussed short courses on topics related to ML engineering, which I have found particularly helpful as someone who has had mostly a research and science-y background. So I decided to build a small companion website for the courses I take on their platform with course notes and learning paths. I did however set up the domain records, and have also set up continuous deployment from my Github repo through Github actions.
+
+The website is built largely from templates using [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/), so most of the work I did was just writing. However, with MkDocs I learned about how to think of technical documentation as code - in important practice for good documentation development. I also found out about things like [Mermaid JS](https://mermaid.js.org/) - which lets you treat diagrams as code, and [Excalidraw](https://excalidraw.com/) which allows me to draw really beautiful digital illustrations that look almost hand-drawn.
+
+![MLSS Deadline countdown](public/static/images/awesome-MLSS.png "MLSS Deadline countdown")
+
+The final web development project I did in the last three months was the [awesome-mlss.com](https://awesome-mlss.com/), which is a website for the github repo [awesome-mlss](https://github.com/sshkhr/awesome-mlss) that I have maintained since 2018. The project is a compilation of machine learning summer schools, which helped me early in my career in this field back in 2019 when I attended a couple of them in London and Moscow. The website was inspired from [aideadlin.es](https://aideadlin.es/), which is a similar compilation for machine learning conferences. I used the original source code of aideadlin.es as my starting point.
+
+While the project uses Jekyll for templating, I found myself writing up a lot of barebones HTML and Javascript code for this website - since I wanted to include additional pages with some basic logic to the original aideadlin.es code. I also bought a cheap domain for the project, mostly because it has been around for 5 years and has gained some popularity in the ML community, so I thought it would be a worthwhile investment. And I think a deadline countdown with calendar integrations is a better format for such a project.
+
+## Starting here
+
+I wouldn't call myself an intermediate web developer yet, let alone an experienced one. But, I have learned a useful bag of tricks, and I have a slightly heavier toolbox now. 
+
+And, perhaps most relevantly, it helped me draw courage to write this blog post. I have always dreamed of blogging frequently - or writing frequently more generally. I have had bouts of writing in last 3-4 years, but never wrote consistently for more than a month. My previous website and dormant dev blog lay witness to my repeated failurs.
+
+The key trepidation that has held me back was the idea of writing poorly, which in turn would reflect poorly on me and my self-image of a smart person. But I know that I can't get better at writing, without writing! The muscle won't grow without carrying around my toolbox and adding new tools to it. Hence, this blog post.
+
+If you're still here, thanks for sticking around and hearing my thoughts. I don't have anything clever or conclusive to leave you with, besides the hope that you also start with whatever toolbox you have today and start slinging it around and using it to the best of your ability. Don't let it sit under your kitchen sink and rust. 
+
+As the prolific internet philosopher [roon](https://twitter.com/tszzl) once said:
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">say it with me now. experts are fake, smart generalists rule the world, everything is designed by people no smarter than you, and courage is in shorter supply than genius</p>&mdash; roon (@tszzl) <a href="https://twitter.com/tszzl/status/1577059345883283456?ref_src=twsrc%5Etfw">October 3, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
