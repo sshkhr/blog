@@ -6,7 +6,7 @@ const siteMetadata = {
   description: 'My experiments with code and learning.',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://shashankshekhar.vercel.app',
+  siteUrl: 'https://shashankshekhar.com',
   siteRepo: 'https://github.com/sshkhr/blog',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/shashankStack-banner.png',
@@ -76,6 +76,9 @@ const siteMetadata = {
       themeURL: '',
       // This corresponds to the `data-lang="en"` in giscus's configurations
       lang: 'en',
+    },
+    disqusConfig: {
+      disqusShortname: process.env.NEXT_PUBLIC_DISQUS_SHORTNAME,
     },
   },
   search: {
