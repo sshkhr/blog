@@ -21,7 +21,7 @@ const talksData: Talk[] = [
       'https://docs.google.com/presentation/d/1mpyrzLCw1aqfBZtVxVJhBcnDp4iCgL0Woo4YcNa1yaM/',
     githubURL: 'https://github.com/sshkhr/safeguarding-llms',
     summary:
-      'Conducted workshop to explore safeguarding of Large Language Models (LLMs) and discuss strategies for generating structured outputs, ensuring topical relevance, preventing hallucinations, avoiding data leakage, and installing safety guardrails on third-party applications.',
+      'Conducted workshop to explore safeguarding of Large Language Models (LLMs) in production for data scientists, researchers, and CTOs.',
   },
   {
     title: 'Implementing Structure Mapping in Deep Learning Models for Abstract Reasoning',

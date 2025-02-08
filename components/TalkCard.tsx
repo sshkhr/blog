@@ -20,9 +20,9 @@ const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, 
         <div>
           <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h3>
           <p className="text-md text-gray-800 dark:text-gray-200">
-            {venue} ({year})
+            {venue} , {year}
           </p>
-          {summary && <p className="text-sm text-gray-600 dark:text-gray-400">{summary}</p>}
+          {summary && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{summary}</p>}
         </div>
 
         <div className="mb-2 mt-4 flex flex-wrap gap-2">
