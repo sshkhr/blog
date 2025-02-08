@@ -25,7 +25,7 @@ const talksData: Talk[] = [
   },
   {
     title: 'Implementing Structure Mapping in Deep Learning Models for Abstract Reasoning',
-    venue: 'Analogical Minds Seminar Spring',
+    venue: 'Analogical Minds Seminar Spring Series',
     year: 2022,
     imgSrc: '/static/images/talks/analogy-logo.png',
     youtubeURL: 'https://www.youtube.com/watch?v=v5al6mJKrHQ',
