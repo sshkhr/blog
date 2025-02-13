@@ -1,0 +1,545 @@
+---
+title: 'Tensor Puzzles Walkthrough'
+date: '2025-02-12'
+tags: ['tensors', 'pytorch', 'linear algebra', 'machine learning']
+draft: false
+summary: "My solutions to the tensor puzzles created by Sasha Rush, along with my reasoning process behind each solution and comparison with the author's reasoning process."
+---
+
+This blog post walks through my solutions to the [Tensor Puzzles]((https://github.com/srush/Tensor-Puzzles)) created by [Sasha Rush](http://rush-nlp.com). The puzzles are designed to help understand tensor operations and broadcasting in PyTorch/NumPy without relying on built-in functions.
+
+If you have not done these puzzles yet, I would **strongly recommend** trying them out first before looking at the solutions. You can find the puzzles on Sasha's GitHub repository linked above. I personally found thinking through these puzzles a great exercise in stepping out of iterative approach mindset to a vectorized approach mindset for a lot of math and ML tasks in PyTorch.
+
+If you are a person who prefers to read code instead of text, you can find my solutions at [Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions)
+
+## Rules of the Puzzles
+
+1. Each puzzle needs to be solved in 1 line (\<80 columns) of code.
+2. Functions allowed: `@`, arithmetic (`+`, `-`, `%` etc), comparison (`>`, `==`, `<=` etc), `shape`, any indexing (e.g. `a[:j], a[:, None], a[arange(10)]`), and previous puzzle functions.
+3. Functions *not allowed* anything else. No `view`, `sum`, `take`, `squeeze`, `tensor`.
+
+In order to get started, two example functions are provided with the puzzles:
+
+### Starter Function 1: arange
+
+```python
+def arange(i: int):
+    "Use this function to replace a for-loop."
+    return torch.tensor(range(i))
+```
+
+The `arange` function is a replacement for the `range` function in Python, except that it returns a tensor.
+
+### Starter Function 2: where
+
+```python
+def where(q, a, b):
+    "Use this function to replace an if-statement."
+    return (q * a) + (~q) * b
+```
+
+The `where` function is a useful replacement for if-else statements, with broadcasting.
+
+Now, let's dive into the puzzles! Each puzzle explains the function itself, and also contains a naive Python implmentation as a spec.
+
+## My First Attempt at the Puzzles
+
+For my first attempt, I decided that I was only going to follow Rules 2 and 3 (allowed/disallowed functions), and not wory too much about the length constraint, since I wanted to write code that could be understood easily as well.
+
+## Puzzle 1: ones
+Implements [ones](https://numpy.org/doc/stable/reference/generated/numpy.ones.html) - create a vector of all ones
+
+**Reasoning Process:**
+I first tried `torch.tensor([1] * i)` but realized `tensor` wasn't allowed. Then I thought about using matrix multiplication with `arange`. I multiplied `arange(i)` with `arange(i)[:, None]` which gave me a matrix with zeros in the first row. Adding 1 to this first row gave me my vector of ones, with broadcasting handling the array dimensions.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def ones(i: int) -> TT["i"]:
+    return (arange(i) * arange(i)[:, None])[0] + 1
+```
+```python
+def ones_spec(out):
+    for i in range(len(out)):
+        out[i] = 1
+```
+</CodeTabs>
+
+## Puzzle 2: sum
+Implements [sum](https://numpy.org/doc/stable/reference/generated/numpy.sum.html) - calculate sum of all elements
+
+**Reasoning Process:**
+I realized I could use a dot product with a vector of ones (from Puzzle 1) to sum all elements. My first solution worked but returned a scalar instead of the required tensor of size [1]. I fixed this by using `array_sum[None]` to convert the scalar into a 1-dimensional tensor.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def sum(a: TT["i"]) -> TT[1]:
+    array_sum = a @ ones(len(a))
+    return array_sum[None]
+```
+```python
+def sum_spec(a, out):
+    out[0] = 0
+    for i in range(len(a)):
+        out[0] += a[i]
+```
+</CodeTabs>
+
+## Puzzle 3: outer
+Implements [outer](https://numpy.org/doc/stable/reference/generated/numpy.outer.html) - compute outer product
+
+**Reasoning Process:**
+I recognized that in an outer product, each column is the first vector scaled by a corresponding element from the second vector. I used None indexing to make the shapes compatible - `a[:, None]` makes a vertical vector and `b[None, :]` makes a horizontal one. Broadcasting then handles the multiplication across all elements.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def outer(a: TT["i"], b: TT["j"]) -> TT["i", "j"]:
+    return a[:, None] * b[None, :]
+```
+```python
+def outer_spec(a, b, out):
+    for i in range(len(out)):
+        for j in range(len(out[0])):
+            out[i][j] = a[i] * b[j]
+```
+</CodeTabs>
+
+## Puzzle 4: diag
+Implements [diag](https://numpy.org/doc/stable/reference/generated/numpy.diag.html) - extract diagonal elements
+
+**Reasoning Process:**
+I initially tried to find a clever stride pattern (`len*i + i`), but that wasn't allowed. I was stuck after several attempts including trying to equate the matrix with its transpose. At this point, I used Claude-3.5-Sonnet to get a hint that diagonal elements are where row index equals column index. I implemented this using `arange(len(a))` broadcasted in two directions with `[:, None]` and `[None, :]`, comparing them for equality to create a mask. Using `a[mask]` with this mask gave me the diagonal elements. 🔧 <span style={{backgroundColor: '#593d7f', color: 'white', padding: '2px 6px', borderRadius: '3px'}}>LLM Assisted</span>
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def diag(a: TT["i", "i"]) -> TT["i"]:
+    mask = arange(len(a))[:, None] == arange(len(a))[None, :]
+    filtered = a[mask]
+    return filtered
+```
+```python
+def diag_spec(a, out):
+    for i in range(len(a)):
+        out[i] = a[i][i]
+```
+</CodeTabs>
+
+## Puzzle 5: eye
+Implements [eye](https://numpy.org/doc/stable/reference/generated/numpy.eye.html) - create identity matrix
+
+**Reasoning Process:**
+I realized the mask from the previous puzzle (where row index equals column index) is actually the identity matrix in boolean form. I used `mask + 0` to convert it from boolean to integer type. The broadcasting of `arange(j)[:, None] == arange(j)[None, :]` creates the exact pattern needed for the identity matrix.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def eye(j: int) -> TT["j", "j"]:
+    mask = arange(j)[:, None] == arange(j)[None, :]
+    return mask + 0
+```
+```python
+def eye_spec(out):
+    for i in range(len(out)):
+        out[i][i] = 1
+```
+</CodeTabs>
+
+## Puzzle 6: triu
+Implements [triu](https://numpy.org/doc/stable/reference/generated/numpy.triu.html) - upper triangular matrix
+
+**Reasoning Process:**
+Following the pattern from the previous two puzzles, I realized I just needed to modify the comparison operator. For an upper triangular matrix, elements are 1 where row index is less than or equal to column index. I used `arange(j)[:, None] <= arange(j)[None, :]` to create a boolean mask and converted it to integers with `mask + 0`.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def triu(j: int) -> TT["j", "j"]:
+    mask = arange(j)[:, None] <= arange(j)[None, :]
+    return mask + 0
+```
+```python
+def triu_spec(out):
+    for i in range(len(out)):
+        for j in range(len(out)):
+            if i <= j:
+                out[i][j] = 1
+            else:
+                out[i][j] = 0
+```
+</CodeTabs>
+
+## Puzzle 7: cumsum
+Implements [cumsum](https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html) - cumulative sum
+
+**Reasoning Process:**
+I first tried using outer product with ones, but realized it wouldn't help with running sums. Then I noticed that multiplying a vector with an upper triangular matrix (from `triu()`) would create the perfect pattern - the first row adds all elements, second row adds all but one, and so on. The matrix multiplication `a @ triu(len(a))` gave me the cumulative sums.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def cumsum(a: TT["i"]) -> TT["i"]:
+    return a @ triu(len(a))
+```
+```python
+def cumsum_spec(a, out):
+    total = 0
+    for i in range(len(out)):
+        out[i] = total + a[i]
+        total += a[i]
+```
+</CodeTabs>
+
+## Puzzle 8: diff
+Implements [diff](https://numpy.org/doc/stable/reference/generated/numpy.diff.html) - compute differences
+
+**Reasoning Process:**
+I knew I needed to offset the array by 1 and subtract from itself to get differences. While this worked for indices `1` onwards using `a[1:] - a[:i-1]`, the spec required the output to be the same size as input (unlike NumPy's implementation) with the first element preserved. I solved this by copying the input array first and then updating all elements except the first one.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def diff(a: TT["i"], i: int) -> TT["i"]:
+    diff = a
+    diff[1:] = a[1:] - a[:i-1]
+    return diff
+```
+```python
+def diff_spec(a, out):
+    out[0] = a[0]
+    for i in range(1, len(out)):
+        out[i] = a[i] - a[i - 1]
+```
+</CodeTabs>
+
+## Puzzle 9: vstack
+Implements [vstack](https://numpy.org/doc/stable/reference/generated/numpy.vstack.html) - stack arrays vertically
+
+**Reasoning Process:**
+I first tried broadcasting and adding matrices, but addition would mix the values. After discussing with Claude, I realized I could create row-specific masks using `arange(2)[:, None] == 0` and `== 1`. These masks, when multiplied with `outer(ones(2), a)` and `outer(ones(2), b)`, let me place each vector in its correct row. Adding these masked matrices and taking `[:2,:]` gave me the stacked result. 🔧 <span style={{backgroundColor: '#593d7f', color: 'white', padding: '2px 6px', borderRadius: '3px'}}>LLM Assisted</span>
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def vstack(a: TT["i"], b: TT["i"]) -> TT[2, "i"]:
+    first_row_mask = arange(2)[:, None] == 0
+    second_row_mask = arange(2)[:, None] == 1
+    filtered = (first_row_mask * outer(ones(2), a)) + (second_row_mask * outer(ones(2), b))
+    return filtered[:2,:]
+```
+```python
+def vstack_spec(a, b, out):
+    for i in range(len(out[0])):
+        out[0][i] = a[i]
+        out[1][i] = b[i]
+```
+</CodeTabs>
+
+## Puzzle 10: roll
+Implements [roll](https://numpy.org/doc/stable/reference/generated/numpy.roll.html) - roll array elements
+
+**Reasoning Process:**
+First tried assigning and slicing in the same operation, but that failed as I was modifying the same vector. Then tried using masks for different positions. Finally, after a hint from Claude about thinking about index arrangements, I created a shifted index array using `arange(len(a)) + ones(len(a))` and set the last index to 0 for circular shift. 🔧 <span style={{backgroundColor: '#593d7f', color: 'white', padding: '2px 6px', borderRadius: '3px'}}>LLM Assisted</span>
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def roll(a: TT["i"], i: int) -> TT["i"]:
+    indices = arange(len(a)) + ones(len(a))
+    indices[-1] = 0
+    result = a[indices]
+    return result
+```
+```python
+def roll_spec(a, out):
+    for i in range(len(out)):
+        if i + 1 < len(out):
+            out[i] = a[i + 1]
+        else:
+            out[i] = a[i + 1 - len(out)]
+```
+</CodeTabs>
+
+## Puzzle 11: flip
+Implements [flip](https://numpy.org/doc/stable/reference/generated/numpy.flip.html) - reverse array
+
+**Reasoning Process:**
+While Claude had given an incorrect solution earlier to Puzzle 10, it sparked the right intuition for this Puzzle. I realized I could reverse the array by flipping the indices - using `arange(len(a))` gives indices `0,...,n-1`, and subtracting this from `len(a)-1` gives me the reversed indices `n-1,...,0`. This creates a perfect reverse mapping for array indexing.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def flip(a: TT["i"], i: int) -> TT["i"]:
+    return a[len(a)-1 - arange(len(a))]
+```
+```python
+def flip_spec(a, out):
+    for i in range(len(out)):
+        out[i] = a[len(out) - i - 1]
+```
+</CodeTabs>
+
+## Puzzle 12: compress
+Implements [compress](https://numpy.org/doc/stable/reference/generated/numpy.compress.html) - select elements based on condition
+
+**Reasoning Process:**
+I first counted non-zeros using `sum(g*1)`. Then created an array of length `i` with ones in the first `nonzero` positions using `(arange(i) < nonzero)*1`. Used boolean indexing `v[g]` to get masked values and placed them in the created array through indexing. Initially had a bug where I added an extra dimension to the mask array, but fixed it to get the working solution.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def compress(g: TT["i", bool], v: TT["i"], i:int) -> TT["i"]:
+    nonzero = sum(g*1)
+    arr = (arange(i) < nonzero)*1
+    masked = v[g]
+    arr[:nonzero] = masked
+    return arr
+```
+```python
+def compress_spec(g, v, out):
+    j = 0
+    for i in range(len(g)):
+        if g[i]:
+            out[j] = v[i]
+            j += 1
+```
+</CodeTabs>
+
+## Puzzle 13: pad_to
+Implements pad_to - add or remove elements to change size
+
+**Reasoning Process:**
+My first approach was to create a zeros array of size `j` and fill in the first `min(i,j)` elements from `a`. Tests weren't passing initially. While formulating a question for Claude, I realized I was interpreting the problem wrong - needed to clip the first `j` elements of `a` and only pad zeros at the end if needed. Created array of zeros with `ones(j) * 0`, then used `min_len` to handle both padding and clipping cases.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def pad_to(a: TT["i"], i: int, j: int) -> TT["j"]:
+    zeros = ones(j) * 0
+    min_len = min(i, j)
+    zeros[:min_len] = a[:min_len] * 1
+    return zeros
+```
+```python
+def pad_to_spec(a, out):
+    for i in range(min(len(out), len(a))):
+        out[i] = a[i]
+```
+</CodeTabs>
+
+## Puzzle 14: sequence_mask
+Implements [sequence_mask](https://www.tensorflow.org/api_docs/python/tf/sequence_mask) - mask sequences
+
+**Reasoning Process:**
+Initially struggled to understand the function's purpose. After checking TensorFlow docs, I understood it masks each row `k` in a `i*j` matrix to length `length[k]`. Created the mask by first making a matrix of indices using `outer(ones(len(values)), arange(len(values[0, :])))`, then a matrix of lengths with `outer(length, ones(len(values[0, :])))`. Compared these (`<`) to create a boolean mask which I multiplied with the input values.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def sequence_mask(values: TT["i", "j"], length: TT["i", int]) -> TT["i", "j"]:
+    ones_matrix = outer(ones(len(values)), arange(len(values[0, :])))
+    condition_matrix = outer(length, ones(len(values[0, :])))
+    masked_matrix = values * ((ones_matrix < condition_matrix)*1)
+    return masked_matrix
+```
+```python
+def sequence_mask_spec(values, length, out):
+    for i in range(len(out)):
+        for j in range(len(out[0])):
+            if j < length[i]:
+                out[i][j] = values[i][j]
+            else:
+                out[i][j] = 0
+```
+</CodeTabs>
+
+## Puzzle 15: bincount
+Implements [bincount](https://numpy.org/doc/stable/reference/generated/numpy.bincount.html) - count occurrences
+
+**Reasoning Process:**
+Initially thought I needed to find unique terms in `a`, but realized I could use `arange(j)` since max index is given. Needed to filter values of `a` based on index value and sum them. Created a matrix where each row represents one index using `outer(arange(j), ones(len(a)))`, and another where each row is `a` using `outer(ones(j), a)`. Comparing these gives occurrences, but was stuck on how to collapse rows into counts since `sum` was only for vectors. Finally realized I could use matrix multiplication with ones vector to sum rows, giving me a new mental model for collapsing dimensions.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def bincount(a: TT["i"], j: int) -> TT["j"]:
+    broadcasted_indices = outer(arange(j), ones(len(a)))
+    broadcasted_a = outer(ones(j), a)
+    counts = ((a == broadcasted_indices)*1) @ ones(len(a))
+    return counts
+```
+```python
+def bincount_spec(a, out):
+    for i in range(len(a)):
+        out[a[i]] += 1
+```
+</CodeTabs>
+
+## Puzzle 16: scatter_add
+Implements [scatter_add](https://pytorch-scatter.readthedocs.io/en/1.3.0/functions/add.html) - scatter and add values
+
+**Reasoning Process:**
+I recognized this was similar to bincount's approach. Created a `j x i` matrix by broadcasting `values` using `outer(ones(j), values)`. Did the same with `link`. Created an index matrix with `outer(arange(j), ones(len(values)))`. Compared broadcasted links with indices to create a mask of where each value should go. Multiplied mask with broadcasted values and used matrix multiplication with ones to sum up rows (reusing the insight from last puzzle about collapsing dimensions).
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def scatter_add(values: TT["i"], link: TT["i"], j: int) -> TT["j"]:
+    broadcasted_values = outer(ones(j), values)
+    broadcasted_links = outer(ones(j), link)
+    indexes = outer(arange(j), ones(len(values)))
+    filtered_values = ((broadcasted_values * ((broadcasted_links == indexes)*1))*1)
+    return filtered_values @ ones(len(values))
+```
+```python
+def scatter_add_spec(values, link, out):
+    for j in range(len(values)):
+        out[link[j]] += values[j]
+```
+</CodeTabs>
+
+## Puzzle 17: flatten
+Implements [flatten](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.flatten.html) - flatten array
+
+**Reasoning Process:**
+First thought about matrix multiplication approach since input is `i*j`. Then realized it's similar to vstack but horizontal. Needed to map between linear indices and matrix indices without loops. Created linear indices with `arange(i*j)`, then converted to row/column indices using division and modulo. Used these indices to map matrix elements to the flattened array through broadcasting. 
+
+💡 I was also parallely working on [minitorch](https://minitorch.github.io/), another great learning project from srush, and knowing shape/stride concepts helped with this puzzle. 
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def flatten(a: TT["i", "j"], i:int, j:int) -> TT["i * j"]:
+    flattened = ones(i*j)
+    vector_indices = arange(i*j)
+    row_indices = vector_indices / j
+    col_indices = vector_indices % j
+    flattened[vector_indices] = a[row_indices.int(), col_indices]
+    return flattened
+```
+```python
+def flatten_spec(a, out):
+    k = 0
+    for i in range(len(a)):
+        for j in range(len(a[0])):
+            out[k] = a[i][j]
+            k += 1
+```
+</CodeTabs>
+
+## Puzzle 18: linspace
+Implements [linspace](https://numpy.org/doc/stable/reference/generated/numpy.linspace.html) - evenly spaced numbers
+
+**Reasoning Process:** 
+The intuition was that `linspace` can be obtained by performing arithmetic operations on the output of `arange`. `arange` produces integers from 0 to n-1, while `linspace` produces floats from a to b. The difference between each number in `linspace` is `(b-a)/(n-1)`. Multiplying this difference with the `arange` output and adding the start value `a` gives the `linspace` result. However, this failed for some test cases due to division edge cases. Accounting for the case when `n=1` fixed the issue.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def linspace(i: TT[1], j: TT[1], n: int) -> TT["n", float]:
+    if i==j or n==1:
+      return i.float()
+    vec = arange(n)
+    diff = (j-i)/(n-1)
+    vec = vec * diff
+    vec += i
+    return vec
+```
+```python
+def linspace_spec(i, j, out):
+    for k in range(len(out)):
+        out[k] = float(i + (j - i) * k / max(1, len(out) - 1))
+```
+</CodeTabs>
+
+## Puzzle 19: heaviside
+Implements [heaviside](https://numpy.org/doc/stable/reference/generated/numpy.heaviside.html) - compute Heaviside step function
+
+**Reasoning Process:**
+At first glance, the solution seemed straightforward - create an array with `b` values and then set indices that don't meet the condition to 0 or 1. However, this approach would likely exceed the 80 character limit. Instead, using the `where` method introduced earlier was more suitable. The solution required using `where` twice: first to create a 0/1 array based on the condition `a < 0`, and then to create the final array with 0, `b`, or 1 values based on whether `a == 0`. This approach successfully solved the problem while keeping the code concise.
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def heaviside(a: TT["i"], b: TT["i"]) -> TT["i"]:
+    zero_one_array = where(a < 0, ones(len(a))*0, ones(len(a)))
+    heaviside_array = where(a == 0, b, zero_one_array)
+    return heaviside_array
+```
+```python
+def heaviside_spec(a, b, out):
+    for k in range(len(out)):
+        if a[k] == 0:
+            out[k] = b[k]
+        else:
+            out[k] = int(a[k] > 0)
+```
+</CodeTabs>
+
+
+## Puzzle 20: repeat
+Implements [repeat](https://pytorch.org/docs/stable/generated/torch.Tensor.repeat.html) - repeat elements
+
+**Reasoning Process:**
+The solution seemed straightforward - taking the outer product of `ones(d)` and `a` should effectively repeat the elements of `a` along a new dimension of size `d`. This single line of code using `outer` elegantly solved the problem.
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def repeat(a: TT["i"], d: TT[1]) -> TT["d", "i"]:
+    return (outer(ones(d), a))
+```
+```python
+def repeat_spec(a, d, out):
+    for i in range(d[0]):
+        for k in range(len(a)):
+            out[i][k] = a[k]
+```
+</CodeTabs>
+
+## Puzzle 21: bucketize 
+Implements [bucketize](https://pytorch.org/docs/stable/generated/torch.bucketize.html) - assign values to buckets
+
+**Reasoning Process:**
+Initially, I had trouble understanding the function due to multitasking. After using Claude as a tutor to clarify the problem, I noticed similarities to the `scatter_add` function. My intuition was to create a matrix where each row corresponds to a bucket and each column represents an element of `v` in that bucket. However, I was stumped on how to map the boundary values to the bins. 
+
+After looking at the looped implementation, I realized that values greater than `boundaries[-1]` should be set to `len(boundaries)`, and values less than `boundaries[0]` should be set to zero. I managed to create a `len(boundaries)-1 * len(values)` matrix, where each column corresponds to a bucket and each row represents the values in `v` belonging to that bucket. Multiplying this matrix by `arange(len(boundaries)-1) + 1` assigned the correct bucket numbers instead of just True/False values.
+
+The remaining challenge was to collapse the matrix rows into a single row, since each column would only have one non-zero number. Using a tensor outer product with ones solved this issue. However, the resulting map was incorrect, requiring further debugging. Fixing the boundary conditions resolved the problem. 🔧 <span style={{backgroundColor: '#593d7f', color: 'white', padding: '2px 6px', borderRadius: '3px'}}>LLM Assisted</span>
+
+<CodeTabs tabs={["Tensor Based", "Naive Python"]}>
+```python
+def bucketize(v: TT["i"], boundaries: TT["j"]) -> TT["i"]:
+    zero_last_array = where(v >= boundaries[-1], ones(len(v))*len(boundaries), ones(len(v))*0)
+    
+    if len(boundaries) == 1:
+        return zero_last_array
+    
+    lower_range_array, upper_range_array = boundaries[:-1], boundaries[1:]
+    broad_lr_array, broad_ur_array = outer(lower_range_array, ones(len(v))), outer(upper_range_array, ones(len(v)))
+    
+    map = outer(ones(len(boundaries)-1), v)
+    map = (broad_lr_array <= v) * (v < broad_ur_array)
+    map_scaled = (map * 1) * outer((arange(len(boundaries)-1)+1), ones(len(v)))
+    
+    bucketized = ones(len(boundaries)-1) @ map_scaled 
+    bucketized = where(bucketized==0, zero_last_array, bucketized)
+    return bucketized
+```
+```python
+def bucketize_spec(v, boundaries, out):
+    for i, val in enumerate(v):
+        out[i] = 0
+        for j in range(len(boundaries)-1):
+            if val >= boundaries[j]:
+                out[i] = j + 1
+        if val >= boundaries[-1]:
+            out[i] = len(boundaries)
+```
+</CodeTabs>
+
+## Final Thoughts
+
+These Tensor Puzzles were a great exercise in understanding tensor operations and broadcasting in PyTorch. At the end, there is a small mini-challenge (`Speed Run Mode`) to make the functions fit in as few characters as possible.
+
+|Puzzle          |Speed Run Results       |
+|----------------|-------------------------|
+| ones           | 50                      |
+| sum            | 26 (more than 1 line)   |
+| outer          | 34                      |
+| diag           | 22 (more than 1 line)   |
+| eye            | 19 (more than 1 line)   |
+| triu           | 19 (more than 1 line)   |
+| cumsum         | 27                      |
+| diff           | 30 (more than 1 line)   |
+| vstack         | 45 (more than 1 line)   |
+| roll           | 19 (more than 1 line)   |
+| flip           | 39                      |
+| compress       | 33 (more than 1 line)   |
+| pad_to         | 23 (more than 1 line)   |
+| sequence_mask  | 61 (more than 1 line)   |
+| bincount       | 56 (more than 1 line)   |
+| scatter_add    | 44 (more than 1 line)   |
+
+As you can see, my current solutions are not optimized for brevity. I will go through this optimization exercise, and also compare my method to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3) in my next blog post. Stay tuned!

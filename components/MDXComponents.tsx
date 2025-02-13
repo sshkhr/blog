@@ -5,6 +5,12 @@ import type { MDXComponents } from 'mdx/types'
 import Image from './Image'
 import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
+import dynamic from 'next/dynamic'
+
+// 1. Dynamically import the actual CodeTabs component (to avoid SSR)
+const CodeTabs = dynamic(() => import('@/components/CodeTabs'), {
+  ssr: false,
+})
 
 export const components: MDXComponents = {
   Image,
@@ -13,4 +19,5 @@ export const components: MDXComponents = {
   pre: Pre,
   table: TableWrapper,
   BlogNewsletterForm,
+  CodeTabs,
 }
