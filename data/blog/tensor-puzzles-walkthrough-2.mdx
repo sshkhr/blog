@@ -1,0 +1,617 @@
+---
+title: 'Tensor Puzzles Walkthrough: Optimizations, Comparing Solutions'
+date: '2025-02-14'
+tags: ['tensors', 'pytorch', 'linear algebra', 'machine learning']
+draft: false
+summary: "In this second blog post in my Tensor Puzzles Walkthrough series, I reduce my function lengths to 1 line and compare them to the author's solution and thought process."
+---
+
+In my [previous blog post](/blog/tensor-puzzles-walkthrough1), I introduced the [Tensor Puzzles](https://github.com/srush/Tensor-Puzzles) created by [Sasha Rush](http://rush-nlp.com), and walked through my solutions ([Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions)). In this post, I will be optimizing my solutions to fit the author's first rule:  
+
+> Each puzzle needs to be solved in 1 line (\<80 columns) of code.  
+
+I also compare my thought process and solutions to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3). As a fun exercise, I also track who has a more concise solution for each puzzle - all in good fun! Note that my "optimized" solutions are not necessarily the most efficient, but rather the most concise. So you'll find that several of them are not the most readable solutions, and I have included my original solutions alongside for comparison.
+
+## Puzzle 1: ones
+
+**Optimization:**
+Realized `arange(i)` already gives a vector of the right shape. By multiplying with 0 and adding 1, I get a ones vector directly, avoiding any matrix operations from my naive solution.
+
+**Comparing Notes:**
+While I used arithmetic (multiply by 0, add 1), Sasha used a logical approach with `where`. His solution leverages the fact that `arange(i) > -1` is always True, mapping to 1 via `where`. Both achieve the same result with different conceptual approaches.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def ones(i: int) -> TT["i"]:
+    return arange(i)*0+1
+```
+```python
+def ones(i: int) -> TT["i"]:
+    return where(arange(i) > -1, 1, 0)
+```
+```python
+def ones(i: int) -> TT["i"]:
+    return (arange(i) * arange(i)[:, None])[0] + 1
+```
+</CodeTabs>
+
+Shashank: 20 cols, Sasha: 34 cols
+
+**Scores: Shashank 1, Sasha 0**
+
+## Puzzle 2: sum
+
+**Optimization:**
+I just removed the intermediate variable storage of the dot product, directly adding the extra dimension using `[None]` to match the return type.
+
+**Comparing Notes:**
+Both solutions use dot product with a ones vector for summation. While I expanded the result dimension (`[None]`), Sasha expanded the input dimension (`[:, None]`). Both approaches ensure correct broadcasting for the final 1D tensor.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def sum(a: TT["i"]) -> TT[1]:
+    return (a@ones(len(a)))[None]
+```
+```python
+def sum(a: TT["i"]) -> TT[1]:
+    return ones(a.shape[0]) @ a[:, None]
+```
+```python
+def sum(a: TT["i"]) -> TT[1]:
+    array_sum = a @ ones(len(a))
+    return array_sum[None]
+```
+</CodeTabs>
+
+Shashank: 29 cols, Sasha: 36 cols
+
+**Scores: Shashank 2, Sasha 0**
+
+💡 I noticed that Sasha used the `shape` method in his solution, which I had incorrectly considered as a function that was not allowed. It wasn't a blocker in my own solutions as I just len with indexing to get the corresponding dimension shapes, but it's just a reminder that you can never be too careful about reading the instructions!
+
+## Puzzle 3: outer
+
+**Optimization:**
+Already had the optimal solution using broadcasting with `None`. Only removed extra spaces for brevity.
+
+**Comparing Notes:**
+Both solutions use identical broadcasting logic: expanding `a` to 2D with `[:, None]` and `b` with `[None, :]`. This creates aligned dimensions for element-wise multiplication, perfectly matching the outer product definition.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def outer(a: TT["i"], b: TT["j"]) -> TT["i", "j"]:
+    return a[:, None]*b[None,:]
+```
+```python
+def outer(a: TT["i"], b: TT["j"]) -> TT["i", "j"]:
+    return a[:, None]*b[None,:]
+```
+```python
+def outer(a: TT["i"], b: TT["j"]) -> TT["i", "j"]:
+    return a[:, None] * b[None, :]
+```
+</CodeTabs>
+
+Shashank: 27 cols, Sasha: 27 cols
+
+**Scores: Shashank 2.5, Sasha 0.5**
+
+## Puzzle 4: diag
+
+**Optimization:**
+Combined creation of boolean mask and filtering into a single line, skipping intermediate variables.
+
+**Comparing Notes:**
+While I used broadcasting to create a 2D boolean mask, Sasha's solution directly indexes both dimensions with the same range tensor. His approach is more concise and elegant, essentially "zipping" the indices to get diagonal positions.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def diag(a: TT["i", "i"]) -> TT["i"]:
+    return a[arange(len(a))[:, None] == arange(len(a))[None, :]]
+```
+```python
+def diag(a: TT["i", "i"]) -> TT["i"]:
+    return a[arange(a.shape[0]), arange(a.shape[0])]
+```
+```python
+def diag(a: TT["i", "i"]) -> TT["i"]:
+    mask = arange(len(a))[:, None] == arange(len(a))[None, :]
+    filtered = a[mask]
+    return filtered
+```
+</CodeTabs>
+
+Shashank: 60 cols, Sasha: 48 cols
+
+**Scores: Shashank 2.5, Sasha 1.5**
+
+## Puzzle 5: eye
+
+**Optimization:**
+Combined boolean mask creation and conversion to integers into one line by adding 0. Removed extra spaces to further reduce length.
+
+**Comparing Notes:**
+Both solutions start with the same boolean mask creation. While I add 0 to convert boolean to integers, Sasha originally used `where` but then found an even simpler approach by multiplying the boolean mask by 1. His final solution is more elegant.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def eye(j: int) -> TT["j", "j"]:
+    return (arange(j)[:,None]==arange(j)[None,:])+0
+```
+```python
+def eye(j: int) -> TT["j", "j"]:
+    return 1*(arange(j)[:, None] == arange(j))
+```
+```python
+def eye(j: int) -> TT["j", "j"]:
+    mask = arange(j)[:, None] == arange(j)[None, :]
+    return mask + 0
+```
+</CodeTabs>
+
+Shashank: 47 cols, Sasha: 42 cols
+
+**Scores: Shashank 2.5, Sasha 2.5**
+
+💡 The key optimization here is that I don't need to add an empty dimension on both sides of the comparsion, since adding the empty dimension on the LHS already causes the right side to be implicitly broadcasted. Quite clever and ingeniuous on Sasha's part!
+
+## Puzzle 6: triu
+
+**Optimization:**
+Used the same approach as `eye()`, but with `<=` comparison to get upper triangular pattern. Combined boolean mask and integer conversion into one line.
+
+**Comparing Notes:**
+Both solutions follow identical strategy from Puzzle 5, just replacing the equality operator with `<=`. Like in `eye()`, the key difference is my redundant `[None,:]` on the RHS which Sasha avoids through implicit broadcasting.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def triu(j: int) -> TT["j", "j"]:
+    return (arange(j)[:,None]<=arange(j)[None,:])+0
+```
+```python
+def triu(j: int) -> TT["j", "j"]:
+    return 1*(arange(j)[:, None] <= arange(j))
+```
+```python
+def triu(j: int) -> TT["j", "j"]:
+    mask = arange(j)[:, None] <= arange(j)[None, :]
+    return mask + 0
+```
+</CodeTabs>
+
+Shashank: 47 cols, Sasha: 42 cols
+
+**Scores: Shashank 2.5, Sasha 3.5**
+
+❗ And just like that, Sasha takes the lead! Could this be a sign of things to come? 🤔
+
+## Puzzle 7: cumsum
+
+**Optimization:**
+No real optimizations per se: I just removed the spaces from my original solution.
+
+**Comparing Notes:**
+Both solutions leverage the same insight - cumulative sum at position i is the dot product of input with first i ones. While I reused `triu()`, Sasha directly embedded the triangular matrix logic. Same concept, different implementation choices.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def cumsum(a: TT["i"]) -> TT["i"]:
+    return a@triu(len(a))
+```
+```python
+def cumsum(a: TT["i"]) -> TT["i"]:
+    return a @ where(arange(a.shape[0])[:, None] <= arange(a.shape[0]), 1, 0)
+```
+```python
+def cumsum(a: TT["i"]) -> TT["i"]:
+    return a @ triu(len(a))
+```
+</CodeTabs>
+
+Shashank: 21 cols, Sasha: 73 cols
+
+**Scores: Shashank 3.5, Sasha 3.5**
+
+## Puzzle 8: diff
+
+**Optimization:**
+Combined assignment and return into one line with semicolon. In-place assignment avoids creating intermediate arrays while maintaining the required functionality.
+
+**Comparing Notes:**
+While I used direct indexing and in-place modification, Sasha used `where` to handle the edge case at index 0. Both solutions compute differences between consecutive elements, just with different approaches to boundary handling.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def diff(a: TT["i"], i: int) -> TT["i"]:
+    a[1:]=a[1:]-a[:i-1];return a
+```
+```python
+def diff(a: TT["i"], i: int) -> TT["i"]:
+    return a[arange(i)] - where(arange(i) != 0, a[arange(i) - 1], 0)
+```
+```python
+def diff(a: TT["i"], i: int) -> TT["i"]:
+    diff = a
+    diff[1:] = a[1:] - a[:i-1]
+    return diff
+```
+</CodeTabs>
+
+Shashank: 28 cols, Sasha: 64 cols
+
+This one's a bit hard to judge, while I used much fewer characters, my solution involves two statements crammed into the same line. Sasha's solution, while longer, is just one Python statement. I am gonna split the points with Sasha on this one.
+
+**Scores: Shashank 4, Sasha 4**
+
+## Puzzle 9: vstack
+
+**Optimization:**
+Initially tried combining masks and outer products, but exceeded 80 chars. Switched to `where` which simplified logic and reduced length significantly. Broadcasting eliminated need for explicit outer products.
+
+**Comparing Notes:**
+Both solutions evolved similarly - from complex broadcasting to simpler `where` usage. Sasha's insight about direct broadcasting of `a` and `b` without manipulation made his solution more elegant. A great example of "less is more" in tensor operations.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def vstack(a: TT["i"], b: TT["i"]) -> TT[2, "i"]:
+    return where(arange(2)[:, None]==0, outer(ones(2),a), outer(ones(2),b))
+```
+```python
+def vstack(a: TT["i"], b: TT["i"]) -> TT[2, "i"]:
+    return where(arange(2)[:, None] == 1, b, a)
+```
+```python
+def vstack(a: TT["i"], b: TT["i"]) -> TT[2, "i"]:
+    first_row_mask = arange(2)[:, None] == 0
+    second_row_mask = arange(2)[:, None] == 1
+    filtered = (first_row_mask * outer(ones(2), a)) + (second_row_mask * outer(ones(2), b))
+    return filtered[:2,:]
+```
+</CodeTabs>
+
+Shashank: 71 cols, Sasha: 43 cols
+
+**Scores: Shashank 4, Sasha 5**
+
+## Puzzle 10: roll
+
+**Optimization:**
+Simplified by removing unnecessary broadcasting with `ones`. Combined three lines into one using semicolons. Direct array modification and indexing keeps the solution concise.
+
+**Comparing Notes:**
+While I manually handled the wrap-around by setting last index to 0, Sasha used `%` modulo operation for cyclic indexing. His solution is more mathematical and eliminates need for in-place modification.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def roll(a: TT["i"], i: int) -> TT["i"]:
+    i=arange(len(a))+1;i[-1]=0;return a[i]
+```
+```python
+def roll(a: TT["i"], i: int) -> TT["i"]:
+    return a[(arange(i) + 1) % i]
+```
+```python
+def roll(a: TT["i"], i: int) -> TT["i"]:
+    indices = arange(len(a)) + ones(len(a))
+    indices[-1] = 0
+    result = a[indices]
+    return result
+```
+</CodeTabs>
+
+Shashank: 38 cols, Sasha: 29 cols
+
+**Scores: Shashank 4, Sasha 6**
+
+## Puzzle 11: flip
+
+**Optimization:**
+Had the optimal solution from start - using reversed indexing sequence. Only removed spaces for brevity.
+
+**Comparing Notes:**
+Both arrived at identical solutions, creating a reversed index sequence to flip the array. A case where tensor indexing has a clear, optimal approach.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def flip(a: TT["i"], i: int) -> TT["i"]:
+    return a[len(a)-1-arange(len(a))]
+```
+```python
+def flip(a: TT["i"], i: int) -> TT["i"]:
+    return a[len(a)-1-arange(len(a))]
+```
+```python
+def flip(a: TT["i"], i: int) -> TT["i"]:
+    return a[len(a)-1 - arange(len(a))]
+```
+</CodeTabs>
+
+Shashank: 33 cols, Sasha: 33 cols
+
+**Scores: Shashank 4.5, Sasha 6.5**
+
+## Puzzle 12: compress
+
+**Optimization:**
+Combined multiple steps into one line using semicolons: summing boolean mask, creating padded array, and filling with masked values.
+
+**Comparing Notes:**
+While I used `sum` to count True values and manual array filling, Sasha used a more sophisticated approach with `cumsum` of the boolean mask to determine target positions. His solution creates a mapping matrix in one go, though more complex to parse.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def compress(g: TT["i", bool], v: TT["i"], i:int) -> TT["i"]:
+    n=sum(g*1);a=(arange(i)<n)*1;a[:n]=v[g];return a
+```
+```python
+def compress(g: TT["i", bool], v: TT["i"], i:int) -> TT["i"]:
+    return v @ where(g[:, None], arange(i) == cumsum(1*g) - 1[:, None], 0)
+```
+```python
+def compress(g: TT["i", bool], v: TT["i"], i:int) -> TT["i"]:
+    nonzero = sum(g*1)
+    arr = (arange(i) < nonzero)*1
+    masked = v[g]
+    arr[:nonzero] = masked
+    return arr
+```
+</CodeTabs>
+
+Shashank: 48 cols, Sasha: 63 cols
+
+Let's split the points on this one, my solution is more concise but uses more than one statement in a line, while Sasha's is a single statement but longer.
+
+**Scores: Shashank 5, Sasha 7**
+
+## Puzzle 13: pad_to
+
+**Optimization:**
+Combined multiple steps into one line using semicolons: creating zero array, finding minimum length, and copying values. Keeps the sequential logic but more concise.
+
+**Comparing Notes:**
+While I used direct array manipulation with a temporary zero array, Sasha used matrix multiplication with a carefully constructed diagonal matrix. His approach is more elegant mathematically but longer in implementation.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def pad_to(a: TT["i"], i: int, j: int) -> TT["j"]:
+    z=ones(j)*0;m=min(i,j);z[:m]=a[:m]*1;return z
+```
+```python
+def pad_to(a: TT["i"], i: int, j: int) -> TT["j"]:
+    return a @ (1*(arange(i)[:, None] == arange(j)))
+```
+```python
+def pad_to(a: TT["i"], i: int, j: int) -> TT["j"]:
+    zeros = ones(j) * 0
+    min_len = min(i, j)
+    zeros[:min_len] = a[:min_len] * 1
+    return zeros
+```
+</CodeTabs>
+
+Shashank: 45 cols, Sasha: 48 cols
+
+I will give this one to Sasha, his solution is more elegant and if you remove the spaces, it will also take fewer characters.
+
+**Scores: Shashank 5, Sasha 8**
+
+## Puzzle 14: sequence_mask
+
+**Optimization:**
+Combined creation of comparison matrices and masking into one line. Used direct comparison of outer products without converting to integers, as multiplication with `values` handles the conversion. Despite optimization attempts, couldn't bring solution under 80 chars.
+
+**Comparing Notes:**
+While I used outer products to create comparison matrices, Sasha used `where` with broadcasting. His solution directly compares reshaped `length` with `arange`, eliminating need for explicit outer products and making the intent clearer. This was one of the more enlightening solutions from the walkthrough, as I hadn't considered using `where` with direct broadcasting at all.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def sequence_mask(values: TT["i", "j"], length: TT["i", int]) -> TT["i", "j"]:
+    l=len(values[0,:]);return values*(outer(ones(len(values)),arange(l))<outer(length,ones(l)))
+```
+```python
+def sequence_mask(values: TT["i", "j"], length: TT["i", int]) -> TT["i", "j"]:
+    return where(length[:, None] > arange(values.shape[1]), values, 0)
+```
+```python
+def sequence_mask(values: TT["i", "j"], length: TT["i", int]) -> TT["i", "j"]:
+    ones_matrix = outer(ones(len(values)), arange(len(values[0, :])))
+    condition_matrix = outer(length, ones(len(values[0, :])))
+    masked_matrix = values * ((ones_matrix < condition_matrix)*1)
+    return masked_matrix
+```
+</CodeTabs>
+
+Shashank: 98 cols, Sasha: 65 cols
+
+**Scores: Shashank 5, Sasha 9**
+
+💡 This was one of the few problems where I couldn't optimize my solution to be under 80 characters. The author's approach using `where` with clever broadcasting not only resulted in a more concise solution but also demonstrated to me a completely different way of thinking about the problem.
+
+## Puzzle 15: bincount
+
+**Optimization:**
+Combined the broadcasting, comparison, and summation into one line. The core idea of comparing each index with input values and summing matches remains the same.
+
+**Comparing Notes:**
+Our approaches aligned perfectly here - both using comparisons with broadcasted arrays to count occurrences. The final solutions are nearly identical, just differing in format rather than logic.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def bincount(a: TT["i"], j: int) -> TT["j"]:
+    return ((a==(outer(arange(j),ones(len(a)))))*1)@ones(len(a))
+```
+```python
+def bincount(a: TT["i"], j: int) -> TT["j"]:
+    return (a[:, None] == arange(j)) @ ones(len(a))
+```
+```python
+def bincount(a: TT["i"], j: int) -> TT["j"]:
+    broadcasted_indices = outer(arange(j), ones(len(a)))
+    broadcasted_a = outer(ones(j), a)
+    counts = ((a == broadcasted_indices)*1) @ ones(len(a))
+    return counts
+```
+</CodeTabs>
+
+Shashank: 60 cols, Sasha: 47 cols
+
+**Scores: Shashank 5, Sasha 10**
+
+💡 The key optimization is Sasha's use of dimension addition with `[:, None]` instead of explicit `outer` product, a pattern we've seen work well in previous puzzles too.
+
+## Puzzle 16: scatter_add
+
+**Optimization:**
+Combined broadcasting, comparison and summation into one line, similar to bincount. Though technically functional, the solution exceeds the 80-character limit significantly.
+
+**Comparing Notes:**
+While I used explicit outer products and element-wise operations, Sasha's elegant solution leverages `eye` matrix indexing to create a mapping matrix. Indexing it with `j` gives the mapping matrix from the columns in `values` to the correct columns in the output.
+
+<CodeTabs tabs={["My Optimized Solution", "Author's Solution", "My Original Solution"]} >
+```python
+def scatter_add(values: TT["i"], link: TT["i"], j: int) -> TT["j"]:
+    l=len(values);return (outer(ones(j),values)*((outer(ones(j),link)==outer(arange(j),ones(l))*1))*1)@ones(l)
+```
+```python
+def scatter_add(values: TT["i"], link: TT["i"], j: int) -> TT["j"]:
+    return values @ eye(j)[link]
+```
+```python
+def scatter_add(values: TT["i"], link: TT["i"], j: int) -> TT["j"]:
+    broadcasted_values = outer(ones(j), values)
+    broadcasted_links = outer(ones(j), link)
+    indexes = outer(arange(j), ones(len(values)))
+    filtered_values = ((broadcasted_values * ((broadcasted_links == indexes)*1))*1)
+    return filtered_values @ ones(len(values))
+```
+</CodeTabs>
+
+Shashank: 106 cols, Sasha: 28 cols
+
+**Scores: Shashank 5, Sasha 11**
+
+💡 I really thought this was the the most elegant solution in the entire puzzle set. It gave me a new mental model to think about: instead of looping over indexes by using broadcasted matrices to get the mapping, I can get the mapping matrix directly by creating an identity matrix and then permuting it by indexing with the link vector.
+
+---
+
+❗ At this point I gave up on the character optimizations of my solutions, because the `Speed Run Mode` only covers Puzzles 1-16. For the remaining 5 puzzles, I just compare my original solution approach to the author's.
+
+
+## Puzzle 17: flatten
+
+**Comparing Notes:**
+Both mine and Sasha's solutions use the same core idea - using `arange` to generate linear indices and mapping them to 2D coordinates using division and modulo. The mathematical approach aligned perfectly between my solution and Sasha's. The only real difference is I used regular division followed by typecasting to integer, while Sasha used `//` integer division directly.
+
+<CodeTabs tabs={["My Original Solution", "Author's Solution"]} >
+```python
+def flatten(a: TT["i", "j"], i:int, j:int) -> TT["i * j"]:
+    flattened = ones(i*j)
+    vector_indices = arange(i*j)
+    row_indices = vector_indices / j
+    col_indices = vector_indices % j
+    flattened[vector_indices] = a[row_indices.int(), col_indices]
+    return flattened
+```
+```python
+def flatten(a: TT["i", "j"], i:int, j:int) -> TT["i * j"]:
+    return a[arange(i*j) // j, arange(i*j) % j]
+```
+</CodeTabs>
+
+## Puzzle 18: linspace
+
+**Comparing Notes:**
+Both approaches use `arange` as the foundation, scaling and shifting it to get desired range. Main difference is in handling edge cases - I used explicit conditionals while Sasha handled it with `max` function.
+
+<CodeTabs tabs={["My Original Solution", "Author's Solution"]} >
+```python
+def linspace(i: TT[1], j: TT[1], n: int) -> TT["n", float]:
+    if i==j or n==1:
+      return i.float()
+    vec = arange(n)
+    diff = (j-i)/(n-1)
+    vec = vec * diff
+    vec += i
+    return vec
+```
+```python
+def linspace(i: TT[1], j: TT[1], n: int) -> TT["n", float]:
+    return i + (j - i)*arange(n) / max(1, n-1)
+```
+</CodeTabs>
+
+💡 While I had already used this idea in my solutions, it was spelled out as a good mental model here: vectorization of loops over indices can be achieved directly with `arange` and broadcasting.
+
+## Puzzle 19: heaviside
+
+**Comparing Notes:**
+While I used two separate `where` calls, Sasha's solution neatly combines the logic into a single `where` statement with a boolean multiplication for the positive case.
+
+<CodeTabs tabs={["My Original Solution", "Author's Solution"]} >
+```python
+def heaviside(a: TT["i"], b: TT["i"]) -> TT["i"]:
+    zero_one_array = where(a < 0, ones(len(a))*0, ones(len(a)))
+    heaviside_array = where(a == 0, b, zero_one_array)
+    return heaviside_array
+```
+```python
+def heaviside(a: TT["i"], b: TT["i"]) -> TT["i"]:
+    return where(a == 0, b, (a>0)*1)
+```
+</CodeTabs>
+
+## Puzzle 20: repeat
+
+**Comparing Notes:**
+Both solutions arrived at the same elegant approach using `outer` product with ones vector. A case where the simplest solution was also the best.
+
+<CodeTabs tabs={["My Original Solution", "Author's Solution"]} >
+```python
+def repeat(a: TT["i"], d: TT[1]) -> TT["d", "i"]:
+    return outer(ones(d), a)
+```
+```python
+def repeat(a: TT["i"], d: TT[1]) -> TT["d", "i"]:
+    return outer(ones(d[0]), a)
+```
+</CodeTabs>
+
+## Puzzle 21: bucketize
+
+**Comparing Notes:**
+While I used a complex approach with multiple comparison matrices, Sasha's solution is much more elegant - directly comparing values with boundaries and summing the resulting boolean matrix to get bucket indices.
+
+<CodeTabs tabs={["My Original Solution", "Author's Solution"]} >
+```python
+def bucketize(v: TT["i"], boundaries: TT["j"]) -> TT["i"]:
+    zero_last_array = where(v >= boundaries[-1], ones(len(v))*len(boundaries), ones(len(v))*0)
+    
+    if len(boundaries) == 1:
+        return zero_last_array
+    
+    lower_range_array, upper_range_array = boundaries[:-1], boundaries[1:]
+    broad_lr_array, broad_ur_array = outer(lower_range_array, ones(len(v))), outer(upper_range_array, ones(len(v)))
+    
+    map = outer(ones(len(boundaries)-1), v)
+    map = (broad_lr_array <= v) * (v < broad_ur_array)
+    map_scaled = (map * 1) * outer((arange(len(boundaries)-1)+1), ones(len(v)))
+    
+    bucketized = ones(len(boundaries)-1) @ map_scaled 
+    bucketized = where(bucketized==0, zero_last_array, bucketized)
+    return bucketized
+```
+```python
+def bucketize(v: TT["i"], boundaries: TT["j"]) -> TT["i"]:
+    return (1 * (v[:, None] >= boundaries)) @ ones(boundaries.shape[0])
+```
+</CodeTabs>
+
+It was really insightful to go over the author's solutions and compare them to my own. Particularly for the puzzles 11-16, I was really glad to see broadcasting in use in ways that I had never explicitly considered - relying on indexing instead. This was also one of those few side projects where I went through the entire process of implementing, optimizing, and comparing solutions, sharing my learning process through blog posts, and putting up my code on GitHub [Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions). To celebrate this little win, here is my favorite dog gif from the ones that Sasha uses on successful completion of a puzzle:
+
+<div className="-mx-2 flex flex-wrap justify-center overflow-hidden xl:-mx-2">
+  <div className="my-1 w-full overflow-hidden px-2 xl:my-1 xl:w-3/4 xl:px-2">
+      <video className="w-full rounded-lg" alt="Puppy Snowboarding" title="Puppy Snowboarding" controls autoPlay>
+          <source src="/static/videos/Nu4RH7f.mp4" type="video/mp4" />
+      </video>
+  </div>
+</div>
