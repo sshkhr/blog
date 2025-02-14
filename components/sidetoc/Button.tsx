@@ -8,8 +8,11 @@ const Button = () => {
     <div className="fixed bottom-8 left-6 z-50">
       <button
         onClick={toggleSidebar}
-        className="rounded-full bg-gray-200 p-2 text-gray-500 opacity-100 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
+        className="flex items-center gap-2 rounded-full bg-gray-200 px-4 py-2 text-gray-500
+          opacity-100 transition-colors hover:bg-gray-300
+          dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
       >
+        Table of Contents
         <ArrowRightIcon
           className={`h-5 w-5 transform transition-transform ${sidebarOpen ? 'rotate-180' : ''}`}
         />
