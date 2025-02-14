@@ -9,6 +9,8 @@ import PageTitle from '@/components/PageTitle'
 import SectionContainer from '@/components/SectionContainer'
 import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
+import { Toc } from 'pliny/mdx-plugins'
+import Sidetoc from '@/components/sidetoc'
 
 interface LayoutProps {
   content: CoreContent<Blog>
@@ -18,13 +20,15 @@ interface LayoutProps {
 }
 
 export default function PostMinimal({ content, next, prev, children }: LayoutProps) {
-  const { slug, title, images } = content
+  const { slug, title, images, toc } = content
+  const tableOfContents: Toc = toc as unknown as Toc
   const displayImage =
     images && images.length > 0 ? images[0] : 'https://picsum.photos/seed/picsum/800/400'
 
   return (
     <SectionContainer>
       <ScrollTopAndComment />
+      <Sidetoc toc={tableOfContents} />
       <article>
         <div>
           <div className="space-y-1 pb-10 text-center dark:border-gray-700">
