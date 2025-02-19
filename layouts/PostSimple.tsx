@@ -10,6 +10,7 @@ import siteMetadata from '@/data/siteMetadata'
 import ScrollTopAndComment from '@/components/ScrollTopAndComment'
 import { Toc } from 'pliny/mdx-plugins'
 import Sidetoc from '@/components/sidetoc'
+import { ReportView } from '@/components/Views'
 
 interface LayoutProps {
   content: CoreContent<Blog>
@@ -28,6 +29,7 @@ export default function PostLayout({ content, next, totalViews, prev, children }
       <ScrollTopAndComment />
       <Sidetoc toc={tableOfContents} />
       <article>
+        <ReportView slug={slug} />
         <div>
           <header>
             <div className="space-y-1 border-b border-gray-200 pb-10 text-center dark:border-gray-700">
