@@ -15,11 +15,12 @@ import { ReportView } from '@/components/Views'
 interface LayoutProps {
   content: CoreContent<Blog>
   children: ReactNode
+  totalViews?: number
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
 }
 
-export default function PostLayout({ content, next, prev, children }: LayoutProps) {
+export default function PostLayout({ content, next, totalViews, prev, children }: LayoutProps) {
   const { path, slug, date, title, toc } = content
   const tableOfContents: Toc = toc as unknown as Toc
 
@@ -37,6 +38,8 @@ export default function PostLayout({ content, next, prev, children }: LayoutProp
                   <dt className="sr-only">Published on</dt>
                   <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                     <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                    <span className="mx-2">|</span>
+                    <span>Total Views: {totalViews}</span>
                   </dd>
                 </div>
               </dl>
