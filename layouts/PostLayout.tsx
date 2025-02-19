@@ -17,6 +17,7 @@ const discussUrl = (path) =>
   `https://mobile.twitter.com/search?q=${encodeURIComponent(`${siteMetadata.siteUrl}/${path}`)}`
 
 const postDateTemplate: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -25,20 +26,12 @@ const postDateTemplate: Intl.DateTimeFormatOptions = {
 interface LayoutProps {
   content: CoreContent<Blog>
   authorDetails: CoreContent<Authors>[]
-  totalViews?: number
   next?: { path: string; title: string }
   prev?: { path: string; title: string }
   children: ReactNode
 }
 
-export default function PostLayout({
-  content,
-  authorDetails,
-  totalViews,
-  next,
-  prev,
-  children,
-}: LayoutProps) {
+export default function PostLayout({ content, authorDetails, next, prev, children }: LayoutProps) {
   const { filePath, path, slug, date, title, tags, toc } = content
   const basePath = path.split('/')[0]
   const tableOfContents: Toc = toc as unknown as Toc
@@ -58,8 +51,6 @@ export default function PostLayout({
                     <time dateTime={date}>
                       {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
                     </time>
-                    <span className="mx-2">|</span>
-                    <span>Total Views: {totalViews}</span>
                   </dd>
                 </div>
               </dl>
