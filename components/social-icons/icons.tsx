@@ -86,8 +86,8 @@ export function Scholar(svgProps: SVGProps<SVGSVGElement>) {
       height="24px"
       {...svgProps}
     >
-      <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-      <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
       <g id="SVGRepo_iconCarrier">
         <rect width="512" height="512" rx="15%"></rect>
         <path
