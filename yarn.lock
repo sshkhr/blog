@@ -6581,15 +6581,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@upstash/redis@npm:^1.34.4":
-  version: 1.34.4
-  resolution: "@upstash/redis@npm:1.34.4"
-  dependencies:
-    crypto-js: ^4.2.0
-  checksum: 30e11ee53a5905df06e5788c71f5f48b9edce79a607dfc89ebcbf8e304bacb18d7cc9ca7b0ccf2c529e84e5fb8d27a46ef0f382aa6bb96455360a1ce894451ad
-  languageName: node
-  linkType: hard
-
 "abbrev@npm:^2.0.0":
   version: 2.0.0
   resolution: "abbrev@npm:2.0.0"
@@ -7701,13 +7692,6 @@ __metadata:
     shebang-command: ^2.0.0
     which: ^2.0.1
   checksum: 671cc7c7288c3a8406f3c69a3ae2fc85555c04169e9d611def9a675635472614f1c0ed0ef80955d5b6d4e724f6ced67f0ad1bb006c2ea643488fcfef994d7f52
-  languageName: node
-  linkType: hard
-
-"crypto-js@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "crypto-js@npm:4.2.0"
-  checksum: f051666dbc077c8324777f44fbd3aaea2986f198fe85092535130d17026c7c2ccf2d23ee5b29b36f7a4a07312db2fae23c9094b644cc35f7858b1b4fcaf27774
   languageName: node
   linkType: hard
 
@@ -14486,7 +14470,6 @@ __metadata:
     "@types/react": ^18.2.73
     "@typescript-eslint/eslint-plugin": ^6.1.0
     "@typescript-eslint/parser": ^6.1.0
-    "@upstash/redis": ^1.34.4
     autoprefixer: ^10.4.13
     contentlayer2: 0.5.1
     cross-env: ^7.0.3
