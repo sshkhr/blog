@@ -13,10 +13,13 @@ interface PaginationProps {
   totalPages: number
   currentPage: number
 }
+type BlogWithViews = CoreContent<Blog> & {
+  totalViews: number
+}
 interface ListLayoutProps {
-  posts: CoreContent<Blog>[]
+  posts: BlogWithViews[]
   title: string
-  initialDisplayPosts?: CoreContent<Blog>[]
+  initialDisplayPosts?: BlogWithViews[]
   pagination?: PaginationProps
 }
 
@@ -113,7 +116,7 @@ export default function ListLayout({
         <ul>
           {!filteredBlogPosts.length && 'No posts found.'}
           {displayPosts.map((post) => {
-            const { path, date, title, summary, tags, readingTime } = post
+            const { path, date, title, summary, tags, readingTime, totalViews } = post
             return (
               <li key={path} className="py-4">
                 <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
@@ -121,6 +124,8 @@ export default function ListLayout({
                     <dt className="sr-only">Published on</dt>
                     <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                       <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                      <span className="mx-2">|</span>
+                      <span>Views: {totalViews}</span>
                       <span className="mx-2">|</span>
                       {readingTime && <span>{readingTime.text}</span>}
                     </dd>
