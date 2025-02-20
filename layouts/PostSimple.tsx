@@ -21,7 +21,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, next, totalViews, prev, children }: LayoutProps) {
-  const { path, slug, date, title, toc } = content
+  const { path, slug, date, title, toc, readingTime } = content
   const tableOfContents: Toc = toc as unknown as Toc
 
   return (
@@ -39,7 +39,9 @@ export default function PostLayout({ content, next, totalViews, prev, children }
                   <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
                     <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                     <span className="mx-2">|</span>
-                    <span>Total Views: {totalViews}</span>
+                    <span>Views: {totalViews}</span>
+                    <span className="mx-2">|</span>
+                    {readingTime && <span>{readingTime.text}</span>}
                   </dd>
                 </div>
               </dl>
