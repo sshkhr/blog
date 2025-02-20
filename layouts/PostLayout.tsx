@@ -40,7 +40,7 @@ export default function PostLayout({
   prev,
   children,
 }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags, toc } = content
+  const { filePath, path, slug, date, title, tags, toc, readingTime } = content
   const basePath = path.split('/')[0]
   const tableOfContents: Toc = toc as unknown as Toc
 
@@ -61,7 +61,9 @@ export default function PostLayout({
                       {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
                     </time>
                     <span className="mx-2">|</span>
-                    <span>Total Views: {totalViews}</span>
+                    <span>Views: {totalViews}</span>
+                    <span className="mx-2">|</span>
+                    {readingTime && <span>{readingTime.text}</span>}
                   </dd>
                 </div>
               </dl>
