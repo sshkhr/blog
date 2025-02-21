@@ -3,10 +3,12 @@ title: 'Tensor Puzzles Walkthrough'
 date: '2025-02-12'
 tags: ['tensors', 'pytorch', 'linear algebra', 'machine learning']
 draft: false
-summary: "My solutions to the tensor puzzles created by Sasha Rush, along with my reasoning process behind each solution and comparison with the author's reasoning process."
+summary: "My solutions and notes to the tensor broadcasting puzzles created by Sasha Rush."
 ---
 
-This blog post walks through my solutions to the [Tensor Puzzles](https://github.com/srush/Tensor-Puzzles) created by [Sasha Rush](http://rush-nlp.com). The puzzles are designed to help understand tensor operations and broadcasting in PyTorch/NumPy without relying on built-in functions.
+This blog post walks through my solutions and notes for the [Tensor Puzzles](https://github.com/srush/Tensor-Puzzles) created by [Sasha Rush](http://rush-nlp.com). 
+
+The puzzles are designed to help understand tensor operations and broadcasting in PyTorch/NumPy without relying on built-in functions.
 
 If you have not done these puzzles yet, I would **strongly recommend** trying them out first before looking at the solutions. You can find the puzzles on Sasha's GitHub repository linked above. I personally found thinking through these puzzles a great exercise in stepping out of iterative approach mindset to a vectorized approach mindset for a lot of math and ML tasks in PyTorch.
 
@@ -44,7 +46,7 @@ Now, let's dive into the puzzles! Each puzzle explains the function itself, and 
 
 ## My First Attempt at the Puzzles
 
-For my first attempt, I decided that I was only going to follow Rules 2 and 3 (allowed/disallowed functions), and not wory too much about the length constraint, since I wanted to write code that could be understood easily as well.
+For my first attempt, I decided that I was only going to follow Rules 2 and 3 (allowed/disallowed functions), and not worry too much about the length constraint, since I wanted to write code that could be understood easily as well.
 
 ## Puzzle 1: ones
 Implements [ones](https://numpy.org/doc/stable/reference/generated/numpy.ones.html) - create a vector of all ones
@@ -542,4 +544,4 @@ These Tensor Puzzles were a great exercise in understanding tensor operations an
 | bincount       | 56 (more than 1 line)   |
 | scatter_add    | 44 (more than 1 line)   |
 
-As you can see, my current solutions are not optimized for brevity. I will go through this optimization exercise, and also compare my method to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3) in my next blog post. Stay tuned!
+As you can see, my current solutions are not optimized for brevity. I will go through this optimization exercise, and also compare my method to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3) in my [next blog post](https://www.shashankshekhar.com/blog/tensor-puzzles-walkthrough-2). Stay tuned!

@@ -3,14 +3,14 @@ title: 'Tensor Puzzles Walkthrough: Optimizations, Comparing Solutions'
 date: '2025-02-14'
 tags: ['tensors', 'pytorch', 'linear algebra', 'machine learning']
 draft: false
-summary: "In this second blog post in my Tensor Puzzles Walkthrough series, I reduce my function lengths to 1 line and compare them to the author's solution and thought process."
+summary: "Part 2 of my Tensor Puzzles Walkthrough series: optimizing solutions to fit the puzzle constraints, and comparing notes with the author."
 ---
 
-In my [previous blog post](/blog/tensor-puzzles-walkthrough1), I introduced the [Tensor Puzzles](https://github.com/srush/Tensor-Puzzles) created by [Sasha Rush](http://rush-nlp.com), and walked through my solutions ([Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions)). In this post, I will be optimizing my solutions to fit the author's first rule:  
+In my [previous blog post](/blog/tensor-puzzles-walkthrough), I introduced the [Tensor Puzzles](https://github.com/srush/Tensor-Puzzles) created by [Sasha Rush](http://rush-nlp.com), and walked through my solutions ([Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions)). In this post, I will be optimizing my solutions to fit the author's first rule:  
 
 > Each puzzle needs to be solved in 1 line (\<80 columns) of code.  
 
-I also compare my thought process and solutions to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3). As a fun exercise, I also track who has a more concise solution for each puzzle - all in good fun! Note that my "optimized" solutions are not necessarily the most efficient, but rather the most concise. So you'll find that several of them are not the most readable solutions, and I have included my original solutions alongside for comparison.
+I also compare my thought process and solutions to the [author's walkthrough](https://youtu.be/Hafo7hIl8MU?si=8_R2T3D-CjhUsZR3). As a fun exercise, I also track who has a more concise solution for each puzzle - all in good fun! Note that my "optimized" solutions are not necessarily the most efficient, but rather the most concise. So you'll find that several of them are not the most readable solutions, and I have included my original solutions alongside for better readability.
 
 ## Puzzle 1: ones
 
@@ -606,11 +606,13 @@ def bucketize(v: TT["i"], boundaries: TT["j"]) -> TT["i"]:
 ```
 </CodeTabs>
 
-It was really insightful to go over the author's solutions and compare them to my own. Particularly for the puzzles 11-16, I was really glad to see broadcasting in use in ways that I had never explicitly considered - relying on indexing instead. This was also one of those few side projects where I went through the entire process of implementing, optimizing, and comparing solutions, sharing my learning process through blog posts, and putting up my code on GitHub [Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions). To celebrate this little win, here is my favorite dog gif from the ones that Sasha uses on successful completion of a puzzle:
+It was really insightful to go over the author's solutions and compare them to my own. Particularly for the puzzles 11-16, I was really glad to see broadcasting in use in ways that I had never explicitly considered - relying on indexing instead. 
+
+This was also one of those few side projects where I went through the entire process of implementing, optimizing, and comparing solutions, sharing my learning process through blog posts, and putting up my code on GitHub [Tensor-Puzzles-Solutions](https://github.com/sshkhr/Tensor-Puzzles-Solutions). To celebrate this little win, here is my favorite dog gif from the ones that Sasha uses on successful completion of a puzzle:
 
 <div className="-mx-2 flex flex-wrap justify-center overflow-hidden xl:-mx-2">
   <div className="my-1 w-full overflow-hidden px-2 xl:my-1 xl:w-3/4 xl:px-2">
-      <video className="w-full rounded-lg" alt="Puppy Snowboarding" title="Puppy Snowboarding" controls autoPlay>
+      <video className="w-full rounded-lg" alt="Puppy Snowboarding" title="Puppy Snowboarding" controls>
           <source src="/static/videos/Nu4RH7f.mp4" type="video/mp4" />
       </video>
   </div>
