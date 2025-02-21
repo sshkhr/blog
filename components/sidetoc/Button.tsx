@@ -12,7 +12,7 @@ const Button = () => {
           opacity-100 transition-colors hover:bg-gray-300
           dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600"
       >
-        Table of Contents
+        <span className="hidden sm:inline">Table of Contents</span>
         <ArrowRightIcon
           className={`h-5 w-5 transform transition-transform ${sidebarOpen ? 'rotate-180' : ''}`}
         />
