@@ -2,8 +2,7 @@
 
 import { KBarSearchProvider } from 'pliny/search/KBar'
 import { useRouter } from 'next/navigation'
-import { CoreContent } from 'pliny/utils/contentlayer'
-import { Blog } from 'contentlayer/generated'
+import { Priority } from 'kbar'
 
 export const SearchProvider = ({ children, searchConfig }) => {
   const router = useRouter()
@@ -15,14 +14,32 @@ export const SearchProvider = ({ children, searchConfig }) => {
       kbarConfig={{
         searchDocumentsPath: searchDocumentsPath,
         onSearchDocumentsLoad(json) {
-          return json.map((post: Blog) => ({
-            id: post.path,
-            name: post.title,
-            keywords: post.body.raw,
-            section: 'Blog',
-            subtitle: post.tags.join(', '),
-            perform: () => router.push('/' + post.path),
-          }))
+          const searchActions = json.map((item) => {
+            const isProject = item.path.startsWith('projects/')
+            if (isProject) {
+              return {
+                id: item.path,
+                name: item.title,
+                keywords: item.keywords,
+                section: 'Projects',
+                subtitle: item.subtitle,
+                perform: () => router.push('/projects'),
+              }
+            } else {
+              return {
+                id: item.path,
+                name: item.title,
+                keywords: item.body?.raw || item.summary || '',
+                section: 'Blog',
+                subtitle: item.tags?.join(', ') || '',
+                perform: () => router.push('/' + item.path),
+              }
+            }
+          })
+
+          // Sort by priority (this will ensure blogs appear first)
+          console.log(searchActions)
+          return searchActions //.sort((a, b) => (b.priority || 0) - (a.priority || 0))
         },
       }}
     >

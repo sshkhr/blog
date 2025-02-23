@@ -76,14 +76,22 @@ function createTagCount(allBlogs) {
   writeFileSync('./app/tag-data.json', JSON.stringify(tagCount))
 }
 
-function createSearchIndex(allBlogs) {
+function createSearchIndex(allBlogs, allProjects) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
   ) {
+    // Get project search metadata
+    const projectActions = allProjects.flatMap(
+      (project) => project.searchMeta // searchMeta is already in the correct format
+    )
+
+    // Combine blog posts and projects
+    const searchableContent = [...sortPosts(allBlogs), ...projectActions]
+
     writeFileSync(
       `public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
-      JSON.stringify(sortPosts(allBlogs))
+      JSON.stringify(searchableContent)
     )
     console.log('Local search index generated...')
   }
@@ -142,9 +150,51 @@ export const Authors = defineDocumentType(() => ({
   computedFields,
 }))
 
+export const Projects = defineDocumentType(() => ({
+  name: 'Projects',
+  filePathPattern: 'projects.json',
+  contentType: 'data',
+  fields: {
+    projects: {
+      type: 'json',
+      required: true,
+    },
+  },
+  computedFields: {
+    searchMeta: {
+      type: 'json',
+      resolve: (doc) => {
+        const projectsArray = doc.projects as Array<{
+          title: string
+          description: string
+          techStack: string[]
+          topics: string[]
+          languages: string[]
+        }>
+
+        return projectsArray.map((project) => ({
+          path: `projects/${project.title.toLowerCase().replace(/\s+/g, '-')}`,
+          title: project.title,
+          description: project.description,
+          subtitle: [...project.techStack, ...project.languages, ...project.topics]
+            .join(', ')
+            .toLowerCase(), // Convert to lowercase
+          keywords: [
+            project.title,
+            project.description,
+            ...project.techStack,
+            ...project.topics,
+            ...project.languages,
+          ].join(' '),
+        }))
+      },
+    },
+  },
+}))
+
 export default makeSource({
   contentDirPath: 'data',
-  documentTypes: [Blog, Authors],
+  documentTypes: [Blog, Authors, Projects],
   mdx: {
     cwd: process.cwd(),
     remarkPlugins: [
@@ -173,8 +223,8 @@ export default makeSource({
     ],
   },
   onSuccess: async (importData) => {
-    const { allBlogs } = await importData()
+    const { allBlogs, allProjects } = await importData()
     createTagCount(allBlogs)
-    createSearchIndex(allBlogs)
+    createSearchIndex(allBlogs, allProjects)
   },
 })
