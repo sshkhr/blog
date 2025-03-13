@@ -3,27 +3,28 @@ title: '(Mis)adventures in running CUDA on Google Colab Free Tier'
 date: '2025-03-12'
 tags: ['cuda', 'nvcc', 'colab'] 
 draft: false
-summary: "A recap of my day debugging issues with nvcc and `nvcc4jupyter` on Google Colab's free T4 GPUs."
+summary: "A recap of my day debugging issues with nvcc and nvcc4jupyter on Google Colab's free T4 GPUs, with brief notes on CUDA backward compatibility and compute capability"
 ---
 
 > [!Info] Who is this guide for?
-> If you're like me — familiar with machine learning and Python but new to CUDA programming and eager to write some GPU code without burning a hole in your pocket — you're in the right place. While Python libraries like Numba, CuPy and PyTorch offer GPU acceleration through high-level APIs, this is more about running CUDA C/C++ directly using Colab.
+> If you're like me — familiar with Python and Jupyter notebooks but new to CUDA programming and eager to write some GPU code without burning a hole in your pocket — you're in the right place. While Python libraries like Numba, CuPy and PyTorch offer GPU acceleration through high-level APIs, this is more about running CUDA C/C++ directly using Colab.
 
-As a [GPU Poor](https://semianalysis.com/2023/08/28/google-gemini-eats-the-world-gemini/) individual with an Apple M1 MacBook, I had no way to run CUDA code locally as I go through the [Programming Massively Parallel Processors](https://www.amazon.com/Programming-Massively-Parallel-Processors-Hands/dp/0323912311) textbook. As a result, I found myself looking for ways to run CUDA code on the cloud ("*someone else's computer*") for free. [LeetGPU](https://www.leetgpu.com/) looked promising, but I am too lazy to try a new platform and decided to stick with the good ol' [Google Colab](colab.research.google.com). For the uninitiated, Colab is a way to run Jupyter notebooks in the cloud with a free tier that lets you access GPUs (and TPUs) for a limited time.
+As a [GPU Poor](https://semianalysis.com/2023/08/28/google-gemini-eats-the-world-gemini/) individual with an Apple M1 MacBook, I had no way to run CUDA code locally as I go through the [Programming Massively Parallel Processors](https://www.amazon.com/Programming-Massively-Parallel-Processors-Hands/dp/0323912311) textbook. As a result, I found myself looking for ways to run CUDA code on the cloud (*someone else's computer*) for free. [LeetGPU](https://www.leetgpu.com/) looked promising, but I am too lazy to try a new platform and decided to stick with the good ol' [Google Colab](https://colab.research.google.com). For the uninitiated, Colab is a way to run Jupyter notebooks in the cloud with a free tier that lets you access GPUs (and TPUs) for a limited time.
 
 A quick google search returned a few tutorials on this, and a handy Python package [`nvcc4jupyter`](https://github.com/andreinechaev/nvcc4jupyter/) that would allow me to write CUDA directly into Colab code cells and compile them easily with some magic commands. How convenient! I ran their [Hello World](https://nvcc4jupyter.readthedocs.io/en/latest/usage.html#hello-world) example. However, this printed no output. Suspicious! 
 
-I tried to go one step further, and wrote a simple CUDA kernel for vector addition kernel with some error handling to understand what was going on. Trying to run this with `nvcc4jupyter`'s `%cuda` magic command gave me the following response: `CUDA error in /tmp/tmpjnowjf_2/b1cdcef3-2dc4-4ef4-94e4-f2cd3aae3655/single_file.cu at line 66: the provided PTX was compiled with an unsupported toolchain.` Perhaps, there is [no free lunch](https://en.wikipedia.org/wiki/No_free_lunch_theorem) when it comes to accessing GPUs on the cloud as well! 
+I tried to go one step further, and wrote a simple CUDA kernel for elementwise vector addition with some error handling to understand what was going on. Trying to run this with `nvcc4jupyter`'s `%cuda` magic command gave me the following response: `CUDA error in /tmp/tmpjnowjf_2/b1cdcef3-2dc4-4ef4-94e4-f2cd3aae3655/single_file.cu at line 66: the provided PTX was compiled with an unsupported toolchain.` Perhaps, there is [no free lunch](https://en.wikipedia.org/wiki/No_free_lunch_theorem) when it comes to accessing GPUs on the cloud as well! 
 
-> **tl;dr** If you want to skip the debugging journey and get straight to the working solution, jump to the [Moving Forward](#moving-forward) section.
+> [!Tip] **tl;dr**
+> If you want to skip the debugging journey and get straight to the working solution, jump to the [Moving Forward](#moving-forward) section.
 
 # Identifying the Problem
 
-Let me actually take a step back, and walk you through my process of trying to get CUDA working on Colab, and how I identified the underlying problem. This will be completely trivial for someone familiar with CUDA and NVCC (NVIDIA CUDA Compiler), but will probably be insightful for machine learning practitioners who have only interacted with CUDA through high-level libraries.
+Let me actually take a step back, and walk you through my process of trying to get CUDA working on Colab, and how I identified the underlying problem. This might be trivial for someone familiar with CUDA and NVCC (NVIDIA CUDA Compiler), but will probably be insightful for machine learning practitioners who have only interacted with CUDA through high-level libraries.
 
-## Attempt #1: Using `nvcc4jupyter`
+## Attempt #1: Using nvcc4jupyter
 
-The top result from Google when searching for "Run cuda on colab" is a [discussion on NVIDIA developer forums](https://forums.developer.nvidia.com/t/running-c-and-cuda-in-google-colab/237108) from 2022, which links to this [StackOverflow discussion](https://stackoverflow.com/questions/56854243/how-to-link-the-libraries-when-executing-cuda-program-on-google-colab/56908350#56908350) which uses the `nvcc4jupyter` and is very similar to what I just did. No luck here!
+The top result from Google when searching for 'Run cuda on colab' is a [discussion on NVIDIA developer forums](https://forums.developer.nvidia.com/t/running-c-and-cuda-in-google-colab/237108) from 2022, which links to this [StackOverflow discussion](https://stackoverflow.com/questions/56854243/how-to-link-the-libraries-when-executing-cuda-program-on-google-colab/56908350#56908350) which uses `nvcc4jupyter` and is very similar to what I just did. No luck here!
 
 The second result is this Medium article from 2024 called [Running CUDA on Google Colab for free](https://medium.com/@zubair09/running-cuda-on-google-colab-d8992b12f767) which again refers to `nvcc4jupyter`, and to add insult to injury the article shows that the `nvcc4jupyter` hello world example runs successfully on Colab. Hmmm, so clearly something has changed with either the package or the Google Colab environment since then.
 
@@ -36,17 +37,17 @@ First, I checked what GPU and CUDA version I was working with:
 Which showed I had a Tesla T4 GPU with CUDA 12.4:
 
 ```bash
-+-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 550.54.15              Driver Version: 550.54.15      CUDA Version: 12.4     |
-|-----------------------------------------+------------------------+----------------------+
-| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
-|                                         |                        |               MIG M. |
-|=========================================+========================+======================|
-|   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   35C    P8              9W /   70W |       0MiB /  15360MiB |      0%      Default |
-|                                         |                        |                  N/A |
-+-----------------------------------------+------------------------+----------------------+
++-------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.54.15          Driver Version: 550.54.15      CUDA Version: 12.4     |
+|-------------------------------------+------------------------+----------------------+
+| GPU  Name             Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf      Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                     |                        |               MIG M. |
+|=====================================+========================+======================|
+|   0  Tesla T4                   Off |   00000000:00:04.0 Off |                    0 |
+| N/A   35C    P8          9W /   70W |       0MiB /  15360MiB |      0%      Default |
+|                                     |                        |                  N/A |
++-------------------------------------+------------------------+----------------------+
 ```
 
 Next I confirmed the nvcc compiler version:
@@ -70,34 +71,39 @@ Build cuda_12.5.r12.5/compiler.34385749_0
 
 On a more serious note, this was a helpful lead - the CUDA toolkit (12.5) is newer than the driver version (12.4). This version mismatch might explain some of the issues I was facing.
 
-At this point, I looked up Issues on the [`nvcc4jupyter` Github repository](https://github.com/andreinechaev/nvcc4jupyter) and came across [Issue #40](https://github.com/andreinechaev/nvcc4jupyter/issues/40):
+At this point, I looked up Issues on the [`nvcc4jupyter` Github repository](https://github.com/andreinechaev/nvcc4jupyter) and lo-and-behold:
 
+> [!Error] nvcc4jupyter [Issue #40](https://github.com/andreinechaev/nvcc4jupyter/issues/40)
 > Extension isn't working with current version of colab with T4 GPU
 
 Bingo! Someone else also encountered the same problem as I, and in fact there was already a workaround in the comments! A comment from Github user [mohamedsamirx](https://github.com/mohamedsamirx) had linked a detailed Colab notebook on [YOLOv12 TensorRT Inference Using CPP And CUDA](https://colab.research.google.com/drive/1kqo6J6jxTiGFjpCHrv6HA5InOIp07Awt?usp=drive_link). They had diagnosed the same exact issue, and in fact the workaround involved them explicitly removing CUDA-12.5 and symlinking the `/usr/local/cuda` folder to `/usr/local/cuda-12.4`.
 
 I checked the [CUDA Compatibility Guide](https://docs.nvidia.com/deploy/cuda-compatibility/) and while it said:
 
+> [!Quote] Note on backward compatibility for CUDA compiled applications
+>
 > From CUDA 11 onwards, applications compiled with a CUDA Toolkit release from within a CUDA major release family (12.x in our case) can run, with limited feature-set, on systems having at least the minimum required driver version as indicated below. This minimum required driver can be different from the driver packaged with the CUDA Toolkit but should belong to the same major release.
 
-but it also included a caveat:
+it also included a caveat:
 
+> [!Quote] Note on backward compatibility for PTX IR
+>
 > Applications using PTX will see runtime issues
 >
 > Applications that compile device code to PTX will not work on older drivers.
 > 
 > If the application requires PTX then administrators have to upgrade the installed driver. PTX Developers should refer to the PTX programming guide in the CUDA C++ Programming Guide for details on this limitation.
 
-So it seems to me as an outsider that if you compiled your CUDA code with the right flags, and already have the compiled binary available, it should be able to run on an older driver of the same CUDA release family for CUDA 12.x or CUDA 11.x. This was confirmed when I read about the CUDA compilation process (discussed in the next section). But for our case, where we want to write and compile CUDA code ourself, it is important to match the toolkit version with the driver version.
+So it seems to me (as a CUDA novice) that if you compiled your CUDA code with the right flags, and/or already have the compiled binary available, it should be able to run on an older driver of the same CUDA release family for CUDA 12.x or CUDA 11.x. This was confirmed when I read about the CUDA compilation process , which I discussed in the next section. But for our case, where we want to write and compile CUDA code ourself, it is important to match the toolkit version with the driver version.
 
-As an aside, I also found out that Google Colab has an active Github organization where they detail CUDA version upgrades to their Colab VM via [lable=announcement issues](https://github.com/googlecolab/colabtools/issues?q=is%3Aissue%20state%3Aclosed%20cuda%20label%3Aannounce%20). It seems like the CUDA-12.5 upgrade happened just a few days before this blog was written! Oh, and a bunch of folks are ranting about how the upate broke stuff for them in the [CUDA 12.5 upgrade issue comments](https://github.com/googlecolab/colabtools/issues/5061) ;)
+As an aside, I also found out that Google Colab has an active Github organization where they detail CUDA version upgrades to their Colab VM via [label=feature issues](https://github.com/googlecolab/colabtools/issues?q=is%3Aissue%20state%3Aclosed%20cuda%20label%3Afeature). It seems like the CUDA-12.5 upgrade happened just a few days before this blog was written! Oh, and a bunch of folks are ranting about how the upate broke stuff for them in the [CUDA 12.5 upgrade issue comments](https://github.com/googlecolab/colabtools/issues/5061) ;)
 
 > [!Success] Solution 1
 > There was a version mismatch between the CUDA driver and toolkit in Colab (as of March 12, 2025) that can cause compatibility issues with `nvcc4jupyter`. One possible solution to CUDA issues on Colab is downgrading the toolkit to match the driver version.
 
-## Attempt #2: Using `nvcc4jupyter` with compiler flags
+## Attempt #2: Using nvcc4jupyter with compiler flags
 
-Now, as I was trying to pinpoint the issue the `nvcc4jupyter`, I learned that I could get away without downgrading my CUDA version for the free tier T4 GPU on Colab. Understanding why requires a slight detour into NVIDIA's GPU compute capabilities and how nvcc can control the machine code generated.  
+Now, as I was trying to pinpoint the issue with `nvcc4jupyter`, I learned a way that I could get away without downgrading my CUDA version for the free tier T4 GPU on Colab. Understanding why requires a slight detour into NVIDIA's GPU compute capabilities and how nvcc can control the machine code generated.  
 
 When NVCC compiles CUDA code, the representations follow this sequence:
 
@@ -105,21 +111,21 @@ When NVCC compiles CUDA code, the representations follow this sequence:
 
 where PTX is architecture-independent but CUDA version-specific, while Cubin is specific to a particular [CUDA Compute Capability](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#compute-capability)
 
-According to NVIDIA "(compute capability) identifies the features supported by the GPU hardware and is used by applications at runtime to determine which hardware features and/or instructions are available on the present GPU." Since GPUs have different hardware architectures with generations, the machine code compiled to run on them varies in order to best utilize the available resources.
+According to NVIDIA <q>*(compute capability) identifies the features supported by the GPU hardware and is used by applications at runtime to determine which hardware features and/or instructions are available on the present GPU.*</q> Since GPUs have different hardware architectures with generations, the machine code compiled to run on them varies in order to best utilize the available capabilities.
 
-Now, the Tesla T4 GPU on Colab's free tier is an older GPU, launched over seven years ago in 2018. It has a Compute Capability (also called SM version) of 7.5 (abbreviated as sm_75). The compute capability does not translate 1-1 to the CUDA toolkit versions, but I found this somewhat dated but neat table on StackOverflow which shows the relation between them:
+Now, the Tesla T4 GPU on Colab's free tier is an older GPU, launched over seven years ago in 2018. It has a Compute Capability (also called SM version) of 7.5 (abbreviated as **sm_75**). The compute capability does not translate 1-1 to the CUDA toolkit versions, but I found this somewhat dated but neat [table from StackOverflow](https://stackoverflow.com/questions/28932864/which-compute-capability-is-supported-by-which-cuda-versions) which shows the relation between them:
 
-| CUDA Version      | Min CC | Deprecated CC | Default CC | Max CC                                    |
-|-------------------|--------|---------------|------------|-------------------------------------------|
-| 5.5 (and prior)   | 1.0    | N/A           | 1.0        | ?                                         |
-| 6.0               | 1.0    | 1.0           | 1.0        | ?                                         |
-| 6.5               | 1.1    | 1.x           | 2.0        | ?                                         |
-| 7.x               | 2.0    | N/A           | 2.0        | ?                                         |
-| 8.0               | 2.0    | 2.x           | 2.0        | 6.2                                       |
-| 9.x               | 3.0    | N/A           | 3.0        | 7.0                                       |
-| 10.x              | 3.0    | N/A *         | 3.0        | 7.5                                       |
-| 11.x              | 3.5 †  | 3.x           | 5.2        | 11.0:8.0, 11.1:8.6, 11.8:9.0              |
-| 12.x              | 5.0    | N/A           | 5.2        | 9.0                                       |
+| **CUDA Version** | **Min CC** | **Deprecated CC**  | **Default CC** | **Max CC**                          |
+|------------------|------------|--------------------|----------------|-------------------------------------|
+| 5.5 (and prior)  | 1.0        | N/A                | 1.0            | ?                                   |
+| 6.0              | 1.0        | 1.0                | 1.0            | ?                                   |
+| 6.5              | 1.1        | 1.x                | 2.0            | ?                                   |
+| 7.x              | 2.0        | N/A                | 2.0            | ?                                   |
+| 8.0              | 2.0        | 2.x                | 2.0            | 6.2                                 |
+| 9.x              | 3.0        | N/A                | 3.0            | 7.0                                 |
+| 10.x             | 3.0        | N/A                | 3.0            | 7.5                                 |
+| 11.x             | 3.5        | 3.x                | 5.2            | 11.0:8.0, 11.1:8.6, 11.8:9.0        |
+| 12.x             | 5.0        | N/A                | 5.2            | 9.0                                 |
 
 So, while there is indeed an issue with the NVIDIA Toolkit and Driver version mismatch on Colab, you probably don't need all the compute capabilities that CUDA-12.4 supports to run your code on the T4 since it has a compute capability of 7.5.
 
@@ -147,9 +153,12 @@ I experimented with a few different spacing formats, such as
 %%cuda -c="-arch sm_75"
 ```
 
-but I kept running the same error. It seemed like `nvcc4jupyter` had issues parsing and passing compiler arguments to the underlying nvcc compiler. A second visit to the `nvcc4jupyter` issues page confirmed my suspicions, as the only other open issue [Issue #39](https://github.com/andreinechaev/nvcc4jupyter/issues/39) was:
+but I kept running into the same error. It seemed like `nvcc4jupyter` had issues parsing and passing compiler arguments to the underlying nvcc compiler. A second visit to the `nvcc4jupyter` issues page confirmed my suspicions:
 
+> [!Error] nvcc4jupyter [Issue #39](https://github.com/andreinechaev/nvcc4jupyter/issues/39)
 > Compilation with compilation options not working
+
+As I read through the issue comments and then later through argument parsing code in `nvcc4jupyter`, I found out that there is a hacky workaround to solving this issue (mentioned below). But the argument parser in `nvcc4jupyter` is not quite comprehensive enough in the way it parses compiler arguments like `-l` (for linking libraries) or `-arch` (for specifying the architecture), and would require a patch for a proper solution to the underlying issue. 
 
 > [!Failure] 
 > `nvcc4jupyter` does not parse the compiler arguments correctly when using the `-c` option, leading to a parser error. This prevents passing the `-arch` flag to the nvcc compiler.
@@ -160,11 +169,11 @@ but I kept running the same error. It seemed like `nvcc4jupyter` had issues pars
 > %%cuda -c "-I /does/not/exist -arch sm_75"
 > ```
 
-But as I read through the comments and the argument parsing code in `nvcc4jupyter`, I realized that this is inconsistent and not a proper solution to the underlying issue, which appears to be how the `nvcc4jupyter` parser handles arguments containing options like `-l` (for linking libraries) or `-arch` (for specifying the architecture). Actually, going through the package code made me realize that the package is a very lightweight wrapper to making nvcc calls, which led me on to my next attempt.
+Actually, going through the package code made me realize that the package is a very lightweight wrapper to making nvcc calls, which led me on to my next attempt.
 
-## Attempt #3: Using NVCC Directly
+## Attempt #3: Using nvcc directly
 
-Since `nvcc4jupyter` wasn't cooperating, I decided to try compiling and running my CUDA code directly using the nvcc compiler that comes pre-installed with Colab. One of the really nice aspects of jupyter notebooks is the ability to run bash commands directly using the `!` prefix. And since we have access to the command line, we can (among other things) write our CUDA code to a file, compile it using nvcc, and run the resulting executable. So, I started by writing out my vector addition code to a file:
+Since `nvcc4jupyter` wasn't cooperating in specifying nvcc command options, I decided to try compiling and running my CUDA code directly using the nvcc compiler since it comes pre-installed with Colab. One of the really neat aspects of jupyter notebooks is the ability to run bash commands directly using the `!` prefix. And since we have access to the command line, we can (among other things) write our CUDA code to a file, compile it using nvcc, and run the resulting executable. So, I started by writing out my vector addition code to a file:
 
 ```python
 %%writefile vector_add.cu
@@ -173,7 +182,7 @@ Since `nvcc4jupyter` wasn't cooperating, I decided to try compiling and running 
 // ... rest of the code ...
 ```
 
-First, I tried compiling without specifying any architecture, just as a sanity check to verify that the error I saw with `nvcc4jupyter` magic commands was replicated in calling nvcc directly:
+First, I tried compiling without specifying any architecture command options, just as a sanity check to verify that the error I saw with `nvcc4jupyter` magic commands was replicated in calling nvcc directly:
 
 ```python
 !nvcc vector_add.cu -o vector_add
@@ -208,7 +217,7 @@ For now, I'm sticking with the direct nvcc compilation approach. The ability of 
 
 ## tl;dr
 
-> [!Info] Summary
+> [!Note] Summary
 >
 > 1. First, check if the CUDA toolkit version matches the driver version on Colab:
 >    ```python
