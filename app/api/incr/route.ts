@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis'
 import { NextRequest, NextResponse } from 'next/server'
+import { allBlogs } from 'contentlayer/generated'
 
 const redis = Redis.fromEnv()
 
@@ -15,6 +16,13 @@ export async function POST(req: NextRequest) {
   const slug = body?.slug
   if (!slug) {
     return new NextResponse('Slug not found', { status: 400 })
+  }
+
+  // Check if the post is a draft
+  const post = allBlogs.find((p) => p.slug === slug)
+  if (post?.draft) {
+    // Don't increment view count for draft posts
+    return new NextResponse(null, { status: 202 })
   }
 
   const ip = req.ip

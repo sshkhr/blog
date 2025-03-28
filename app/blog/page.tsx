@@ -13,8 +13,11 @@ export default async function BlogPage() {
   const sortedPosts = allCoreContent(sortPosts(allBlogs))
   const pageNumber = 1
 
+  // Fetch view counts only for non-draft posts
   const allViewCounts = await Promise.all(
     sortedPosts.map(async (post) => {
+      // Skip fetching for draft posts
+      if (post.draft) return 0
       const count = await redis.get<number>(['pageviews', 'projects', post.slug].join(':'))
       return count ?? 0
     })
