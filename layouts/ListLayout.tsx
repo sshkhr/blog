@@ -116,7 +116,7 @@ export default function ListLayout({
         <ul>
           {!filteredBlogPosts.length && 'No posts found.'}
           {displayPosts.map((post) => {
-            const { path, date, title, summary, tags, readingTime, totalViews } = post
+            const { path, date, title, summary, tags, readingTime, totalViews, draft } = post
             return (
               <li key={path} className="py-4">
                 <article className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
@@ -128,6 +128,11 @@ export default function ListLayout({
                       <span>Views: {totalViews}</span>
                       <span className="mx-2">|</span>
                       {readingTime && <span>{readingTime.text}</span>}
+                      {draft && (
+                        <span className="mx-2">
+                          | <span className="text-red-500">Draft</span>
+                        </span>
+                      )}
                     </dd>
                   </dl>
                   <div className="space-y-3 xl:col-span-3">

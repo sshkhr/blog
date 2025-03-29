@@ -40,7 +40,7 @@ export default function PostLayout({
   prev,
   children,
 }: LayoutProps) {
-  const { filePath, path, slug, date, title, tags, toc, readingTime } = content
+  const { filePath, path, slug, date, title, tags, toc, readingTime, draft } = content
   const basePath = path.split('/')[0]
   const tableOfContents: Toc = toc as unknown as Toc
 
@@ -49,7 +49,7 @@ export default function PostLayout({
       <ScrollTopAndComment />
       <Sidetoc toc={tableOfContents} />
       <article>
-        <ReportView slug={slug} />
+        <ReportView slug={slug} draft={draft} />
         <div className="xl:divide-y xl:divide-gray-200 xl:dark:divide-gray-700">
           <header className="pt-6 xl:pb-6">
             <div className="space-y-1 text-center">
@@ -64,6 +64,11 @@ export default function PostLayout({
                     <span>Views: {totalViews}</span>
                     <span className="mx-2">|</span>
                     {readingTime && <span>{readingTime.text}</span>}
+                    {draft && (
+                      <span className="mx-2">
+                        | <span className="text-red-500">Draft</span>
+                      </span>
+                    )}
                   </dd>
                 </div>
               </dl>

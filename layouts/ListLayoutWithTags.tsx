@@ -125,7 +125,7 @@ export default function ListLayoutWithTags({
           <div>
             <ul>
               {displayPosts.map((post) => {
-                const { path, date, title, summary, tags, readingTime, totalViews } = post
+                const { path, date, title, summary, tags, readingTime, totalViews, draft } = post
                 return (
                   <li key={path} className="py-5">
                     <article className="flex flex-col space-y-2 xl:space-y-0">
@@ -137,6 +137,11 @@ export default function ListLayoutWithTags({
                           <span>Views: {totalViews}</span>
                           <span className="mx-2">|</span>
                           {readingTime && <span>{readingTime.text}</span>}
+                          {draft && (
+                            <span className="mx-2">
+                              | <span className="text-red-500">Draft</span>
+                            </span>
+                          )}
                         </dd>
                       </dl>
                       <div className="space-y-3">

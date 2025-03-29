@@ -111,9 +111,13 @@ export default async function Page({ params }: { params: { slug: string[] } }) {
 
   const Layout = layouts[post.layout || defaultLayout]
 
-  // 1) Retrieve the current view count from Redis
-  const views = await redis.get<number>(['pageviews', 'projects', slug].join(':'))
-  const totalViews = views ?? 0 // fallback if null
+  // Only fetch view count for non-draft posts
+  let totalViews = 0
+  if (!post.draft) {
+    // Retrieve the current view count from Redis
+    const views = await redis.get<number>(['pageviews', 'projects', slug].join(':'))
+    totalViews = views ?? 0 // fallback if null
+  }
 
   return (
     <>

@@ -21,7 +21,7 @@ interface LayoutProps {
 }
 
 export default function PostLayout({ content, next, totalViews, prev, children }: LayoutProps) {
-  const { path, slug, date, title, toc, readingTime } = content
+  const { path, slug, date, title, toc, readingTime, draft } = content
   const tableOfContents: Toc = toc as unknown as Toc
 
   return (
@@ -29,7 +29,7 @@ export default function PostLayout({ content, next, totalViews, prev, children }
       <ScrollTopAndComment />
       <Sidetoc toc={tableOfContents} />
       <article>
-        <ReportView slug={slug} />
+        <ReportView slug={slug} draft={draft} />
         <div>
           <header>
             <div className="space-y-1 border-b border-gray-200 pb-10 text-center dark:border-gray-700">
@@ -42,6 +42,11 @@ export default function PostLayout({ content, next, totalViews, prev, children }
                     <span>Views: {totalViews}</span>
                     <span className="mx-2">|</span>
                     {readingTime && <span>{readingTime.text}</span>}
+                    {draft && (
+                      <span className="mx-2">
+                        | <span className="text-red-500">Draft</span>
+                      </span>
+                    )}
                   </dd>
                 </div>
               </dl>

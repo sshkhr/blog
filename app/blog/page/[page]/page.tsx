@@ -16,11 +16,12 @@ export default async function Page({ params }: { params: { page: string } }) {
   // 1) Grab all sorted posts
   const sortedBlogPosts = allCoreContent(sortPosts(allBlogs))
 
-  // 2) Fetch a view count for each post
+  // 2) Fetch a view count for each post (skip drafts)
   const allViewCounts = await Promise.all(
     sortedBlogPosts.map(async (post) => {
+      // Skip fetching for draft posts
+      if (post.draft) return 0
       const count = await redis.get<number>(['pageviews', 'projects', post.slug].join(':'))
-      console.log('DEBUG - For slug:', post.slug, ' => Redis count:', count)
       return count ?? 0
     })
   )

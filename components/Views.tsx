@@ -2,8 +2,10 @@
 
 import { useEffect } from 'react'
 
-export const ReportView: React.FC<{ slug: string }> = ({ slug }) => {
+export const ReportView: React.FC<{ slug: string; draft?: boolean }> = ({ slug, draft }) => {
   useEffect(() => {
+    // Don't report views for draft posts
+    if (draft) return
     fetch('/api/incr', {
       method: 'POST',
       headers: {
@@ -11,7 +13,7 @@ export const ReportView: React.FC<{ slug: string }> = ({ slug }) => {
       },
       body: JSON.stringify({ slug }),
     })
-  }, [slug])
+  }, [slug, draft])
 
   return null
 }
