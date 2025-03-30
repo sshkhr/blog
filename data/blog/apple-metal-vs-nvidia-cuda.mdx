@@ -1,0 +1,403 @@
+---
+title: 'Apple Silicon Metal vs NVIDIA CUDA'
+date: '2025-03-28'
+tags: ['cuda', 'metal', 'gpu', 'parallel programming'] 
+draft: true
+summary: "Notes on the Apple Silicon GPUs: Architecture, Memory Heirarchy, and the Metal Programming frameworks, and how it compares to NVIDIA CUDA."
+---
+
+My predicament of being [GPU Poor](./cuda-colab) in terms of owning NVIDIA GPUs, but having an Apple M1 Max MacBook led me to explore the Apple Silicon GPUs and the [Metal](https://developer.apple.com/metal/) framework for GPU programming. However, I found that the [Metal documentation](https://developer.apple.com/documentation/metal) and [examples](https://developer.apple.com/documentation/metal/metal-sample-code-library) are highly geared towards graphics programming, and do not capture the ability of Apple Silicon GPUs to perform GPGPU (General Purpose GPU) computations very well. Since my goal is to make [GPUs Go Brrr](https://hazyresearch.stanford.edu/blog/2024-05-12-tk) i.e. implement computational workloads relevant to deep learning, I decided to document the key concepts in the Apple Silicon GPU hardware and software ecosystem for myself, as well as for any other folks who are not well versed in graphics programming but are looking to use their Apple GPUs for machine learning or HPC workloads.
+
+> [!Info] Author's disclaimer
+> This is a relatively high level overview of the Apple GPU architecture and Metal programming API, and how it compares to the NVIDIA GPU architecture and CUDA API. It is aimed mostly at folks in machine learning and scientific computing, perhaps someone who is somewhat familiar with CUDA and looking to run computational workloads on the Apple Silicon GPUs. 
+>  
+> It doesn't cover several low-level details, including but not limited to: NVIDIA's tensor cores, Apple's Neural Engines, interfacing CPU and GPU programming, resource optimization, or almost anything that is relevant for graphics workloads.
+
+# Comparing the Device Architectures
+
+Since I started learning about CUDA and parallel programming from the [Programming Massively Parallel Processors](https://a.co/d/0a9B0vD) book (abbreviated as PMPP), I thought it would be a nice parallel to compare the GPU architecture and memory model of Apple Silicon family with that of NVIDIA based on the illustrations shown in PMPP.
+
+![CUDA Architecture](/static/images/cuda-architecture.png "CUDA Architecture")
+
+The architecture of a CUDA enabled GPU is illustrated as shown above (reproduced from Fig 4.1 of PMPP). The `SM` in the figure is the Streaming Multiprocessor, which is the basic compute unit of a CUDA GPU. Each SM contains multiple ALUs (Arithmetic Logic Units), schedulers, and caches (grouped together control in the image). The SMs are organized into a grid of thread `blocks` (the white rectangles containing the eight green squares), which are further organized into a grid of `threads` (the little green squares in the image). The threads in a block can communicate with each other through `shared memory`, while the threads in different blocks cannot. The GPU also comes with a `global memory` space, which is accessible by all threads, but has a higher latency than shared memory. 
+
+![Metal Architecture](/static/images/metal-architecture.png "Metal Architecture")
+
+Based on my understanding of an Apple Silicon GPU, the architecture is similar to that of a CUDA GPU, but with one key difference. The Apple Silicon GPU has a `core` which is largely equivalent to the SM in CUDA. Each core contains multiple ALUs and caches, and the cores are organized into a grid of `threadgroups` (instead of blocks), which are further organized into a grid of `threads`. The threads in a threadgroup can communicate with each other through `threadgroup memory`, which is similar to shared memory in CUDA. The key difference between the two architectures arises in the global memory: unlike CUDA GPUs which have a global device memory space, Apple utilizes a `unified memory` architecture where the CPU and GPU share the same memory. 
+
+While the unified memory architecture (UMA) allows for more efficient data sharing between the CPU and GPU, it also means that the memory access patterns need to be carefully managed to avoid contention. Apple's close control over the software and hardware stack in their computers allows them to utilize this unified memory architecture effectively for various applications.
+
+> [!Warning] Note on CUDA terminology
+> In CUDA terminology, `device` refers to the GPU, while `host` refers to the CPU. Wherever you read the term device and host in this article, mentally replace it with GPU and CPU respectively.
+
+For illustration purposes, the grid, blocks (threadgroups) and threads are shown as 1D/2D arrays in the figures above, but they can also be 3D arrays in both CUDA and Metal. 
+
+## A dictionary for translating Apple Silicon GPU terms to NVIDIA
+
+Based on our brief discussion of the two device architectures, I'm sure you must have noticed that several of the hardware and software abstractions in both the Apple and NVIDIA GPU ecosystems are similar. Just from the terms we have seen until now, we can already start to map the terms used in Metal to those more familiar to CUDA practitioners. The table below summarizes the Apple GPU terms we have encountered thus far and their equivalents in NVIDIA GPUs:
+
+| Apple Silicon Term    | NVIDIA Equivalent               | Description                                                               |
+|-----------------------|---------------------------------|---------------------------------------------------------------------------|
+| **GPU Core**          | **Streaming Multiprocessor**    | Basic compute unit containing multiple ALUs, schedulers, and caches       |
+| **Grid**              | **Grid**                        | Overall structure of work to be processed by the GPU                      |
+| **Threadgroup**       | **Thread Block**                | Group of threads that can synchronize and share memory                    |
+| **Thread**            | **Thread**                      | Individual execution unit that processes a single element of work         |
+| **SIMD-group**        | **Warp**                        | Group of 32 threads executed in lockstep                                  |
+| **Threadgroup Memory**| **Shared Memory**               | Fast memory accessible by all threads in a threadgroup/block              |
+| **Device Memory**     | **Global Memory**               | Main GPU memory accessible by all threads                                 |
+| **Unified Memory**    | **CUDA Unified Memory**         | Shared memory space accessible by both CPU and GPU                        |
+
+# The Programming Models: CUDA vs Metal
+
+Since it is so fundamental to the difference between the two GPUs, we will revisit the differences in memory heirarchy of Apple Silicon and NVIDIA GPUs in a bit. But first, let's take a brief look at the programming models of both architectures. NVIDIA developed its own superset  of C (and later C++) called [CUDA](https://developer.nvidia.com/cuda-toolkit) to program its GPUs, starting all the way back in 2007. Apple came out with the [Metal](https://developer.apple.com/metal/) language and API in 2014, initially in Swfit and Objective-C but later on in C++ via the [metal-cpp](https://developer.apple.com/metal/cpp/) project.
+
+> [!Warning] metal-cpp
+> I have used metal-cpp in this article, but frankly the documentation on Apple's developer website for it is very sparse. However, I chose to still use it for drawing a parallel to CUDA, and also cause I'm unfamiliar with Objective-C or Swift. If you are writing hardware accelerated code for Apple Silicon, metal-cpp might end being limiting for you, since the [Metal Performance Shaders](https://developer.apple.com/documentation/metalperformanceshaders) framework which has *"highly optimized compute and graphics shaders"* is not available (or at least not documented) in metal-cpp. CUDA has equivalent libraries with optimized kernels like [CUTLASS](https://github.com/NVIDIA/cutlass) which are both open source and quite well documented.
+
+The Metal *<q>language</q>* is a C++-like language that allows developers to write GPU code in a familiar syntax. Metal kernels (also referred to as *"shaders"* since Metal was originally written for graphics programming) are written as `.metal` files which follow a syntax very similar to that of C.
+
+Let us visualize the kernel code with a pratical example of a simple kernel that adds two arrays of floats. This example is borrowed from one out of four ML workloads documented in the [Metal documentation](https://developer.apple.com/documentation/metal/performing-calculations-on-a-gpu) (seriously, Apple 😠). The example below shows the same kernel written in both Metal and CUDA. 
+
+<CodeTabs tabs={["Metal Kernel", "CUDA Kernel"]}>
+```cpp
+// device code
+#include <metal_stdlib>
+using namespace metal;
+
+kernel void add_arrays(device const float* inA,
+                       device const float* inB,
+                       device float* result,
+                       uint index [[thread_position_in_grid]])
+{
+    // Each thread performs one addition
+    result[index] = inA[index] + inB[index];
+}
+```
+```cpp
+// device code
+__global__ void add_arrays(const float* inA, 
+                           const float* inB, 
+                           float* result, 
+                           int arrayLength)
+{
+    // Calculate the global thread ID
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
+    
+    // Make sure we do not go out of bounds
+    if (index < arrayLength)
+    {
+        result[index] = inA[index] + inB[index];
+    }
+}
+```
+</CodeTabs>
+
+
+## Differences in host code and kernel dispatch
+
+While the kernel code looks suspiciously similar, the way we dispatch the kernel is quite different in Metal and CUDA. In CUDA, we can use the handy `<<<...>>>` syntax to specify the grid and block dimensions and CUDA largely takes care of the kernel dispatch. Metal, on the other hand, is a somewhat lower-level library, and we need to explicitly set up and take care of a few more steps. I have written out a minimal host code setup for both Metal and CUDA where we utilize our kernels written above.
+
+<CodeTabs tabs={["Metal Dispatch", "CUDA Dispatch"]}>
+```cpp
+// host code
+// Minimal Metal-cpp array addition example
+
+#define NS_PRIVATE_IMPLEMENTATION
+#define CA_PRIVATE_IMPLEMENTATION
+#define MTL_PRIVATE_IMPLEMENTATION
+#include <Foundation/Foundation.hpp>
+#include <Metal/Metal.hpp>
+#include <iostream>
+
+// Metal shader (add.metal) should contain:
+/*
+kernel void add_arrays(device const float* inA,
+                       device const float* inB,
+                       device float* result,
+                       uint index [[thread_position_in_grid]])
+{
+    result[index] = inA[index] + inB[index];
+}
+*/
+
+int main() {
+    constexpr int arrayLength = 1000;
+    
+    // 1. Get the default Metal device
+    MTL::Device* device = MTL::CreateSystemDefaultDevice();
+    
+    // 2. Create a command queue
+    MTL::CommandQueue* commandQueue = device->newCommandQueue();
+    
+    // 3. Load the Metal library and create the function
+    MTL::Library* library = device->newDefaultLibrary();
+    MTL::Function* addFunction = library->newFunction(NS::String::string("add_arrays", NS::ASCIIStringEncoding));
+    
+    // 4. Create a compute pipeline state
+    MTL::ComputePipelineState* pipelineState = device->newComputePipelineState(addFunction, nullptr);
+    
+    // 5. Prepare input data
+    float* dataA = new float[arrayLength];
+    float* dataB = new float[arrayLength];
+    
+    // Fill arrays with sample data
+    for (int i = 0; i < arrayLength; i++) {
+        dataA[i] = static_cast<float>(i);
+        dataB[i] = static_cast<float>(i * 2);
+    }
+    
+    // 6. Create Metal buffers
+    MTL::Buffer* bufferA = device->newBuffer(dataA, arrayLength * sizeof(float), MTL::ResourceStorageModeShared);
+    MTL::Buffer* bufferB = device->newBuffer(dataB, arrayLength * sizeof(float), MTL::ResourceStorageModeShared);
+    MTL::Buffer* bufferResult = device->newBuffer(arrayLength * sizeof(float), MTL::ResourceStorageModeShared);
+    
+    // 7. Create a command buffer and compute encoder
+    MTL::CommandBuffer* commandBuffer = commandQueue->commandBuffer();
+    MTL::ComputeCommandEncoder* computeEncoder = commandBuffer->computeCommandEncoder();
+    
+    // 8. Set pipeline state and buffers
+    computeEncoder->setComputePipelineState(pipelineState);
+    computeEncoder->setBuffer(bufferA, 0, 0);
+    computeEncoder->setBuffer(bufferB, 0, 1);
+    computeEncoder->setBuffer(bufferResult, 0, 2);
+    
+    // 9. Calculate grid and threadgroup sizes
+    MTL::Size gridSize = MTL::Size(arrayLength, 1, 1);
+    MTL::Size threadgroupSize = MTL::Size(pipelineState->maxTotalThreadsPerThreadgroup(), 1, 1);
+    
+    // 10. Dispatch threads
+    computeEncoder->dispatchThreads(gridSize, threadgroupSize);
+    
+    // 11. End encoding and commit command buffer
+    computeEncoder->endEncoding();
+    commandBuffer->commit();
+    
+    // 12. Wait for completion
+    commandBuffer->waitUntilCompleted();
+    
+    // 13. Verify results
+    float* resultData = static_cast<float*>(bufferResult->contents());
+    
+    // 14. Cleanup resources
+    delete[] dataA;
+    delete[] dataB;
+    
+    bufferA->release();
+    bufferB->release();
+    bufferResult->release();
+    pipelineState->release();
+    addFunction->release();
+    library->release();
+    commandQueue->release();
+    device->release();
+    
+    return 0;
+}
+```
+```cpp
+// host code
+// Minimal CUDA array addition example
+#include <stdio.h>
+#include <cuda_runtime.h>
+
+// CUDA kernel to add two arrays
+__global__ void add_arrays(const float* inA, const float* inB, float* result) {
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    result[index] = inA[index] + inB[index];
+}
+
+int main() {
+    const int arrayLength = 1000;
+    size_t size = arrayLength * sizeof(float);
+    
+    // 1. Allocate host memory
+    float* h_A = new float[arrayLength];
+    float* h_B = new float[arrayLength];
+    float* h_Result = new float[arrayLength];
+    
+    // Fill arrays with sample data
+    for (int i = 0; i < arrayLength; i++) {
+        h_A[i] = static_cast<float>(i);
+        h_B[i] = static_cast<float>(i * 2);
+    }
+    
+    // 2. Allocate device memory
+    float *d_A, *d_B, *d_Result;
+    cudaMalloc(&d_A, size);
+    cudaMalloc(&d_B, size);
+    cudaMalloc(&d_Result, size);
+    
+    // 3. Copy input data from host to device
+    cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    
+    // 4. Launch kernel with 256 threads per block
+    int threadsPerBlock = 256;
+    int blocksPerGrid = (arrayLength + threadsPerBlock - 1) / threadsPerBlock;
+    
+    add_arrays<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_Result);
+    
+    // 5. Wait for GPU to finish
+    cudaDeviceSynchronize();
+    
+    // 6. Copy results from device to host
+    cudaMemcpy(h_Result, d_Result, size, cudaMemcpyDeviceToHost);
+        
+    // 7. Free memory
+    cudaFree(d_A);
+    cudaFree(d_B);
+    cudaFree(d_Result);
+    
+    delete[] h_A;
+    delete[] h_B;
+    delete[] h_Result;
+    
+    return 0;
+}
+```
+</CodeTabs>
+
+As you can see in CUDA, the key steps after writing our kernel that we need to do are allocating our host and device memory, copying the data from host to device, launching the kernel and copying the results back to host. While Metal avoids us having to copy data back and forth due to the unified memory architecture, we have to do a lot more work to get things set up before we call our kernel.
+
+Calling a Metal kernel (after writing the GPU function in Metal Shading Language) involces creating a compute pipeline from the compiled function, allocating device-accessible buffers for input and output data, constructing a command buffer to hold instructions, encoding the kernel dispatch call into that command buffer, and finally submitting the command buffer to the GPU for execution.
+
+As noted in [another blog](https://andrewkchan.dev/posts/things-april-2024.html), I am unsure why some of this boilerplate could not be wrapped into an easy kernel dispatcher function, similar to how CUDA does it. I suspect it is because Apple wants to keep the Metal API as low-level as possible, and give developers more control over the GPU resources. As a beginner to GPU programming, I had to spend a little bit longer trying to learn about command queues, command buffers, data buffers, and pipeline. But they let you have really close control over your CPU and GPU compute cycles and memory, and for someone interested in further understanding how that can be useful in writing performant code can check out this video from Apple: [Optimize Metal performance for Apple Silicon Macs](https://developer.apple.com/videos/play/wwdc2020/10632/).
+
+## Parallels in the programming APIs
+
+Similar to how we can map a lot of the concepts from NVIDIA GPU system architecture to Apple Silicon, a lot of the programming constructs in CUDA and Metal have parallels. While I have tried my best to be correct in writing the translation from Metal to CUDA programming contructs, I did use [Claude's](https://claude.ai/) helo to write the table, so please do let me know if you find any errors.
+
+| Metal API/Concept                                           | CUDA Equivalent                                 | Description                                                     |
+|-------------------------------------------------------------|-------------------------------------------------|-----------------------------------------------------------------|
+| **Memory Spaces**                                           |                                                 |                                                                 |
+| `device`                                                    | (global)                                        | Main GPU memory (default for parameters in CUDA)                |
+| `threadgroup`                                               | `__shared__`                                    | Memory shared within a threadgroup/block                        |
+| `constant`                                                  | `__constant__`                                  | Read-only memory space for constants                            |
+| `thread`                                                    | `(local variables)`                             | Thread-local memory (automatic variables)                       |
+| **Kernel Functions**                                        |                                                 |                                                                 |
+| `kernel void functionName()`                                | `__global__ void functionName()`                | Defines a function that runs on the GPU                         |
+| `[[thread_position_in_grid]]`                               | `blockIdx.x * blockDim.x + threadIdx.x`         | Getting the global thread index                                 |
+| `[[threadgroup_position_in_grid]]`                          | `blockIdx`                                      | Getting the threadgroup/block position                          |
+| `[[thread_position_in_threadgroup]]`                        | `threadIdx`                                     | Getting the thread position within a threadgroup/block          |
+| `[[threads_per_threadgroup]]`                               | `blockDim`                                      | Getting the dimensions of a threadgroup/block                   |
+| `[[threads_per_grid]]`                                      | `gridDim * blockDim`                            | Getting the total thread dimensions                             |
+| **Synchronization**                                         |                                                 |                                                                 |
+| `threadgroup_barrier(mem_flags::mem_none)`                  | `__syncthreads()`                               | Synchronize threads within a threadgroup/block                  |
+| `threadgroup_barrier(mem_flags::mem_threadgroup)`           | `__syncthreads()`                               | Sync with memory visibility for threadgroup memory              |
+| `simdgroup_barrier(mem_flags::mem_none)`                    | `__syncwarp()`                                  | Synchronize threads within a SIMD-group/warp                    |
+| **Memory Management**                                       |                                                 |                                                                 |
+| `MTL::Buffer* buffer = device->newBuffer()`                 | `cudaMalloc(&ptr, size)`                        | Allocate memory on the GPU                                      |
+| `buffer->contents()`                                        | `cudaMemcpy(dst, src, size, direction)`         | Access/transfer GPU memory                                      |
+| `MTL::ResourceStorageModeShared`                            | `cudaMallocManaged()`                           | Unified memory accessible by CPU and GPU                        |
+| **Execution Configuration**                                 |                                                 |                                                                 |
+| `MTL::Size gridSize(x, y, z)`                               | `dim3 gridSize(x, y, z)`                        | Specifying grid dimensions                                      |
+| `MTL::Size threadgroupSize(x, y, z)`                        | `dim3 blockSize(x, y, z)`                       | Specifying threadgroup/block dimensions                         |
+| `computeEncoder->dispatchThreads(gridSize, threadgroupSize)`| `kernel<<<gridSize, blockSize>>()`              | Launching kernel with dimensions                                |
+| **Resource Management**                                     |                                                 |                                                                 |
+| `buffer->release()`                                         | `cudaFree(ptr)`                                 | Free GPU memory                                                 |
+| **GPU Selection**                                           |                                                 |                                                                 |
+| `MTL::CreateSystemDefaultDevice()`                          | `cudaSetDevice(0)`                              | Select the default GPU                                          |
+| `MTL::CopyAllDevices()`                                     | `cudaGetDeviceCount()` + iterate                | Get all available GPUs                                          |
+
+<br></br>  
+
+# Revisiting the memory models
+
+Before we wrap up this comparison of Apple Silicon and NVIDIA GPUs, it is worthwhile to take a closer second look at the memory models of both architectures since it is one of the biggest differences between the two GPUs. The NVIDIA memory model is illustrated in the figure below (reproduced from Fig 5.2 of PMPP), and shows the different types of memory available on an NVIDIA GPU. 
+
+![CUDA Memory Model](/static/images/cuda-device-memory-model.png "CUDA Memory Model")
+
+As shown in the diagram, the model consists of a device grid containing multiple blocks, each holding multiple threads. Each thread has access to its own `registers` for fast temporary storage. Threads within the same block can communicate through `shared memory`, which provides higher bandwidth and lower latency than `global memory` but is limited to intra-block access. All threads across the entire grid can access global memory, albeit with higher latency. Additionally, `constant memory` provides read-only storage that's optimized for broadcast access when all threads read the same value simultaneously. 
+
+This memory hierarchy is fundamental to CUDA programming as it guides developers in optimizing data locality – placing frequently accessed data in faster memory spaces (registers and shared memory) while using global memory for data that needs to be accessed across blocks. The host (CPU) can transfer data to and from the device's global and constant memories but cannot directly access registers or shared memory, creating a clear separation between host and device memory spaces.
+
+![Metal Memory Model](/static/images/metal-device-memory-model.png "Metal Memory Model")
+
+Similar to a an NVIDIA GPU device, the Apple Silicon GPUs also contain `registers` and threadgroup local `shared memory`. However, unlike the NVIDIA GPUs, there is no separate device global memory or constant memory which the GPU and CPU go back and forth on writing data to and reading data from. Instead, the unified memory serves as the global memory for the GPU, and is shared between the CPU and GPU. The `constant buffers` are essentially cache optimized regions on the unified memory itself. Memory coherency is managed by both the Apple hardware and Metal API (as we saw earlier in the allocation of device buffers).
+
+In the Apple developer article [Choosing a Resource Storage Mode for Apple GPUs](https://developer.apple.com/documentation/metal/choosing-a-resource-storage-mode-for-apple-gpus), it is illustrated how Metal can be used to control how buffers and textures are allocated in system memory, and how the CPU and GPU access them:
+
+| Storage Mode | Definition / Memory Location | CPU Access | GPU Access | Common Use Cases |
+|--------------|------------------------------|------------|------------|------------------|
+| `MTLStorageModeShared` | System (unified) memory accessible by both CPU and GPU. | Read/Write: CPU can directly read/write. Data is CPU–GPU coherent. | Read/Write: GPU can directly access the same shared memory. | Default for buffers/textures on Apple GPUs. Frequent CPU updates to GPU data. Ideal when CPU and GPU both need to read/write the resource. |
+| `MTLStorageModePrivate` | System (unified) memory allocated for GPU‐only access. | No direct CPU access: must use blit/encode operations to copy or fill. | Read/Write: GPU can fully access, read, and modify the data. | Render targets and intermediate resources. Large textures that don't require CPU readback. Optimized for GPU‐only usage to improve performance. |
+| `MTLStorageModeMemoryless` | Tile memory (on‐chip GPU memory), allocated per pass. | No CPU access: ephemeral resource. | Read/Write by GPU within a single render or compute pass only. | Depth, stencil, or color buffers that are only needed temporarily within a pass. Very fast access with reduced power usage, freed at end of pass. |
+
+## On-device memory
+
+The physical memory available on the NVIDIA CUDA streaming multiprocessors and Apple Silicon Metal cores is often referred to as on-device memory. This includes the registers, shared memory, and caches (if available) on the GPU. Let us take a closer look at the NVIDIA on-device memory heirarchy. 
+
+![CUDA Memory Heirarchy](/static/images/cuda-memory-heirarchy.png "CUDA Memory Heirarchy")
+
+This memory heirarchy illustration is similar to the one in Fig 7.10 from PMPP, but actually reproduced from NVIDIA's developer blog [CUDA Refresher: The CUDA Programming Model](https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/). In the NVIDIA CUDA memory hierarchy, each thread has access to private **registers** that are invisible to other threads and managed by the compiler. At the SM level, a fast on-chip scratchpad memory serves dual purposes as both **L1 cache** and **shared memory** (SMEM), enabling all threads in a CUDA block to share data, with physical resources distributed among blocks running on the same SM. Each SM also contains **read-only memory** components including instruction cache, constant memory, texture memory, and RO cache that kernels can access but not modify. The **L2 cache** represents a higher level in the hierarchy, shared across all SMs and accessible by every thread in every CUDA block. The **global memory** represents the DRAM sitting in the GPU.
+
+There is trade-off between memory access speed and its storage capacity, due to power and size constraints introduced by larger/faster memory devices.  The higher we go in the memory hierarchy, the larger the memory size but the slower the access time. The thread registers are the fastest on-chip memory, but each thread has a very limited amount of register memory available to it. On the other hand, the global device memory is the largest memory on-device memory available to each SM but has extremely low bandwidth and high latency to read/write from. 
+
+As an aside, the constant memory (not depicted here for brevity), is usually implemented as a dedicated area on the device global memory and a fast read-only cache usually small in size that is shared among all threads in a block. It is optimized for broadcast access, meaning that if all threads in a block read the same value from constant memory, it will be very fast. For a much more thorough explanation of the memory heirarchy, I would suggest reading the technical report [Dissecting the NVIDIA volta GPU architecture via microbenchmarking](https://arxiv.org/abs/1804.06826). 
+
+> [!Error] TODO: Apple GPU Memory heirarchy diagram and description
+
+## An apples 🤭 to oranges comparison
+
+Since the memory heirarchy and its conseqeuent access patterns are very important for writing performant GPU code, it would help to illustrate the relevant numbers for Apple vs NVIDIA GPUs. Given below is a high‐level comparison table of key GPU memory‐hierarchy and architectural details for the **Apple M1 Max GPU** versus the **NVIDIA GeForce RTX 3090**. Both models are somewhat dated now (released in 2020-21), and are roughly comparable in terms of pricing (here in Canada the RTX 3090 sells for anywhere between [CAD \$2K-\$4K](https://www.newegg.ca/p/pl?d=rtx+3090)) while an M1 Max capable MacBook/Mac Studio/Mac Mini sells for a similar CAD \$2K-\$4K range (sourced from various sources since the Apple online store doesn't seem to sell new ones anymore). While it is hard to compare pricing since the Apple M1 Max is not available as a discrete GPU, I think the table below is still useful.
+
+
+| **Feature**                        | **Apple M1 Max GPU**                                                 | **NVIDIA GeForce RTX 3090 (GA102, SM 8.6)**                      |
+|:-----------------------------------|:---------------------------------------------------------------------|:-----------------------------------------------------------------|
+| **Architecture / Generation**      | Apple M1 Max SoC                                                     | Ampere                                                           |
+| **Warp/SIMD Size**                 | 32 threads per SIMD-group                                            | 32 threads per warp                                              |
+| **Execution Model**                | SIMD – 32 lanes share instruction stream                             | SIMT – each thread has its own context                           |
+| **Compute Units**                  | 32 GPU cores                                                         | 82 Streaming Multiprocessors (SMs)                               |
+| **ALUs per Compute Unit**          | 128 ALUs per core                                                    | 128 FP32 ALUs per SM + 4 Tensor Cores                            |
+| **Total ALUs**                     | ~4,096 ALUs                                                          | ~10,496 FP32 ALUs                                                |
+| **Clock Frequency**                | 1.3 GHz                                                              | 1.7 GHz (boost up to 1.8 GHz)                                    |
+| **Theoretical FP32 Performance**   | 10.4 TFLOPS                                                          | 35.6 TFLOPS                                                      |
+| **Low-Precision Math**             | FP16: 10.4 TFLOPS (no acceleration)                                  | FP16: 71.2 TFLOPS (via Tensor Cores)                             |
+| **Memory Type**                    | Unified LPDDR5(shared across CPU, GPU, Neural Engine, etc.)          | GDDR6X (dedicated GPU memory)                                    |
+| **Memory Capacity**                | 32 GB or 64 GB                                                       | 24 GB                                                            |
+| **Memory Bus Width**               | 512‐bit interface to LPDDR5 (multiple 64‐bit memory controllers)     | 384‐bit interface to GDDR6X                                      |
+| **Peak Memory Bandwidth**          | Up to ~400 GB/s                                                      | ~936 GB/s                                                        |
+| **L2 Cache (Total, GPU)**          | ~~Not officially disclosed<br/>Estimates of 8–16 MB~~                | 6 MB                                                             |
+| **L1 Data / Shared Memory**        | ~~Not disclosed publicly<br/>Apple has not published per‐core L1~~   | 128 KB per SM (combined L1 + Shared Memory, configurable)        |
+| **Register File Size**             | ~~Not disclosed publicly~~                                           | 65,536 × 32‐bit registers per SM (≈ 256 KB/SM)                   |
+| **Max Threads Per Block/Group**    | ~~1024 threads~~                                                     | 1024 threads                                                     |
+| **Thread Dimensions**              | ~~1024 × 1024 × 1024~~                                               | 1024 × 1024 × 64                                                 |
+| **Grid/Dispatch Dimensions**       | ~~2³²-1 × 65535 × 65535~~                                            | 2³¹-1 × 65535 × 65535                                            |
+| **Registers Per Block/Group**      | ~~65536~~                                                            | 65536                                                            |
+| **Max Blocks Per Compute Unit**    | ~~24 threadgroups per core~~                                         | 16 blocks per SM                                                 |
+| **Registers Per Thread**           | ~~Up to 128~~                                                        | Up to 255                                                        |
+
+# Up Next
+
+Hopefully I have managed to convey my understanding of the Apple GPU architecture, memory heirarchy as well as the programming model in Metal to you. I am currently working on a more practical programming guide in Metal for GPU operations, something similar to siboehm's great article [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM). By writing my kernels in Metal, I have already been able to much achieve better throughput than [WeGPU kernels running on Apple Silicon](https://www.nuss-and-bolts.com/p/optimizing-a-webgpu-matmul-kernel) for matrix multiplication workloads. However, I haven't been to match the optimized [MPSMatrixMultiplication](https://developer.apple.com/documentation/metalperformanceshaders/mpsmatrixmultiplication) kernel from the Metal Performance Shaders library. I will keep you posted about my experiments in my next blog!
+
+## References
+
+For those looking to learn more about the Apple GPU architecture and Metal, here are some great references for further reading on the Apple Silicon GPUs and Metal that I came across while writing this article:
+
+1. Alyssa Rosenweig's 4-part series [Dissecting the Apple M1 GPU](https://rosenzweig.io/blog/asahi-gpu-part-1.html)
+2. Dougall Johnson's work on [reverse engineering the Apple G13 GPU architecture (used by M1)](https://dougallj.github.io/applegpu/docs.html)
+3. Philip Turner's [Apple GPU microarchitecture metal-benchmarks](https://github.com/philipturner/metal-benchmarks)
+4. Hübner et al's 2025 paper [Apple vs. Oranges: Evaluating the Apple Silicon M-Series SoCs for HPC Performance and Efficiency](https://arxiv.org/abs/2502.05317v1)
+5. Biran Vogel's notes on benchmarkding scientific computing (matmul) using [Metal Performance Testing on M1 CPU and GPU](https://github.com/bkvogel/metal_performance_testing)
+
+Besides these references, here is a handy guide to all the documents relevant to Apple Metal and NVIDIA CUDA that were referred to earlier (numbers indicate the order they appeared):
+
+2. [Metal](https://developer.apple.com/metal/)
+3. [Metal documentation](https://developer.apple.com/documentation/metal)
+4. [Metal sample code library](https://developer.apple.com/documentation/metal/metal-sample-code-library)
+5. [GPUs Go Brrr - Hazy Research Group Stanford Blog](https://hazyresearch.stanford.edu/blog/2024-05-12-tk)
+6. [Programming Massively Parallel Processors](https://a.co/d/0a9B0vD)
+7. [CUDA](https://developer.nvidia.com/cuda-toolkit)
+8. [metal-cpp](https://developer.apple.com/metal/cpp/)
+9. [Metal Performance Shaders](https://developer.apple.com/documentation/metalperformanceshaders)
+10. [CUTLASS](https://github.com/NVIDIA/cutlass)
+11. [Performing calculations on a GPU](https://developer.apple.com/documentation/metal/performing-calculations-on-a-gpu)
+12. [Andrew Chan: Thoughts on Metal (vs. CUDA)](https://andrewkchan.dev/posts/things-april-2024.html)
+13. [Optimize Metal performance for Apple Silicon Macs](https://developer.apple.com/videos/play/wwdc2020/10632/)
+15. [Choosing a Resource Storage Mode for Apple GPUs](https://developer.apple.com/documentation/metal/choosing-a-resource-storage-mode-for-apple-gpus)
+16. [CUDA Refresher: The CUDA Programming Model](https://developer.nvidia.com/blog/cuda-refresher-cuda-programming-model/)
+17. [Dissecting the NVIDIA volta GPU architecture via microbenchmarking](https://arxiv.org/abs/1804.06826)
+19. [Simon Boehm: How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM)
+20. [Zach Nussbaum: Optimizing a WebGPU Matmul Kernel](https://www.nuss-and-bolts.com/p/optimizing-a-webgpu-matmul-kernel)
+21. [MPSMatrixMultiplication](https://developer.apple.com/documentation/metalperformanceshaders/mpsmatrixmultiplication)
