@@ -3,7 +3,7 @@ title: 'Apple Silicon Metal vs NVIDIA CUDA'
 date: '2025-03-28'
 tags: ['cuda', 'metal', 'gpu', 'parallel programming'] 
 draft: false
-summary: "Notes on the Apple Silicon GPUs: Architecture, Memory Hierarchy, and the Metal Programming frameworks, and how it compares to NVIDIA CUDA."
+summary: "Notes on the Apple Silicon GPUs: Architecture, Memory Hierarchy, and the Metal Programming framework, and how it compares to NVIDIA CUDA."
 ---
 
 My predicament of being [GPU Poor](./cuda-colab) in terms of owning NVIDIA GPUs, but having an Apple M1 Max MacBook led me to explore the Apple Silicon GPUs and the [Metal](https://developer.apple.com/metal/) framework for GPU programming. However, I found that the [Metal documentation](https://developer.apple.com/documentation/metal) and [examples](https://developer.apple.com/documentation/metal/metal-sample-code-library) are highly geared towards graphics programming, and do not capture the ability of Apple Silicon GPUs to perform GPGPU (General Purpose GPU) computations very well. Since my goal is to make [GPUs Go Brrr](https://hazyresearch.stanford.edu/blog/2024-05-12-tk) i.e. implement computational workloads relevant to deep learning, I decided to document the key concepts in the Apple Silicon GPU hardware and software ecosystem for myself, as well as for any other folks who are not well versed in graphics programming but are looking to use their Apple GPUs for machine learning or HPC workloads.
@@ -335,43 +335,57 @@ There is trade-off between memory access speed and its storage capacity, due to 
 
 As an aside, the constant memory (not depicted here for brevity), is usually implemented as a dedicated area on the device global memory and a fast read-only cache usually small in size that is shared among all threads in a block. It is optimized for broadcast access, meaning that if all threads in a block read the same value from constant memory, it will be very fast. For a much more thorough explanation of the memory hierarchy, I would suggest reading the technical report [Dissecting the NVIDIA volta GPU architecture via microbenchmarking](https://arxiv.org/abs/1804.06826). 
 
-> [!Error] TODO: Apple GPU Memory hierarchy diagram and description
+![Metal Memory Hierarchy](/static/images/metal-memory-hierarchy.png "Metal Memory Hierarchy")
+
+I have tried to recreate an equivalent memory hierarchy system diagram for Apple Silicon GPUs above, as it helps illustrate several key differences from NVIDIA's approach. In the Apple unified system memory architecture, each GPU core has separate and dedicated memory components rather than the configurable shared resources found in NVIDIA SMs. The memory hierarchy starts with fast **registers** at the top, providing thread-local storage. Below this sits dedicated **shared memory**, which allows threads within the same threadgroup to communicate efficiently. Unlike NVIDIA's combined L1/shared memory approach, Apple implements a separate but small **L1 cache** for data alongside a dedicated instruction cache (not depicted). The **L2 cache** (much smaller than NVIDIA's) is shared across all cores, but uniquely Apple adds a substantial **System Level Cache** (SLC) between L2 and main memory — a layer absent in NVIDIA GPUs. The SLC, like the **unified memory** below it in the memory hierarchy, is shared between the GPU and CPU. 
 
 ## An apples 🤭 to oranges comparison
 
 Since the memory hierarchy and its conseqeuent access patterns are very important for writing performant GPU code, it would help to illustrate the relevant numbers for Apple vs NVIDIA GPUs. Given below is a high‐level comparison table of key GPU memory‐hierarchy and architectural details for the **Apple M1 Max GPU** versus the **NVIDIA GeForce RTX 3090**. Both models are somewhat dated now (released in 2020-21), and are roughly comparable in terms of pricing (here in Canada the RTX 3090 sells for anywhere between [CAD \$2K-\$4K](https://www.newegg.ca/p/pl?d=rtx+3090)) while an M1 Max capable MacBook/Mac Studio/Mac Mini sells for a similar CAD \$2K-\$4K range (sourced from various sources since the Apple online store doesn't seem to sell new ones anymore). While it is hard to compare pricing since the Apple M1 Max is not available as a discrete GPU, I think the table below is still useful.
 
 
-| **Feature**                        | **Apple M1 Max GPU**                                                 | **NVIDIA GeForce RTX 3090 (GA102, SM 8.6)**                      |
-|:-----------------------------------|:---------------------------------------------------------------------|:-----------------------------------------------------------------|
-| **Architecture / Generation**      | Apple M1 Max SoC                                                     | Ampere                                                           |
-| **Warp/SIMD Size**                 | 32 threads per SIMD-group                                            | 32 threads per warp                                              |
-| **Execution Model**                | SIMD – 32 lanes share instruction stream                             | SIMT – each thread has its own context                           |
-| **Compute Units**                  | 32 GPU cores                                                         | 82 Streaming Multiprocessors (SMs)                               |
-| **ALUs per Compute Unit**          | 128 ALUs per core                                                    | 128 FP32 ALUs per SM + 4 Tensor Cores                            |
-| **Total ALUs**                     | ~4,096 ALUs                                                          | ~10,496 FP32 ALUs                                                |
-| **Clock Frequency**                | 1.3 GHz                                                              | 1.7 GHz (boost up to 1.8 GHz)                                    |
-| **Theoretical FP32 Performance**   | 10.4 TFLOPS                                                          | 35.6 TFLOPS                                                      |
-| **Low-Precision Math**             | FP16: 10.4 TFLOPS (no acceleration)                                  | FP16: 71.2 TFLOPS (via Tensor Cores)                             |
-| **Memory Type**                    | Unified LPDDR5(shared across CPU, GPU, Neural Engine, etc.)          | GDDR6X (dedicated GPU memory)                                    |
-| **Memory Capacity**                | 32 GB or 64 GB                                                       | 24 GB                                                            |
-| **Memory Bus Width**               | 512‐bit interface to LPDDR5 (multiple 64‐bit memory controllers)     | 384‐bit interface to GDDR6X                                      |
-| **Peak Memory Bandwidth**          | Up to ~400 GB/s                                                      | ~936 GB/s                                                        |
-| **L2 Cache (Total, GPU)**          | ~~Not officially disclosed<br/>Estimates of 8–16 MB~~                | 6 MB                                                             |
-| **L1 Data / Shared Memory**        | ~~Not disclosed publicly<br/>Apple has not published per‐core L1~~   | 128 KB per SM (combined L1 + Shared Memory, configurable)        |
-| **Register File Size**             | ~~Not disclosed publicly~~                                           | 65,536 × 32‐bit registers per SM (≈ 256 KB/SM)                   |
-| **Max Threads Per Block/Group**    | ~~1024 threads~~                                                     | 1024 threads                                                     |
-| **Thread Dimensions**              | ~~1024 × 1024 × 1024~~                                               | 1024 × 1024 × 64                                                 |
-| **Grid/Dispatch Dimensions**       | ~~2³²-1 × 65535 × 65535~~                                            | 2³¹-1 × 65535 × 65535                                            |
-| **Registers Per Block/Group**      | ~~65536~~                                                            | 65536                                                            |
-| **Max Blocks Per Compute Unit**    | ~~24 threadgroups per core~~                                         | 16 blocks per SM                                                 |
-| **Registers Per Thread**           | ~~Up to 128~~                                                        | Up to 255                                                        |
+| **Memory Feature**               | **Apple M1 Max GPU**                                           | **NVIDIA GeForce RTX 3090 (GA102)**                          |
+|:---------------------------------|:---------------------------------------------------------------|:-------------------------------------------------------------|
+| **Memory Type**                  | Unified LPDDR5 (shared across CPU, GPU, Neural Engine, etc.)   | GDDR6X (dedicated GPU memory)                                |
+| **Memory Capacity**              | 32 GB or 64 GB                                                 | 24 GB                                                        |
+| **Memory Bus Width**             | 512‐bit interface to LPDDR5                                    | 384‐bit interface to GDDR6X                                  |
+| **Peak Memory Bandwidth**        | Up to ~400 GB/s                                                | ~936 GB/s                                                    |
+| **L1 Data Cache**                | 8 KB per core                                                  | 128 KB combined L1/Shared Memory per SM (configurable)       |
+| **Shared Memory**                | ~60 KB per core                                                | 128 KB combined L1/Shared Memory per SM (configurable)       |
+| **L2 Cache (Total)**             | 512 KB                                                         | 6 MB                                                         |
+| **L3 Cache (SLC)**               | 48 MB                                                          | N/A                                                          |
+| **Register File Size**           | ~208 KB per core                                               | ~256 KB per SM (65,536 × 32‐bit registers)                   |
 
-# Up Next
 
-Hopefully I have managed to convey my understanding of the Apple GPU architecture, memory hierarchy as well as the programming model in Metal to you. I am currently working on a more practical programming guide in Metal for GPU operations, something similar to siboehm's great article [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM). By writing my kernels in Metal, I have already been able to much achieve better throughput than [WeGPU kernels running on Apple Silicon](https://www.nuss-and-bolts.com/p/optimizing-a-webgpu-matmul-kernel) for matrix multiplication workloads. However, I haven't been able to match or get close enough to the optimized [MPSMatrixMultiplication](https://developer.apple.com/documentation/metalperformanceshaders/mpsmatrixmultiplication) kernel from the Metal Performance Shaders library. I will keep you posted about my experiments in my next blog!
+# A Brief Note on Constraints
 
-## References
+Since my primary concern is with writing kernels to perform parallel computation for machine learning workloads on the GPUs, I thought it would be useful to summarize some of the key performance and programming constraints for both Apple and NVIDIA GPUs. From my (limited) experience writing performant CUDA kernels, these bottlenecks tend to become very important when thinking about optimizing parallel algorithms on GPUs - with different bottlenecks becoming important at different scales. For a more detailed discussion of these bottlenecks, I would recommend reading Chapter 6 - Performance Considerations in PMPP.
+
+| **Feature**                          | **Apple M1 Max GPU**                                        | **NVIDIA GeForce RTX 3090 (GA102)**                        |
+|:------------------------------------|:-------------------------------------------------------------|:-----------------------------------------------------------|
+| **Architecture / Generation**        | Apple 7 (M1 Max)                                            | Ampere                                                     |
+| **Warp/SIMD Size**                   | 32 threads per SIMD-group                                   | 32 threads per warp                                        |
+| **Execution Model**                  | SIMD – 32 lanes share instruction stream                    | SIMT – each thread has its own context                     |
+| **Compute Units**                    | 32 GPU cores                                                | 82 Streaming Multiprocessors (SMs)                         |
+| **ALUs per Compute Unit**            | 128 ALUs per core                                           | 128 FP32 ALUs per SM + 4 Tensor Cores                      |
+| **Total ALUs**                       | ~4,096 ALUs                                                 | ~10,496 FP32 ALUs                                          |
+| **Clock Frequency**                  | 1.296 GHz                                                   | 1.7 GHz (boost up to 1.8 GHz)                              |
+| **Theoretical FP32 Performance**     | 10.617 TFLOPS                                               | 35.6 TFLOPS                                                |
+| **Low-Precision Math**               | FP16: 10.617 TFLOPS                                         | FP16: 71.2 TFLOPS (via Tensor Cores)                       |
+| **Max Threads Per Block/Group**      | 1024 threads                                                | 1024 threads                                               |
+| **Thread Dimensions**                | 1024 × 1024 × 1024                                          | 1024 × 1024 × 64                                           |
+| **Grid/Dispatch Dimensions**         | 2³²-1 × 65535 × 65535                                       | 2³¹-1 × 65535 × 65535                                      |
+| **Registers Per Block/Group**        | 65536                                                       | 65536                                                      |
+| **Max Blocks/Threadgroups Per CU**   | 24 threadgroups per core                                    | 16 blocks per SM                                           |
+| **Registers Per Thread**             | Up to 128                                                   | Up to 255                                                  |
+| **Max Threads Per Core/SM**          | 384-3072                                                    | 256-1536                                                   |
+| **Instruction Cache**                | 12 KB                                                       | 32 KB                                                      |
+
+## What's Next
+
+Hopefully I have managed to convey my understanding of the Apple GPU architecture, memory hierarchy as well as the programming model in Metal to you. My discussion on the bottlenecks and performance constraints might come across a little out of place in this blog. But it comes in handy when writing a more practical programming guide for writing Metal kernels for GPU operations. I am currently trying to implement and systematically improve upon a square matrix fp32 matmul kernel in Metal, something similar to siboehm's great article [How to Optimize a CUDA Matmul Kernel for cuBLAS-like Performance: a Worklog](https://siboehm.com/articles/22/CUDA-MMM). By writing my kernels in Metal, I have already been able to much achieve better throughput than [WeGPU kernels running on Apple Silicon](https://www.nuss-and-bolts.com/p/optimizing-a-webgpu-matmul-kernel) for matrix multiplication workloads. However, I haven't been able to match or get close enough to the optimized [MPSMatrixMultiplication](https://developer.apple.com/documentation/metalperformanceshaders/mpsmatrixmultiplication) kernel from the Metal Performance Shaders library. I will keep you posted about my experiments in my next blog!
+
+# References
 
 For those looking to learn more about the Apple GPU architecture and Metal, here are some great references for further reading on the Apple Silicon GPUs and Metal that I came across while writing this article:
 
