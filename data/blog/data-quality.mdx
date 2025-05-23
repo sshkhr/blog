@@ -1,9 +1,9 @@
 ---
 title: 'Data Quality Is All You Need?'
 date: '2025-05-23'
-tags: ['llm', 'pretraining', 'midtraining', 'posttraining', 'data-quality', 'synthetic-data', 'rlhf', 'dpo'] 
+tags: ['llm', 'pretraining', 'midtraining', 'posttraining', 'data-quality', 'synthetic-data', 'dpo'] 
 draft: false
-summary: "Notes on Microsoft phi-4 data pipeline for pre-training, 'mid-training', supervised fine-tuning and reinforcement learning from human feedback"
+summary: "Notes on Microsoft phi-4 data pipeline for pre-training, 'mid-training', supervised fine-tuning and preference optimization"
 ---
 
 
@@ -41,7 +41,7 @@ As you can see in the pyramid above, phi-4 does not strictly follow the same tra
 
 - Instead of Reinforcement Learning for Human Preference based optimization, it uses DPO i.e. Direct Preference Optimization. DPO is a simplified formulation for the RLHF training objective, with the benefit of not requiring RL to optimize a discretized loss. Hence the optimization problem is simpler and tends to be more stable during training. For further details, I found this article on HuggingFace to be a great and accessible read: [Simplifying Alignment: From RLHF to Direct Preference Optimization (DPO)](https://huggingface.co/blog/ariG23498/rlhf-to-dpo)
   
-- It introduces a new stage "Mid-Training" between pre-training and post-training (SFT+RLHF). Mid-training is new terminology for even active researchers, as when I asked my friends pursuing PhDs in NLP only one of them was aware of the term. I will discuss it in further detail in the corresponding section on [Mid-Training](#mid-training), but it is essentially a curriculum step after pre-training that optimizes for objectives beyond next-token prediction.
+- It introduces a new stage "Mid-Training" between pre-training and post-training. Mid-training is new terminology for even active researchers, as when I asked my friends pursuing PhDs in NLP only one of them was aware of the term. I will discuss it in further detail in the corresponding section on [Mid-Training](#mid-training), but it is essentially a curriculum step after pre-training that optimizes for objectives beyond next-token prediction.
 
 > [!hint] Author's Notes : Legend
 >
@@ -680,7 +680,7 @@ During SFT, the model was trained on following Q&A pairs to ensure that it refus
 - (question, refusal) for questions where phi-4 was usually incorrect
 - (bogus question, refusal) for all bogus questions
   
-### RLHF Hallucination Mitigation
+### DPO Hallucination Mitigation
 
 For preference rating, the phi-4 model was given the following signal:
 
