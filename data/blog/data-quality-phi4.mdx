@@ -3,24 +3,24 @@ title: 'Data Quality Is All You Need?'
 date: '2025-05-07'
 tags: ['llm', 'pretraining', 'midtraining', 'posttraining', 'data-quality', 'synthetic-data', 'rlhf', 'dpo'] 
 draft: true
-summary: "Notes on Microsoft Phi-4 data pipeline for pre-training, 'mid-training', supervised fine-tuning and reinforcement learning from human feedback"
+summary: "Notes on Microsoft phi-4 data pipeline for pre-training, 'mid-training', supervised fine-tuning and reinforcement learning from human feedback"
 ---
 
 
-[Microsoft's Phi-4](https://arxiv.org/abs/2412.08905) is a small (14B parameters) language model that is a massive testament to the importance of data quality in training LLMs. In fact, when I went through their 36-page long technical report, what astounded me was the fact that only one paragraph is devoted to details of the model architecture, and the rest of the report talks almost exclusively about the data or evaluation pipeline. There are hardly any model details, because Phi-4 uses the exact same architecture as the [Phi-3 model](https://arxiv.org/abs/2404.14219) which came out 8 months ago - yet it outperforms Phi-3 on both benchmarks as well as ✨vibe checks✨.
+[Microsoft's Phi-4](https://arxiv.org/abs/2412.08905) is a small (14B parameters) language model that is a massive testament to the importance of data quality in training Large Language Models (LLMs). phi-4 uses the exact same architecture as the [phi-3 model](https://arxiv.org/abs/2404.14219) which came out 8 months ago - yet it outperforms phi-3 on both benchmarks as well as ✨vibe checks✨.
 
-I initially picked out the Phi-4 technical report to review because it was so heavily focussed on data and benchmarks, compared to say the [DeepSeek-V3 report](https://arxiv.org/abs/2412.19437) which focusses a lot on the architecture as well as the infrastructure used. Rightfully so, there are a lot of cool systems-level innovations that drove the success of DeepSeek-V3. But I wanted to understand how data selection and curation is used in training LLMs today (afterall, Phi-4 is less than six months old). 
+In fact, when I went through their 36-page long technical report, what astounded me was the fact that only one paragraph is devoted to details of the model architecture, and the rest of the report talks almost exclusively about the data or evaluation pipeline. 
 
+![phi-4 Performance](/static/images/phi-performance.png)
+<small><small>*Table 1 in the phi-4 Report showcases its performance compared to other LLMs, and importance of data vs phi-3 (emphasis mine)*</small></small>
 
-> [!hint] Author's Notes
->
-> While there were quite a lot of useful details, especially on the Synthetic Data and Preference data curation, I was a bit disappointed with the lack of details on the reasoning and long-context data in pre-training, as well as all of the SFT data. It is, of course, by design - since data is the secret sauce of machine learning, frontier model labs are unwilling to give it away for others to build upon as the AI race heats up. This blog post discusses the data pipeline used in Phi-4, in a chronological order as the model saw it. I have tried too additional context on standard techniques wherever details were missing under the "Author's Notes" callouts (shown here as an example):
+Through this post I will walkthrough the training data collection and curation pipeline used in training LLMs today (afterall, phi-4 is less than six months old). I picked out phi-4 to review, compared to say [DeepSeek-V3](https://arxiv.org/abs/2412.19437), since the latter focusses a lot on the architecture as well as the infrastructure used. Rightfully so, there are a lot of cool systems-level innovations that drove the success of DeepSeek-V3. But data, architecture and infrastructure innovations are largely independent and symbiotic - parallel innovations in each of these areas are driving the success of LLMs.
 
 # LLM Training: A Brief Primer
 
 ![LLM Training Stages](/static/images/llm-training.png)
 
-Before we proceed with discussing the data pipeline for Phi-4, it would be helpful to understand the generic training pipeline used to train LLMs. There are three main steps that are used:
+Before we proceed with discussing the data pipeline for phi-4, it would be helpful to understand the generic training pipeline used to train LLMs. It involves three stages:
 
 - **Pre-Training:** Unsupervised learning of LLMs for next token prediction on large unlabeled data corpus
 - **Supervised Fine-Tuning (SFT):** Supervised learning of LLMs for things like chat modelling on a smaller labeled data corpus 
@@ -29,31 +29,35 @@ Before we proceed with discussing the data pipeline for Phi-4, it would be helpf
 SFT and RLHF are often clubbed together under the banner of "**Post-Training**" - since pre-training comprises the bulk of compute FLOPs involved in training the LLM compared to these two.
 
 ![Training Cake](/static/images/training-cake.png)
-*Yann LeCun gave a great visual metaphor for these three training modes with his cake analogy at [Predictive Learning, NIPS 2016 Talk](https://www.youtube.com/watch?v=Ount2Y4qxQo&t=1072s). This analogy transfers very well to training of LLMs today with pre-training, SFT and RLHF.*
+<small><small>*Yann LeCun gave a great visual metaphor for these three training stages with his cake analogy at [Predictive Learning, NIPS 2016 Talk](https://www.youtube.com/watch?v=Ount2Y4qxQo&t=1072s). This analogy transfers very well to training of LLMs today with pre-training, SFT and RLHF.*</small></small>
 
-Now that we have the big-picture view of the three training methodologies, let's do a deep dive into the data pipeline for each training stage in Phi-4. 
+If you are unfamiliar with some of these terms, and would like a deeper dive the article [Data is the Foundation of Language Models](https://cameronrwolfe.substack.com/p/data-is-the-foundation-of-language) on the Deep (Learning) Focus substack is a great and accessible read.
 
-![Phi-4 Training and Data](/static/images/data-phi4.png)
+Now that we have the big-picture view of the three training methodologies, let's do a deep dive into the data pipeline for each training stage in phi-4. The rest of this blog post discusses the data pipeline used in phi-4, in a chronological order as the model saw it.
 
-As you can see in the pyramid above, Phi-4 does not strictly follow the same training heirarchy as mentioned earlier, as there are two key changes:
+![phi-4 Training and Data](/static/images/data-phi4.png)
+
+As you can see in the pyramid above, phi-4 does not strictly follow the same training heirarchy as mentioned earlier, as there are two key changes:
 
 - Instead of Reinforcement Learning for Human Preference based optimization, it uses DPO i.e. Direct Preference Optimization. DPO is a simplified formulation for the RLHF training objective, with the benefit of not requiring RL to optimize a discretized loss. Hence the optimization problem is simpler and tends to be more stable during training. For further details, I found this article on HuggingFace to be a great and accessible read: [Simplifying Alignment: From RLHF to Direct Preference Optimization (DPO)](https://huggingface.co/blog/ariG23498/rlhf-to-dpo)
   
-- It introduces a new stage "Mid-Training" between pre-training and post-training (SFT+RLHF). Mid-training is new terminology for even active researchers, as when I asked my friends pursuing PhDs in NLP only was aware of the term. I will discuss it in further detail in the corresponding section on [Mid-Training](#mid-training), but it is essentially a curriculum step after pre-training that optimizes for objectives beyond next-token prediction.
+- It introduces a new stage "Mid-Training" between pre-training and post-training (SFT+RLHF). Mid-training is new terminology for even active researchers, as when I asked my friends pursuing PhDs in NLP only one of them was aware of the term. I will discuss it in further detail in the corresponding section on [Mid-Training](#mid-training), but it is essentially a curriculum step after pre-training that optimizes for objectives beyond next-token prediction.
+
+> [!hint] Author's Notes : Legend
+>
+> While there were quite a lot of useful details in the phi-4 report, especially on the Synthetic Data and Preference data curation, I was a bit disappointed with the lack of details on the reasoning and long-context data in pre-training, as well as all of the SFT data. It is, of course, by design - **since data is the secret sauce of machine learning, frontier model labs are unwilling to give it away for others to build upon as the AI race heats up. I have tried to provide additional context on standard techniques wherever details were missing under the "Author's Notes" callouts** (this one is an example).
 
 # Pre-Training
 
-The Phi-4 training process involved the model being trained on nearly **10 Trillion tokens**!  
+The phi-4 training process involved the model being trained on nearly **10 Trillion tokens**!  
 
-> [!question] Tokens
-> 
-> If you are unfamiliar with tokens - you can mentally substitute it as words. LLM training involves matrix multiplications and other mathematical operations, and as such you need to convert text into numbers - this process is called tokenization. Here is an example from [Open AI tokenizer](https://platform.openai.com/tokenizer) which shows correspondence between words and tokens. Each token in the text is substituted by a corresponding token ID before the model sees it. You can try out the example linked here to play around with the tokenization process for yourself. 
+> [!question] Tokenization
 > 
 > ![Tokenization](/static/images/tokenization.png) 
 > 
-> Phi-4 uses the `tiktoken` tokenizer from OpenAI used in the GPT example above. All the tokens it sees come from a vocabulary of size 100,352.
+> phi-4 uses the `tiktoken` tokenizer from OpenAI used in the GPT example above. All the tokens it sees come from a vocabulary of size 100,352.
 
-The 10T tokens are made up of a cocktail of data from various sources. This table shows each of these sources in summary, as well as how they add up to the total pre-training dataset size.
+The 10T pretraining tokens are made up of a cocktail of data from various sources. This table shows each of these sources in summary, as well as how they add up to the total pre-training dataset size.
 
 | Data Source      | Fraction of Training | Unique Token Count | Number of Epochs | Total Token Count |
 | ---------------- | -------------------- | ------------------ | ---------------- | ----------------- |
@@ -64,14 +68,15 @@ The 10T tokens are made up of a cocktail of data from various sources. This tabl
 | Acquired sources | 10%                  | 580B               | 1.7              | 0.986T            |
 |                  |                      |                    | **Total tokens** | **~10T**          |
 
-<small>*Table 5 in the Phi-4 Report summarizes the data mix used in the pre-training process - the last column has been added by me*</small>
+<small>*Table 5 in the phi-4 Report summarizes the data mix used in the pre-training process - last column added by me*</small>
 
-Let's see what each of these pre-training data sources consist of. Since the Synthetic Data is the single largest, and perhaps most promising part of the training mix, we will discuss it last and in detail.
-## Web Data (15%)
+Let's see what each of these pre-training data sources consist of. **Over half of the pre-training data (40% for Synthetic + 15% for Web rewrites) was not human generated data - instead it was generated from other LLMs with a lot of expert curation!🤯**. Since the Synthetic Data is the single largest, and perhaps most promising part of the training mix, we will discuss it last and in detail.
 
-As is standard for LLM training, a lot of web based data was utilized for Phi-4:
+## A. Web Data (15%)
 
-### Q&A Web Datasets
+As is standard for LLM training, a lot of web based data was utilized for phi-4:
+
+### A.1 Q&A Web Datasets
 
 According to the authors, they knew that Q&A datasets are important for model capabilities like mathematical reasoning and academic performance. They collected "tens-of-millions" of "high-quality" Q&A data from public websites, existing datasets, and acquiring external datasets.
 
@@ -88,9 +93,8 @@ Besides using the datasets, there were a bunch of data augmentations performed o
 > * "What was the last year that Brazil won the FIFA World Cup?" → "The FIFA World Cup was last won by Brazil in which year?"
 > 
 > This is an active research area within NLP with various approaches - [PapersWithCode lists 15 research papers on question rewriting](https://paperswithcode.com/task/question-rewriting). 
->
-> The Phi-4 authors mention that "organic questions" i.e. obtained from human data from the internet are more useful for training LLMs than "synthetic questions" i.e. generated from another LLM. However, they also mention that "rewritten questions improved the model’s capabilities, the gains were not as pronounced" implying that the data augmentation helped, but not by a lot.
 
+The phi-4 authors mention that "organic questions" i.e. obtained from human data from the internet are more useful for training LLMs than "synthetic questions" i.e. generated from another LLM. However, they also mention that "rewritten questions improved the model’s capabilities, the gains were not as pronounced" implying that the data augmentation helped, but not by a lot.
 
 > [!hint] Author's Notes: Answer Verification
 > 
@@ -99,21 +103,21 @@ Besides using the datasets, there were a bunch of data augmentations performed o
 > Incorrect answers were replaced by "synthetic ones" i.e. other LLMs were used to generate the correct answers, and then majority voting i.e. probably passing several LLM generated answers into a model that picks the response which gets repeated across multiple synthetic answers. 
 
 
-####  Decontamination of Q&A Data
+#### A.1.1 Decontamination of Q&A Data
 
-In order to avoid training on questions that are included in benchmark datasets used for performance evaluation a decontamination algorithm was used on the Q&A data to remove such questions (and answers). The ARC-Easy, MBPP, phibench, CommonsenseQA, WinoGrande, mcphi, MedQA, MATH, AGIEval, PIQA, OpenBookQA, HellaSwag, GPQA, mt-bench, MMLUPro, GSM8k, HumanEval, arena hard, ARC-Challenge, and MMLU benchmarks were checked against. The exact algorithm is not key, but 7-gram and 13-gram features were used (i.e. sequential combinations of 7 and 13 words) and then compared against the features from benchmark sets.
+In order to avoid training on questions that are included in benchmark datasets used for performance evaluation, a decontamination algorithm was used on the Q&A data to remove such questions (and answers). The ARC-Easy, MBPP, phibench, CommonsenseQA, WinoGrande, mcphi, MedQA, MATH, AGIEval, PIQA, OpenBookQA, HellaSwag, GPQA, mt-bench, MMLUPro, GSM8k, HumanEval, arena hard, ARC-Challenge, and MMLU benchmarks were checked against. The exact algorithm is not key, but 7-gram and 13-gram features were used (i.e. sequential combinations of 7 and 13 words) and then compared against the features from benchmark sets.
 
-### Multilingual Web Data
+### A.2 Multilingual Web Data
 
 Datasets from CommonCrawl and Wikipedia for languages like German, Spanish, French, Portuguese, Italian, Hindi, and Japanese were incorporated. The multilingual data filtering pipeline consisted of first classifying data into 176 languages [using a simple text classifier from fasttext](https://fasttext.cc/docs/en/language-identification.html) and then filtering data for quality using classifiers (discussed in next subsection). 
 
-### Filtered Web Dumps
+### A.3 Filtered Web Dumps
 
 > [!hint] Author's Note: Web Dumps
 > 
-> Web dumps are just large collated content from the web, a classic example I am familiar with is the [The Pile](https://pile.eleuther.ai/). Think, for example, all the posts and comments from Reddit, or all of StackExchange posts and comments etc. 
+> Web dumps are just large collated content from the web, a classic example I am familiar with is [CommonCrawl](https://commoncrawl.org/). Think, for example, all the posts and comments from Reddit, or all of StackExchange posts and comments, every blog post etc. 
 
-Web dumps, as implied by their name, are large uncurated collections which don't separate 'good' training data from 'bad' when it comes to training LLMs. The Phi-4 authors did several filtering and cleanup steps to obtain *"information-rich web sources"*. 
+Web dumps, as implied by their name, are large uncurated collections which don't separate 'good' training data from 'bad' when it comes to training LLMs. The phi-4 authors did several filtering and cleanup steps to obtain *"information-rich web sources"*. 
 
 - First, small text classifiers were trained on around ~ $10^6$ LLM-generated annotations on data quality. The web dumps were filtered using these text classifiers to obtain high quality annotations.
 
@@ -131,13 +135,17 @@ Web dumps, as implied by their name, are large uncurated collections which don't
 
 > [!hint] Author's Note:  Parsing Web Data for LLMs
 > 
-> While details are missing in the phi-4 paper, I would like to emphasize good parsing of web data for LLM training is a very challenging problem in of itself. There are entire companies ([Unstructured.io](https://unstructured.io/), [Datalab](https://www.datalab.to/) among others) focussed on solving this problem, and most large companies have data engineers who build ETL pipelines for converting web data into something more amenable to LLM training.
+> While details are missing in the phi-4 paper, I would like to emphasize good parsing of web data for LLM training is a very challenging problem in of itself. There are entire companies ([Unstructured.io](https://unstructured.io/), [Datalab](https://www.datalab.to/), [JINA Reader](https://github.com/jina-ai/reader) among others) focussed on solving this problem, and most large companies have data engineers who build ETL pipelines for converting web data into something more amenable to LLM training.
 
-## Code Data (20%)
+## B. Code Data (20%)
 
-Publicly permissible data from GitHub was used to train the model. Code data tends to be a very high quality for training LLMs - programming language grammar is self-defined and fully described, the syntax is much smaller compared to natural languages, a lot of eccentricities and redundancies built into human language (like morphology) are not present in programming languages etc. A cool paper from a few years ago, [Language Models of Code are Few-Shot Commonsense Learners](https://arxiv.org/abs/2210.07128), showed that *"pre-trained LMs of code are better structured commonsense reasoners than LMs of natural language, even when the downstream task does not involve source code at all"*.
+Publicly permissible data from GitHub was used to train the model. Code data tends to be a very high quality for training LLMs - programming language grammar is self-defined and fully described, the syntax is much smaller compared to natural languages, a lot of eccentricities and redundancies built into human language (like morphology) are not present in programming languages etc. 
 
-## Acquired Sources (10%)
+> [!hint] Author's Note: Code Data for LLMs
+>
+> A cool paper from a few years ago, [Language Models of Code are Few-Shot Commonsense Learners](https://arxiv.org/abs/2210.07128), showed that *"pre-trained LMs of code are better structured commonsense reasoners than LMs of natural language, even when the downstream task does not involve source code at all"*.
+
+## C. Acquired Sources (10%)
 
 The authors mention using reasoning-dense documents that are either publicly permissible to use (e.g. arXiv, PubMed Central) or were explicitly licensed by them (e.g. books) to include data that is more comprehensive and clean compared to web sourced data. 
 
@@ -145,17 +153,19 @@ So, it seems like research papers and textbooks largely comprised this acquired 
 
 Custom data extraction and cleaning pipelines were build for each of these sources *"(e.g., multi-file TeX source, ePub and other XML-like formats, Microsoft Word documents, and PDFs)"*. 
 
-> [!hint] Author's Note: Data Cleaning Pipeline
+> [!hint] Author's Note: Document Data Cleaning Pipeline
 > 
-> TODO
+> Similar to parsing web data for LLMs, parsing structured documents for LLMs is also a huge area of research and engineering in itself. Every major cloud provider has a service for it e.g. [Amazon's Textract](https://aws.amazon.com/textract/), [Google's Document AI](https://cloud.google.com/document-ai/docs). There are tons and tons of other open-source and partly open-source tools for this as well: [llamaparse](https://www.llamaindex.ai/llamaparse), [Mistral-OCR](https://mistral.ai/news/mistral-ocr) to name a few.
 
-## Synthetic Data (40%)
+## D. Synthetic Data (40%)
 
-Synthetic data generated from other LLMs was used to train Phi-4 quite extensively. Over 50 types of synthetic datasets were created - corresponding to around 400B unweighted tokens, using different sets of seeds and prompting procedures. The synthetic data generation follows an extensive pipeline, which is described below:
-### 1. Seed Curation
+Synthetic data generated from other LLMs was used to train phi-4 quite extensively. Over 50 types of synthetic datasets were created - corresponding to around 400B unweighted tokens, using different sets of seeds and prompting procedures. The synthetic data generation follows an extensive pipeline, which is described below:
+
+### D.1. Seed Curation
 
 First, high-quality "seeds" (i.e. real data that can be used as a starting point to generate synthetic data) was curated. The seeds are used for creating exercises, discussions, and reasoning tasks later in the synthetic data pipeline. 
-#### 1.1 Web and Code-based Seeds
+
+#### D.1.1 Web and Code-based Seeds
 
 The authors:
 
@@ -185,7 +195,7 @@ Dependencies: Previous GWAS findings, statistical methods (lines 10-15)
 > 
 > The authors do not provide any details on how this classification for "strong educational potential" or tagging of metadata was done. If I were to speculate, steps similar to filtering elsewhere in the data pipeline: e.g. context length, using small non-LLM classifiers, or using n-gram based statistics etc. were probably used. Maybe even human annotations?
 
-#### 1.2 Question Dataset Seeds
+#### D.1.2 Question Dataset Seeds
 
 Questions were sourced from websites, forums, and Q&A platforms, then filtered with a plurality-based technique. First, several answers were generated from the phi-4 model, then the cases with the following questions were discarded:
 
@@ -198,24 +208,29 @@ This gives a dataset of questions that are just 'challenging enough' for the mod
 > 
 > The paper mentions "The plurality answers were used in place of the ground truth in our rejection-sampling based generations" but doesn't elaborate on how exactly these plurality answers (from the majority voting process) were integrated into the rejection sampling pipeline. This likely means that instead of using the original "correct" answers from the datasets, they used the consensus answers from multiple model generations as the target for training.
 
-#### 1.3 Q&A Pairs Seeds from Acquired Sources
+#### D.1.3 Q&A Pairs Seeds from Acquired Sources
 
-LLMs were used to generate Q&A pairs from the code, books, and scientific pairs data collected (mentioned previously). No further details are given, but something akin to [Generate question/answer training pairs out of raw text](https://github.com/nestordemeure/question_extractor) was probably done where a prompt like extracts questions:
+LLMs were used to generate Q&A pairs from the code, books, and scientific pairs data collected (mentioned previously). 
 
-```
-You are an expert user extracting information to quiz people on documentation. You will be passed a page extracted from the documentation, write a numbered list of questions that can be answered based *solely* on the given text.
-```
+> [!hint] Author's Note: Q&A Pair Generation
+>
+> No further details are given, but something akin to [Generate question/answer training pairs out of raw text](https://github.com/nestordemeure/question_extractor) was probably done where a prompt like this extracts questions:
+>
+> ```
+> You are an expert user extracting information to quiz people on documentation. You will be passed a page extracted from the documentation, write a numbered list of questions that can be answered based *solely* on the given text.
+> ```
+> 
+> And a follow-up prompt like this one extracts answers:
+> 
+> ```
+> You are an expert user answering questions. You will be passed a page extracted from a documentation and a question. Generate a comprehensive and informative answer to the question based *solely* on the given text.
+> ```
 
-And something like the following prompt extracts answers:
-
-```
-You are an expert user answering questions. You will be passed a page extracted from a documentation and a question. Generate a comprehensive and informative answer to the question based *solely* on the given text.
-```
-### 2. Rewrite and Augment
+### D.2. Rewrite and Augment
 
 Seeds are changed into synthetic data using LLMs to rewrite useful content into "exercises, discussions, or structured reasoning tasks."
 
-#### 2.1 Creating Conversations from Snippets
+#### D.2.1 Creating Conversations from Snippets
 
 One component of the synthetic data generation pipeline involves converting the phrases into discussions, following these steps:
 
@@ -225,9 +240,9 @@ One component of the synthetic data generation pipeline involves converting the 
   
 - Lastly, self-revision is used after each dialogue turn to evaluate the responses, in order to maximize nuance and complexity. See the next subsection for an example of a self-revision prompt used.
 
-#### 2.2 Fill-in-the-middle Exercises
+#### D.2.2 Fill-in-the-middle Exercises
 
-Fill-in-the-middle exercises represent an innovative approach to creating language training data from existing code snippets. The Phi-4 authors used a technique where they take functional code and strategically remove portions, creating exercises that require the model to reconstruct the missing segments.
+Fill-in-the-middle exercises represent an innovative approach to creating language training data from existing code snippets. The phi-4 authors used a technique where they take functional code and strategically remove portions, creating exercises that require the model to reconstruct the missing segments.
 
 The process works by taking code snippets, writing a prompt (given below) that describes the code context and asks a model to generate a text description and code solution for it. When the generated response matches with the removed code snippet, it is included in training data.
 
@@ -294,12 +309,13 @@ The process works by taking code snippets, writing a prompt (given below) that d
 >   on the exact count of visits that should trigger allowances.
 
 
-#### 2.3 Agent task trajectories
+#### D.2.3 Agent task trajectories
 
 [AgentKit](https://arxiv.org/abs/2404.11483) - a framework for LLM prompting for multifunctional agents, was used to create task trajectories for long horizon tasks with chain-of-thought reasoning. The phi-4 authors ran AgentKit on various environments, and rewrote the guided raw reasoning outputs into a variety of self-contained thoughts and statements. It lead to improvement in planning, reasoning, tool use, math, and error correction on Microsoft's internal benchmarks.
 
-> [!info]- Example of Phi-4 interacting with Tower of Hanoi
+> [!info]- Example of phi-4 interacting with Tower of Hanoi
 >
+> ```md
 > Analyzing the current situation and reflecting on past actions is crucial for determining the next best step. Here's a breakdown of the thought process:
 > 
 > ### Analysis of Current and Past Environment
@@ -373,8 +389,9 @@ The process works by taking code snippets, writing a prompt (given below) that d
 > </updated plan>
 > 
 > <action>Move the top disk of rod B to the top of rod C</action>
+> ```
 
-### 3. Self-Revision
+### D.3. Self-Revision
 
 The responses then goes through an iterative self-revision process, where a model (not mentioned, but probably GPT-4o) is used to critique and improve its outputs, with rubrics focussed on reasoning and factual accuracy.
 
@@ -445,7 +462,7 @@ The responses then goes through an iterative self-revision process, where a mode
 > classical and non-classical pathways in epigenetics.  
 >
 
-### 4. Instruction Reversal
+### D.4. Instruction Reversal
 
 Instruction Reversal is a technique used to improve the model's ability to generate outputs from instructions. 
 
@@ -456,7 +473,8 @@ Instruction Reversal is a technique used to improve the model's ability to gener
 - From the regenerated code (using an LLM), the fidelity between the regenerated code and original code is compared.
 
 Only data where the fidelity between the original code and the regenerated code is high is retained for pre-training.
-### 5. Validation
+
+### D.5. Validation
 
 Further validation of the generated synthetic data is done wherever possible:
 
@@ -465,11 +483,11 @@ Further validation of the generated synthetic data is done wherever possible:
   
 > [!hint] Author's Note: Validation
 > 
-> NLP has long-standing research problems such as [entailment](https://en.wikipedia.org/wiki/Textual_entailment) and [grounding](https://arxiv.org/abs/2106.02192) which investigate the verification of text generated from models in real world information.
+> NLP has long-standing research problems such as [entailment](https://en.wikipedia.org/wiki/Textual_entailment) and [grounding](https://arxiv.org/abs/2106.02192) which investigate the verification of text generated from models in real world information. Microsoft published a recent article called [Claimify](https://www.microsoft.com/en-us/research/blog/claimify-extracting-high-quality-claims-from-language-model-outputs/) which showcases an approach on verifying claims made in LLM outputs.
 
-## Web Rewrites (15%)
+## E. Web Rewrites (15%)
 
-According to the Phi-4 technical report:
+According to the phi-4 technical report:
 
 > *"Web rewrites is a sub-category of synthetic data that is substantially large and contains direct rewrites of web content"*
 
@@ -494,7 +512,7 @@ According to the Phi-4 technical report:
 > 
 > This was the first time I came across the term "**mid-training**" for LLMs. Granted that I haven't done deep dives into LLM papers in the last 1-1.5 years, but it seems like mid-training is a new term for LLM folks too. This article is a great summary [What's the deal with mid-training?](https://vintagedata.org/blog/posts/what-is-mid-training) In summary, it is a re-branding of the training steps that most people would previously consider part of pre-training, but these steps seem key to implementing a training curriculum which improves reasoning performance or long-context performance of LLMs.
 
-For Phi-4, the mid-training process specifically involved expanding the **context length** in training from 4K tokens to 16K tokens. Context length is the number of tokens a model considers as part of its likelihood when calculating the conditional probability for generating the next token in an autoregressive manner. If that sounds like mumbo-jumbo, just think of the context length as the tokens previously generated that influence the generation of the next token, in addition to the model's knowledge of course. 
+For phi-4, the mid-training process specifically involved expanding the **context length** in training from 4K tokens to 16K tokens. Context length is the number of tokens a model considers as part of its likelihood when calculating the conditional probability for generating the next token in an autoregressive manner. If that sounds like mumbo-jumbo, just think of the context length as the tokens previously generated that influence the generation of the next token, in addition to the model's knowledge of course. 
 
 How is this done? All "high-quality" organic data sources (i.e.e the Acquired Sources and Code Data) was filtered to obtain the samples above 8K tokens in length. Next, the samples that were 16K or higher in length were up-weighted (i.e. they would appear more frequently during this training stage). 
 
@@ -523,7 +541,7 @@ The details of the SFT dataset used for phi-4 are quite sparse.  Here is what we
 
 ## Preference Optimization
 
-Phi-4 uses DPO (Direct Preference Optimization) as its algorithm for aligning the LLM outputs with human preference, and also to perform safety related controls. 
+phi-4 uses DPO (Direct Preference Optimization) as its algorithm for aligning the LLM outputs with human preference, and also to perform safety related controls. 
 
 DPO is done over two rounds: first using a technique introduced in the paper called Pivotal Token Search (PTS) to generate 250K preference pairs, followed by judge-guided DPO where a approximately 850K pairs of desired versus undesired outputs are used. 
 
@@ -538,7 +556,7 @@ DPO is done over two rounds: first using a technique introduced in the paper cal
 | cpp, go, java, js, rust data | 21,806       |
 | **Total pairs**              | **250,297**  |
 
-*Table 7 in the Phi-4 report summarizes the data mixture used for the Pivotal Token DPO*
+*Table 7 in the phi-4 report summarizes the data mixture used for the Pivotal Token DPO*
 
 Without going into a lot of technical detail, pivotal tokens are those which significantly influence the probability of a response being correct. Pivotal Token Search (PTS) is used on . It creates preference pairs by generating two responses which vary starting from a preference token, particularly for cases where $0.2 <= p(success) <= 0.8$ 
 
@@ -569,9 +587,9 @@ Example of pair generated with PTS:
 | any vs any accuracy    | 532,000      |
 | **Total pairs**        | **841,842**  |
 
-*Table 8 in the Phi-4 report summarizes the data mixture used for the Judge-Guided DPO*
+*Table 8 in the phi-4 report summarizes the data mixture used for the Judge-Guided DPO*
 
-For judge-guided DPO, first prompts are sourced from publicly available instruction tuning datasets and safety and responsible ai datasets. Next, GPT-4o, GPT-4t and Phi-4 are used to generate responses for these prompts. Various combinations of answer pairs are generated from these responses, and GPT-4o is used as the judge to label positive/negative sample in a pair. Each response is scored on accuracy, style and detail - and either the higher accuracy or higher overall score is taken as the positive sample. 
+For judge-guided DPO, first prompts are sourced from publicly available instruction tuning datasets and safety and responsible ai datasets. Next, GPT-4o, GPT-4t and phi-4 are used to generate responses for these prompts. Various combinations of answer pairs are generated from these responses, and GPT-4o is used as the judge to label positive/negative sample in a pair. Each response is scored on accuracy, style and detail - and either the higher accuracy or higher overall score is taken as the positive sample. 
 
 Here is the GPT-4o prompt used to generate the accuracy, style and detail ratings:
 
@@ -613,9 +631,9 @@ Here is the GPT-4o prompt used to generate the accuracy, style and detail rating
 
 Hallucination is the tendency of LLMs to generate wrong answers for questions that they don't have knowledge to answer correctly, or unable to synthesize their knowledge correctly. 
 
-For Phi-4, the authors focussed on letting the model learn "as much...as possible" during pre-training i.e. not perform any hallucination mitigation training, instead  performing it post-training. 
+For phi-4, the authors focussed on letting the model learn "as much...as possible" during pre-training i.e. not perform any hallucination mitigation training, instead  performing it post-training. 
 
-How as this done? First, Phi-4 was run multiple times on questions to estimate its ability to solve a question. For reference, consistency across multiple LLM generations is a simple but very useful approach towards hallucination mitigation (for other common approaches, see my tutorial at last year's Toronto Machine Learning Summit: [A Practitioner's Guide To Safeguarding Your LLM Applications](https://github.com/sshkhr/safeguarding-llms))
+How as this done? First, phi-4 was run multiple times on questions to estimate its ability to solve a question. For reference, consistency across multiple LLM generations is a simple but very useful approach towards hallucination mitigation (for other common approaches, see my tutorial at last year's Toronto Machine Learning Summit: [A Practitioner's Guide To Safeguarding Your LLM Applications](https://github.com/sshkhr/safeguarding-llms))
 
 Additionally, GPT-4o was used to generate
 - a correct answer
@@ -627,8 +645,8 @@ Additionally, GPT-4o was used to generate
 
 During SFT, the model was trained on following Q&A pairs to ensure that it refuses to answer questions instead of coming up with bogus answers:
 
-- (question, correct answer) for questions where Phi-4 was usually correct
-- (question, refusal) for questions where Phi-4 was usually incorrect
+- (question, correct answer) for questions where phi-4 was usually correct
+- (question, refusal) for questions where phi-4 was usually incorrect
 - (bogus question, refusal) for all bogus questions
   
 ### RLHF Hallucination Mitigation
