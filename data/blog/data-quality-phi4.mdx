@@ -26,7 +26,7 @@ Before we proceed with discussing the data pipeline for phi-4, it would be helpf
 - **Supervised Fine-Tuning (SFT):** Supervised learning of LLMs for things like chat modelling on a smaller labeled data corpus 
 - **Reinforcement Learning From Human Feedback (RLHF):** Reinforcement learning of LLMs to align their outputs with human-desired values by training on human preference data
 
-SFT and RLHF are often clubbed together under the banner of "**Post-Training**" - since pre-training comprises the bulk of compute FLOPs involved in training the LLM compared to these two.
+SFT and RLHF are often grouped together under the banner of "**Post-Training**" - since pre-training comprises the bulk of compute FLOPs involved in training the LLM compared to these two.
 
 ![Training Cake](/static/images/training-cake.png)
 <small><small>*Yann LeCun gave a great visual metaphor for these three training stages with his cake analogy at [Predictive Learning, NIPS 2016 Talk](https://www.youtube.com/watch?v=Ount2Y4qxQo&t=1072s). This analogy transfers very well to training of LLMs today with pre-training, SFT and RLHF.*</small></small>
@@ -68,9 +68,13 @@ The 10T pretraining tokens are made up of a cocktail of data from various source
 | Acquired sources | 10%                  | 580B               | 1.7              | 0.986T            |
 |                  |                      |                    | **Total tokens** | **~10T**          |
 
-<small>*Table 5 in the phi-4 Report summarizes the data mix used in the pre-training process - last column added by me*</small>
+<small><small>*Table 5 in the phi-4 Report summarizes the data mix used in the pre-training process - last column added by me*</small></small>
 
-Let's see what each of these pre-training data sources consist of. **Over half of the pre-training data (40% for Synthetic + 15% for Web rewrites) was not human generated data - instead it was generated from other LLMs with a lot of expert curation!🤯**. Since the Synthetic Data is the single largest, and perhaps most promising part of the training mix, we will discuss it last and in detail.
+> [!hint] Author's Note: Synthetic Data for Pre-Training
+>
+> **Over half of the pre-training data (40% for Synthetic + 15% for Web rewrites) was not human generated data - instead it was generated from other LLMs with a lot of expert curation 🤯** Compare this to the [Llama-2 13B model](https://arxiv.org/abs/2307.09288) of a similar size which come out a year before phi-4, and was trained on a similar order of real world data (2B tokens) - **but had 0% synthetic training data!**
+
+Let's do a deeper dive into what each of these pre-training data sources consist of. Since the Synthetic Data is the single largest, and perhaps most promising part of the training mix, we will discuss it last and in detail.
 
 ## A. Web Data (15%)
 
@@ -82,15 +86,13 @@ According to the authors, they knew that Q&A datasets are important for model ca
 
 > [!hint] Author's Note: Q&A Datasets
 > 
-> Beyond this brief blurb, there are no details about the exact Q&A datasets used in phi-4. It would be safe to consider that several of the standard Q&A datasets were used (check out [List of Question Answering datasets on Huggingface](https://huggingface.co/datasets?modality=modality:text&task_categories=task_categories:question-answering&sort=downloads)).
+> Standard Q&A datasets likely include [MMLU](https://arxiv.org/abs/2009.03300), [GSM8K](https://arxiv.org/abs/2110.14168), and collections from [BigBench](https://arxiv.org/abs/2206.04615). The "tens of millions" scale suggests scraping from Stack Exchange, Reddit's AskScience, and similar platforms. See [The Pile](https://arxiv.org/abs/2101.00027) for how Q&A data is typically sourced and filtered. It would be safe to consider that several of the standard Q&A datasets were used (check out [List of Question Answering datasets on Huggingface](https://huggingface.co/datasets?modality=modality:text&task_categories=task_categories:question-answering&sort=downloads)).
 
 Besides using the datasets, there were a bunch of data augmentations performed on the Q&A datasets to increase their size and quality. The authors mention using *"several ways to synthetically augment the dataset of organic questions to obtain a larger dataset"* and also *"replaced the (wrong) answers with synthetically generated ones and used majority-voting to increase accuracy"*. 
 
 > [!hint] Author's Notes: Question Rewriting Techniques
-> 
-> While the exact details of the "several ways" of synthetic augmentation are not specified, question rewriting is mentioned. This involves rephrasing questions while preserving their semantic meaning:
-> 
-> * "What was the last year that Brazil won the FIFA World Cup?" → "The FIFA World Cup was last won by Brazil in which year?"
+>  
+> Common augmentation methods include paraphrasing via [InstructGPT techniques](https://arxiv.org/abs/2203.02155) and back-translation. Microsoft's [GLAN paper](https://arxiv.org/abs/2402.13064) details systematic question generation approaches. See also [Self-Instruct](https://arxiv.org/abs/2212.10560) for automated instruction generation methods.
 > 
 > This is an active research area within NLP with various approaches - [PapersWithCode lists 15 research papers on question rewriting](https://paperswithcode.com/task/question-rewriting). 
 
@@ -107,9 +109,17 @@ The phi-4 authors mention that "organic questions" i.e. obtained from human data
 
 In order to avoid training on questions that are included in benchmark datasets used for performance evaluation, a decontamination algorithm was used on the Q&A data to remove such questions (and answers). The ARC-Easy, MBPP, phibench, CommonsenseQA, WinoGrande, mcphi, MedQA, MATH, AGIEval, PIQA, OpenBookQA, HellaSwag, GPQA, mt-bench, MMLUPro, GSM8k, HumanEval, arena hard, ARC-Challenge, and MMLU benchmarks were checked against. The exact algorithm is not key, but 7-gram and 13-gram features were used (i.e. sequential combinations of 7 and 13 words) and then compared against the features from benchmark sets.
 
+> [!hint] Author's Note: N-gram Decontamination
+> 
+> The 7/13-gram approach follows [GPT-3's decontamination](https://arxiv.org/abs/2005.14165) (Section 4.1). For more robust methods, see [Detecting Pretraining Data from LLMs](https://arxiv.org/abs/2310.16789) which uses Min-K% Prob for contamination detection.
+
 ### A.2 Multilingual Web Data
 
 Datasets from CommonCrawl and Wikipedia for languages like German, Spanish, French, Portuguese, Italian, Hindi, and Japanese were incorporated. The multilingual data filtering pipeline consisted of first classifying data into 176 languages [using a simple text classifier from fasttext](https://fasttext.cc/docs/en/language-identification.html) and then filtering data for quality using classifiers (discussed in next subsection). 
+
+> [!hint] Author's Note: Multilingual Data Processing
+> 
+> See [mT5](https://arxiv.org/abs/2010.11934) and [ROOTS](https://arxiv.org/abs/2303.03915) for multilingual filtering pipelines. [CulturaX](https://arxiv.org/abs/2309.09400) details language-specific quality thresholds. For tokenization challenges, see [No Language Left Behind](https://arxiv.org/abs/2207.04672).
 
 ### A.3 Filtered Web Dumps
 
@@ -127,15 +137,16 @@ Web dumps, as implied by their name, are large uncurated collections which don't
 
 > [!hint] Author's Note: Compression Ratio
 > 
-> Compressions ratios are measure of how information dense a piece of text is. 
-> 
-> In [The Story Behind Data Compression and LLM Performance](https://arxiv.org/abs/2407.06645v1), the authors showed a theoretical and empirical proof that training on data that is low in compression ratio tends to help LLM performance during SFT and RLHF. 
+> Compressions ratios are measure of how information dense a piece of text is. In [The Story Behind Data Compression and LLM Performance](https://arxiv.org/abs/2407.06645v1), the authors showed a theoretical and empirical proof that training on data that is low in compression ratio tends to help LLM performance during SFT and RLHF. See also [Compression Represents Intelligence Linearly](https://arxiv.org/abs/2404.09937v1) for a theoretical discussion on how compression efficiency of text data corresponds to LLM capabilities.
 
 - Finally, a custom HTML-to-text extractor was used on web data, to preserve text data that gets corrupted by naive parsers (e.g., TeX/MathML equations, code blocks, tables, and forum thread structure). This parses is based on various heuristics such as HTML tag names, CSS classes, content length, and depth of the DOM tree. 
 
 > [!hint] Author's Note:  Parsing Web Data for LLMs
 > 
-> While details are missing in the phi-4 paper, I would like to emphasize good parsing of web data for LLM training is a very challenging problem in of itself. There are entire companies ([Unstructured.io](https://unstructured.io/), [Datalab](https://www.datalab.to/), [JINA Reader](https://github.com/jina-ai/reader) among others) focussed on solving this problem, and most large companies have data engineers who build ETL pipelines for converting web data into something more amenable to LLM training.
+> While details are missing in the phi-4 paper, I would like to emphasize good parsing of web data for LLM training is a very challenging problem in of itself. There are entire companies ([Unstructured.io](https://unstructured.io/), [Datalab](https://www.datalab.to/), [JINA Reader](https://github.com/jina-ai/reader) among others) focused on solving this problem, and most large companies have data engineers who build ETL pipelines for converting web data into something more amenable to LLM training.
+>
+> 
+> [Trafilatura](https://github.com/adbar/trafilatura) and [Readability](https://github.com/mozilla/readability) are standard tools. For math extraction, see [LaTeX-OCR](https://github.com/lukas-blecher/LaTeX-OCR) and [MathPix](https://mathpix.com/). The [CommonCrawl extraction pipeline](https://github.com/commoncrawl/cc-pyspark) shows production-scale HTML processing.
 
 ## B. Code Data (20%)
 
@@ -191,9 +202,11 @@ Reasoning Steps:
 Dependencies: Previous GWAS findings, statistical methods (lines 10-15)
 ```
 
-> [!question] Page -> Passage, but how?
+> [!hint] Author's Note: Passage Segmentation
 > 
-> The authors do not provide any details on how this classification for "strong educational potential" or tagging of metadata was done. If I were to speculate, steps similar to filtering elsewhere in the data pipeline: e.g. context length, using small non-LLM classifiers, or using n-gram based statistics etc. were probably used. Maybe even human annotations?
+> The authors do not provide any details on how this classification for "strong educational potential" or tagging of metadata was done. But [Textbooks Are All You Need](https://arxiv.org/abs/2306.11644) (phi-1) was one of the first to introduce this approach of chosing high-educational content based training data. [The FineWeb-Edu paper](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1) describes training classifiers on educational annotations. See also [QWEN's data pipeline](https://arxiv.org/abs/2407.10671) for educational scoring metrics. 
+>
+> Other works that discuss this: [Longformer](https://arxiv.org/abs/2004.05150) introduced sliding window approaches for passage segmentation. [Dense Passage Retrieval](https://arxiv.org/abs/2004.04906) uses 100-word passages. For educational segmentation specifically, see [MathInstruct](https://arxiv.org/abs/2309.16713).
 
 #### D.1.2 Question Dataset Seeds
 
@@ -243,6 +256,10 @@ One component of the synthetic data generation pipeline involves converting the 
 #### D.2.2 Fill-in-the-middle Exercises
 
 Fill-in-the-middle exercises represent an innovative approach to creating language training data from existing code snippets. The phi-4 authors used a technique where they take functional code and strategically remove portions, creating exercises that require the model to reconstruct the missing segments.
+
+> [!hint] Author's Note: Fill-in-the-Middle Training
+> 
+> FIM was introduced in [Efficient Training of Language Models to Fill in the Middle](https://arxiv.org/abs/2207.14255). [CodeLlama](https://arxiv.org/abs/2308.12950) (Section 2.3) details infilling implementation for code. [StarCoder](https://arxiv.org/abs/2305.06161) shows FIM's impact on real-world code completion.
 
 The process works by taking code snippets, writing a prompt (given below) that describes the code context and asks a model to generate a text description and code solution for it. When the generated response matches with the removed code snippet, it is included in training data.
 
@@ -393,7 +410,7 @@ The process works by taking code snippets, writing a prompt (given below) that d
 
 ### D.3. Self-Revision
 
-The responses then goes through an iterative self-revision process, where a model (not mentioned, but probably GPT-4o) is used to critique and improve its outputs, with rubrics focussed on reasoning and factual accuracy.
+The responses then goes through an iterative self-revision process, where a model (not mentioned, but probably GPT-4o) is used to critique and improve its outputs, with rubrics focused on reasoning and factual accuracy.
 
 
 > [!info]- Self-Revision Prompt Example
@@ -466,6 +483,10 @@ The responses then goes through an iterative self-revision process, where a mode
 
 Instruction Reversal is a technique used to improve the model's ability to generate outputs from instructions. 
 
+> [!hint] Author's Note: Instruction Backtranslation
+> 
+> The instruction reversal technique originates from [Self-Alignment with Instruction Backtranslation](https://arxiv.org/abs/2308.06259). It is similar to the older [Unnatural Instructions](https://arxiv.org/abs/2212.09689) technique, but generates instructions from outputs rather than vice versa. [Code Alpaca](https://github.com/sahil280114/codealpaca) implements this for code.
+
 - First, code snippets from code data corpus are used to generate problem descriptions/task prompts with corresponding instructions.
   
 - Resulting data is paired, with instruction appearing before the code during training.
@@ -474,11 +495,12 @@ Instruction Reversal is a technique used to improve the model's ability to gener
 
 Only data where the fidelity between the original code and the regenerated code is high is retained for pre-training.
 
+
 ### D.5. Validation
 
 Further validation of the generated synthetic data is done wherever possible:
 
-- For code data, the code is executed and tests run to ensure if is reasonable
+- For code data, the code is executed and tests run to ensure if is reasonable.
 - For scientific data, questions are extracted to ensure *"high relevance, groundedness, and difficulty balance"*.
   
 > [!hint] Author's Note: Validation
@@ -508,19 +530,24 @@ According to the phi-4 technical report:
 </div>
 
 
-> [!hint] Author's Note
+> [!hint] Author's Note: Mid-Training
 > 
 > This was the first time I came across the term "**mid-training**" for LLMs. Granted that I haven't done deep dives into LLM papers in the last 1-1.5 years, but it seems like mid-training is a new term for LLM folks too. This article is a great summary [What's the deal with mid-training?](https://vintagedata.org/blog/posts/what-is-mid-training) In summary, it is a re-branding of the training steps that most people would previously consider part of pre-training, but these steps seem key to implementing a training curriculum which improves reasoning performance or long-context performance of LLMs.
 
 For phi-4, the mid-training process specifically involved expanding the **context length** in training from 4K tokens to 16K tokens. Context length is the number of tokens a model considers as part of its likelihood when calculating the conditional probability for generating the next token in an autoregressive manner. If that sounds like mumbo-jumbo, just think of the context length as the tokens previously generated that influence the generation of the next token, in addition to the model's knowledge of course. 
 
-How is this done? All "high-quality" organic data sources (i.e.e the Acquired Sources and Code Data) was filtered to obtain the samples above 8K tokens in length. Next, the samples that were 16K or higher in length were up-weighted (i.e. they would appear more frequently during this training stage). 
+How is this done? All "high-quality" organic data sources (i.e. the Acquired Sources and Code Data) was filtered to obtain the samples above 8K tokens in length. Next, the samples that were 16K or higher in length were up-weighted (i.e. they would appear more frequently during this training stage). 
 
 The mid-training step was carried out for a total of **250B tokens**.
+
+> [!hint] Author's Note: Mid-training Context Length
+>
+> [DeepSeek-V3](https://arxiv.org/abs/2412.19437) and V-2 uses a two-phase mid-training for increasing context lengths. [Long Context Scaling Laws](https://arxiv.org/abs/2410.02660) explains why gradual curriculum based context extension works. 
 
 # Post-Training
 
 As mentioned earlier, post-training is done to turn the LLM into a chat assistant, and to make sure that its responses align with human values (to be more pedantic, the values of the folks training the model). 
+
 ## Supervised Fine-Tuning
 
 The SFT training step was carried out for a total of **8B tokens**.
@@ -545,6 +572,10 @@ phi-4 uses DPO (Direct Preference Optimization) as its algorithm for aligning th
 
 DPO is done over two rounds: first using a technique introduced in the paper called Pivotal Token Search (PTS) to generate 250K preference pairs, followed by judge-guided DPO where a approximately 850K pairs of desired versus undesired outputs are used. 
 
+> [!hint] Author's Note: Safety Data Curation
+> 
+> Both stages of DPO mention using safety data for preference optimization. See [Constitutional AI](https://arxiv.org/abs/2212.08073) for systematic safety data generation. [Red Teaming Language Models](https://arxiv.org/abs/2209.07858) details adversarial prompt collection. Microsoft's [Safety-Tuned LLaMAs](https://arxiv.org/abs/2309.07875) describes their safety taxonomy.
+
 ### Pivotal Token DPO
 
 | Dataset Name                 | Sample Count |
@@ -556,7 +587,7 @@ DPO is done over two rounds: first using a technique introduced in the paper cal
 | cpp, go, java, js, rust data | 21,806       |
 | **Total pairs**              | **250,297**  |
 
-*Table 7 in the phi-4 report summarizes the data mixture used for the Pivotal Token DPO*
+<small><small>*Table 7 in the phi-4 report summarizes the data mixture used for the Pivotal Token DPO*</small></small>
 
 Without going into a lot of technical detail, pivotal tokens are those which significantly influence the probability of a response being correct. Pivotal Token Search (PTS) is used on . It creates preference pairs by generating two responses which vary starting from a preference token, particularly for cases where $0.2 <= p(success) <= 0.8$ 
 
@@ -587,7 +618,7 @@ Example of pair generated with PTS:
 | any vs any accuracy    | 532,000      |
 | **Total pairs**        | **841,842**  |
 
-*Table 8 in the phi-4 report summarizes the data mixture used for the Judge-Guided DPO*
+<small><small>*Table 8 in the phi-4 report summarizes the data mixture used for the Judge-Guided DPO*</small></small>
 
 For judge-guided DPO, first prompts are sourced from publicly available instruction tuning datasets and safety and responsible ai datasets. Next, GPT-4o, GPT-4t and phi-4 are used to generate responses for these prompts. Various combinations of answer pairs are generated from these responses, and GPT-4o is used as the judge to label positive/negative sample in a pair. Each response is scored on accuracy, style and detail - and either the higher accuracy or higher overall score is taken as the positive sample. 
 
@@ -631,7 +662,7 @@ Here is the GPT-4o prompt used to generate the accuracy, style and detail rating
 
 Hallucination is the tendency of LLMs to generate wrong answers for questions that they don't have knowledge to answer correctly, or unable to synthesize their knowledge correctly. 
 
-For phi-4, the authors focussed on letting the model learn "as much...as possible" during pre-training i.e. not perform any hallucination mitigation training, instead  performing it post-training. 
+For phi-4, the authors focused on letting the model learn "as much...as possible" during pre-training i.e. not perform any hallucination mitigation training, instead  performing it post-training. 
 
 How as this done? First, phi-4 was run multiple times on questions to estimate its ability to solve a question. For reference, consistency across multiple LLM generations is a simple but very useful approach towards hallucination mitigation (for other common approaches, see my tutorial at last year's Toronto Machine Learning Summit: [A Practitioner's Guide To Safeguarding Your LLM Applications](https://github.com/sshkhr/safeguarding-llms))
 
@@ -658,7 +689,7 @@ For preference rating, the phi-4 model was given the following signal:
 
 # Final Thoughts
 
-Inductive biases (e.g. convolutions, graph neural networks) tailored towards exploiting inherent structure in the data are efficient at learning from little data and the pre-GPT3 machine learning (ML) research focussed a lot on getting their architectural details right. During my time doing ML research (2019-23), there was this slow but sure realization that happened across the ML research community that model idiosyncrasies are usually overcome given enough, and the right kind of training data. A testament to this fact in my own research journey was the fact that I went from writing papers like [Knowledge-enabled vqa model that can read and reason](http://openaccess.thecvf.com/content_ICCV_2019/html/Singh_From_Strings_to_Things_Knowledge-Enabled_VQA_Model_That_Can_Read_ICCV_2019_paper.html) and [Neural Structure Mapping For Learning Abstract Visual Analogies](https://openreview.net/forum?id=By5Uwd_xzNF) (both focussed on exploiting inherent properties of the data via model structure) to papers like [Beating power law scaling via data pruning](https://proceedings.neurips.cc/paper_files/paper/2022/hash/7b75da9b61eda40fa35453ee5d077df6-Abstract-Conference.html) and [Photorealistic and semantically controllable synthetic data for representation learning](https://proceedings.neurips.cc/paper_files/paper/2023/hash/8d352fd0f07fde4a74f9476603b3773b-Abstract-Datasets_and_Benchmarks.html) (both aimed at obtaining training data that fit a desirable property to be modelled).
+Inductive biases (e.g. convolutions, graph neural networks) tailored towards exploiting inherent structure in the data are efficient at learning from little data and the pre-GPT3 machine learning (ML) research focused a lot on getting their architectural details right. During my time doing ML research (2019-23), there was this slow but sure realization that happened across the ML research community that model idiosyncrasies are usually overcome given enough, and the right kind of training data. A testament to this fact in my own research journey was the fact that I went from writing papers like [Knowledge-enabled vqa model that can read and reason](http://openaccess.thecvf.com/content_ICCV_2019/html/Singh_From_Strings_to_Things_Knowledge-Enabled_VQA_Model_That_Can_Read_ICCV_2019_paper.html) and [Neural Structure Mapping For Learning Abstract Visual Analogies](https://openreview.net/forum?id=By5Uwd_xzNF) (both focused on exploiting inherent properties of the data via model structure) to papers like [Beating power law scaling via data pruning](https://proceedings.neurips.cc/paper_files/paper/2022/hash/7b75da9b61eda40fa35453ee5d077df6-Abstract-Conference.html) and [Photorealistic and semantically controllable synthetic data for representation learning](https://proceedings.neurips.cc/paper_files/paper/2023/hash/8d352fd0f07fde4a74f9476603b3773b-Abstract-Datasets_and_Benchmarks.html) (both aimed at obtaining training data that fit a desirable property to be modelled).
 
 <div className="-mx-2 flex flex-wrap justify-center overflow-hidden xl:-mx-2">
   <div className="my-1 w-full overflow-hidden px-2 xl:my-1 xl:w-3/4 xl:px-2">
