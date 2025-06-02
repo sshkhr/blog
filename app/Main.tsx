@@ -21,11 +21,11 @@ export default function Home({ posts }) {
             </h1>
             <div className="prose mt-4 max-w-full text-gray-500 dark:text-gray-400 sm:max-w-xl sm:text-lg md:max-w-2xl md:text-xl lg:text-2xl">
               <p>
-                I am the co-founder of <a href="https://www.dice.health/">Dice Health</a>, where I
-                wear many hats. Before Dice, I mostly did machine learning engineering and{' '}
-                <a href="/research">research</a>. I enjoy working on different{' '}
-                <a href="/projects">projects</a>, and <a href="/blog">writing</a> about things I
-                learn. You can read more <a href="/about">about me</a> or contact me here.
+                I do machine learning research and engineering. This website is my place to talk
+                about about <a href="/research">ML</a>,{' '}
+                <a href="https://www.dice.health/">startups</a>, interesting{' '}
+                <a href="/projects">projects</a>, <a href="/blog">writing</a>, and learning.
+                Speaking of which, you can learn more <a href="/about">about me</a> here.
               </p>
             </div>
           </div>
