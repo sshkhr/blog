@@ -30,7 +30,7 @@ const talksData: Talk[] = [
     youtubeURL: 'https://www.youtube.com/watch?v=wC_2dO2lKWk',
     githubURL: 'https://github.com/sshkhr/MinText',
     summary:
-      'Gave a talk in the Inference Scaling track on how the Flash Multi-Head Latent Attention algorithm for NVIDIA Hopper GPUs works.',
+      'Conducted a workshop on distributed training (data parallelism, FSDP, Tensor Parallelism) of Large Language Models (LLMs) using the MinText JAX library I wrote.',
   },
   {
     title: "A Practitioner's Guide to Safeguarding Your LLM Applications",
