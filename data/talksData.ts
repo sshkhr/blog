@@ -11,12 +11,33 @@ interface Talk {
 
 const talksData: Talk[] = [
   {
+    title: 'Case Study: How Does DeepSeek’s FlashMLA Speed up Inference',
+    venue: 'Toronto Machine Learning Summit',
+    year: 2025,
+    imgSrc: '/static/images/talks/tmls-logo.png',
+    youtubeURL: 'https://www.youtube.com/watch?v=KnaT7utCvl8',
+    slidesURL:
+      'https://docs.google.com/presentation/d/1r8hnsOp6EOYgkhmn-hlJLwXLqvPiIyVEZHtyQzdoWUU/edit?usp=sharing',
+    summary:
+      'Gave a talk in the Inference Scaling track on how the Flash Multi-Head Latent Attention algorithm for NVIDIA Hopper GPUs works.',
+  },
+  {
+    title:
+      'Scaling Large Language Models: Getting Started with Large-Scale Parallel Training of LLMs',
+    venue: 'TMLS Workshop',
+    year: 2025,
+    imgSrc: '/static/images/talks/tmls-logo.png',
+    youtubeURL: 'https://www.youtube.com/watch?v=wC_2dO2lKWk',
+    githubURL: 'https://github.com/sshkhr/MinText',
+    summary:
+      'Gave a talk in the Inference Scaling track on how the Flash Multi-Head Latent Attention algorithm for NVIDIA Hopper GPUs works.',
+  },
+  {
     title: "A Practitioner's Guide to Safeguarding Your LLM Applications",
     venue: 'Toronto Machine Learning Summit',
     year: 2024,
     imgSrc: '/static/images/talks/tmls-logo.png',
-    youtubeURL:
-      'https://www.youtube.com/watch?v=NMYIj1U8DRM&list=PLH-rpi_agJT0MJXa0CkH8-coE7NfqEUo1&index=6&t=3887s',
+    youtubeURL: 'https://www.youtube.com/watch?v=NMYIj1U8DRM',
     slidesURL:
       'https://docs.google.com/presentation/d/1mpyrzLCw1aqfBZtVxVJhBcnDp4iCgL0Woo4YcNa1yaM/',
     githubURL: 'https://github.com/sshkhr/safeguarding-llms',
