@@ -15,6 +15,45 @@ interface Project {
 
 const projectsData: Project[] = [
   {
+    title: 'MinText',
+    description: `Minimalistic 4D-parallelism distributed training and inference framework in JAX.`,
+    imgSrc: '/static/images/flax.webp',
+    techStack: ['JAX'],
+    topics: ['Machine Learning'],
+    languages: ['Python'],
+    githubURL: 'https://github.com/sshkhr/MinText',
+    websiteURL: 'https://mintext.readthedocs.io',
+  },
+  {
+    title: 'noPR',
+    description: `Browser extension that adds a simple UI filter to GitHub issues page to show 
+    issues with or without linked pull requests.`,
+    imgSrc: '/static/images/noPR-logo.png',
+    techStack: ['Chrome', 'Firefox'],
+    topics: ['Frontend'],
+    languages: ['JavaScript'],
+    githubURL: 'https://github.com/sshkhr/noPR',
+    websiteURL: 'https://addons.mozilla.org/en-GB/firefox/addon/nopr-filter/',
+  },
+  {
+    title: 'nanoGPT-TPU',
+    description: `Karpathy's nanoGPT - a simple transformer implementation in Jax/Flax NNX API`,
+    imgSrc: '/static/images/nanogpt.jpg',
+    techStack: ['JAX'],
+    topics: ['Machine Learning'],
+    languages: ['Python'],
+    githubURL: 'https://github.com/sshkhr/nanoGPT-TPU',
+  },
+  {
+    title: 'minitorch',
+    description: `A pure Python re-implementation of the Torch API. Supports CUDA parallelism with Numba.`,
+    imgSrc: '/static/images/minitorch.svg',
+    techStack: ['PyTorch', 'NumPy'],
+    topics: ['Machine Learning'],
+    languages: ['Python'],
+    githubURL: 'https://github.com/sshkhr/minitorch',
+  },
+  {
     title: 'DLAI Companion',
     description: `Comprehensive notes and reviews for various courses offered by DeepLearning.AI on 
     topics related to ML Engineering and MLOps.`,

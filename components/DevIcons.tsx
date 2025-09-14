@@ -978,6 +978,215 @@ export const MaterialforMkDocs = () => {
   )
 }
 
+export const JAX = () => {
+  return (
+    <>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 451 260.81" width={24} height={24}>
+        <defs>
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `.cls-1{fill:#5e97f6;}.cls-1,.cls-2,.cls-3,.cls-4,.cls-5,.cls-6,.cls-7,.cls-8,.cls-9{stroke:#dce0df;stroke-linejoin:round;}.cls-2{fill:#2a56c6;}.cls-3{fill:#00796b;}.cls-4{fill:#3367d6;}.cls-5{fill:#26a69a;}.cls-6{fill:#9c27b0;}.cls-7{fill:#6a1b9a;}.cls-8{fill:#00695c;}.cls-9{fill:#ea80fc;}`,
+            }}
+          />
+        </defs>
+        <title>JAX Light Stroke</title>
+        <g id="Layer_2" data-name="Layer 2">
+          <g id="Layer_1-2" data-name="Layer 1">
+            <polygon
+              className="cls-1"
+              points="50.5 130.4 25.5 173.71 75.5 173.71 100.5 130.4 50.5 130.4"
+            />
+            <polygon
+              className="cls-1"
+              points="0.5 217.01 25.5 173.71 75.5 173.71 50.5 217.01 0.5 217.01"
+            />
+            <polygon
+              className="cls-1"
+              points="125.5 173.71 75.5 173.71 50.5 217.01 100.5 217.01 125.5 173.71"
+            />
+            <polygon
+              className="cls-1"
+              points="175.5 173.71 125.5 173.71 100.5 217.01 150.5 217.01 175.5 173.71"
+            />
+            <polygon
+              className="cls-1"
+              points="150.5 130.4 125.5 173.71 175.5 173.71 200.5 130.4 150.5 130.4"
+            />
+            <polygon
+              className="cls-1"
+              points="175.5 87.1 150.5 130.4 200.5 130.4 225.5 87.1 175.5 87.1"
+            />
+            <polygon
+              className="cls-1"
+              points="200.5 43.8 175.5 87.1 225.5 87.1 250.5 43.8 200.5 43.8"
+            />
+            <polygon
+              className="cls-1"
+              points="225.5 0.5 200.5 43.8 250.5 43.8 275.5 0.5 225.5 0.5"
+            />
+            <polygon
+              className="cls-2"
+              points="0.5 217.01 25.5 260.31 75.5 260.31 50.5 217.01 0.5 217.01"
+            />
+            <polygon
+              className="cls-2"
+              points="125.5 260.31 75.5 260.31 50.5 217.01 100.5 217.01 125.5 260.31"
+            />
+            <polygon
+              className="cls-2"
+              points="175.5 260.31 125.5 260.31 100.5 217.01 150.5 217.01 175.5 260.31"
+            />
+            <polygon
+              className="cls-3"
+              points="200.5 217.01 175.5 173.71 150.5 217.01 175.5 260.31 200.5 217.01"
+            />
+            <polygon className="cls-3" points="250.5 130.4 225.5 87.1 200.5 130.4 250.5 130.4" />
+            <polygon
+              className="cls-3"
+              points="250.5 43.8 225.5 87.1 250.5 130.4 275.5 87.1 250.5 43.8"
+            />
+            <polygon className="cls-4" points="125.5 173.71 100.5 130.4 75.5 173.71 125.5 173.71" />
+            <polygon
+              className="cls-5"
+              points="250.5 130.4 200.5 130.4 175.5 173.71 225.5 173.71 250.5 130.4"
+            />
+            <polygon
+              className="cls-5"
+              points="300.5 130.4 250.5 130.4 225.5 173.71 275.5 173.71 300.5 130.4"
+            />
+            <polygon
+              className="cls-6"
+              points="350.5 43.8 325.5 0.5 300.5 43.8 325.5 87.1 350.5 43.8"
+            />
+            <polygon
+              className="cls-6"
+              points="375.5 87.1 350.5 43.8 325.5 87.1 350.5 130.4 375.5 87.1"
+            />
+            <polygon
+              className="cls-6"
+              points="400.5 130.4 375.5 87.1 350.5 130.4 375.5 173.71 400.5 130.4"
+            />
+            <polygon
+              className="cls-6"
+              points="425.5 173.71 400.5 130.4 375.5 173.71 400.5 217.01 425.5 173.71"
+            />
+            <polygon
+              className="cls-6"
+              points="450.5 217.01 425.5 173.71 400.5 217.01 425.5 260.31 450.5 217.01"
+            />
+            <polygon
+              className="cls-6"
+              points="425.5 0.5 400.5 43.8 425.5 87.1 450.5 43.8 425.5 0.5"
+            />
+            <polygon
+              className="cls-6"
+              points="375.5 87.1 400.5 43.8 425.5 87.1 400.5 130.4 375.5 87.1"
+            />
+            <polygon
+              className="cls-6"
+              points="350.5 130.4 325.5 173.71 350.5 217.01 375.5 173.71 350.5 130.4"
+            />
+            <polygon
+              className="cls-6"
+              points="325.5 260.31 300.5 217.01 325.5 173.71 350.5 217.01 325.5 260.31"
+            />
+            <polygon
+              className="cls-7"
+              points="275.5 260.31 250.5 217.01 300.5 217.01 325.5 260.31 275.5 260.31"
+            />
+            <polygon
+              className="cls-8"
+              points="225.5 173.71 175.5 173.71 200.5 217.01 250.5 217.01 225.5 173.71"
+            />
+            <polygon
+              className="cls-8"
+              points="275.5 173.71 225.5 173.71 250.5 217.01 275.5 173.71"
+            />
+            <polygon
+              className="cls-8"
+              points="275.5 87.1 300.5 130.4 350.5 130.4 325.5 87.1 275.5 87.1"
+            />
+            <polygon
+              className="cls-8"
+              points="300.5 43.8 250.5 43.8 275.5 87.1 325.5 87.1 300.5 43.8"
+            />
+            <polygon
+              className="cls-8"
+              points="425.5 260.31 400.5 217.01 350.5 217.01 375.5 260.31 425.5 260.31"
+            />
+            <polygon
+              className="cls-8"
+              points="375.5 173.71 350.5 217.01 400.5 217.01 375.5 173.71"
+            />
+            <polygon
+              className="cls-9"
+              points="325.5 0.5 275.5 0.5 250.5 43.8 300.5 43.8 325.5 0.5"
+            />
+            <polygon
+              className="cls-9"
+              points="325.5 173.71 275.5 173.71 250.5 217.01 300.5 217.01 325.5 173.71"
+            />
+            <polygon
+              className="cls-9"
+              points="350.5 130.4 300.5 130.4 275.5 173.71 325.5 173.71 350.5 130.4"
+            />
+            <polygon
+              className="cls-9"
+              points="425.5 0.5 375.5 0.5 350.5 43.8 400.5 43.8 425.5 0.5"
+            />
+            <polygon className="cls-9" points="375.5 87.1 350.5 43.8 400.5 43.8 375.5 87.1" />
+          </g>
+        </g>
+      </svg>
+    </>
+  )
+}
+
+export const NumPy = () => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width={24} height={24}>
+      <g id="Layer_1" data-name="Layer 1">
+        <polygon
+          fill="#4DABCF"
+          points="220.93 127.14 151.77 92.23 75.87 130.11 146.9 165.78 220.93 127.14"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="252.63 143.14 325.14 179.74 249.91 217.52 178.77 181.79 252.63 143.14"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="349.47 92.76 423.96 130.11 357.34 163.57 284.68 126.92 349.47 92.76"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="317.41 76.67 250.35 43.05 184.01 76.15 253.11 111 317.41 76.67"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="264.98 365.44 264.98 456.95 346.22 416.41 346.13 324.86 264.98 365.44"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="346.1 292.91 346.01 202.32 264.98 242.6 264.98 333.22 346.1 292.91"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="443.63 275.93 443.63 367.8 374.34 402.38 374.29 310.93 443.63 275.93"
+        />
+        <polygon
+          fill="#4DABCF"
+          points="443.63 243.81 443.63 153.79 374.21 188.3 374.27 279.07 443.63 243.81"
+        />
+        <path
+          fill="#4D77CF"
+          d="M236.3,242.6l-54.72-27.51V334s-66.92-142.39-73.12-155.18c-.8-1.65-4.09-3.46-4.93-3.9-12-6.3-47.16-24.11-47.16-24.11V360.89l48.64,26V277.08s66.21,127.23,66.88,128.62,7.32,14.8,14.42,19.51c9.46,6.26,50,30.64,50,30.64Z"
+        />
+      </g>
+    </svg>
+  )
+}
+
 export const Jekyll = () => {
   return (
     <>
@@ -1101,4 +1310,6 @@ export const DevIcons = {
   Bootstrap: Bootstrap,
   MkDocs: MkDocs,
   MaterialforMkDocs: MaterialforMkDocs,
+  JAX: JAX,
+  NumPy: NumPy,
 }

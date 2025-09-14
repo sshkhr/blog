@@ -22,6 +22,8 @@ export type TechStack =
   | 'Bootstrap'
   | 'MkDocs'
   | 'MaterialforMkDocs'
+  | 'JAX'
+  | 'NumPy'
 
 export const techStackArray: TechStack[] = [
   'React',
@@ -47,4 +49,6 @@ export const techStackArray: TechStack[] = [
   'Bootstrap',
   'MkDocs',
   'MaterialforMkDocs',
+  'JAX',
+  'NumPy',
 ]
