@@ -6,6 +6,7 @@ const headerNavLinks = [
   { href: '/research', title: 'Research' },
   { href: '/talks', title: 'Talks' },
   { href: '/about', title: 'About' },
+  { href: '/contact', title: 'Contact' },
 ]
 
 export default headerNavLinks
