@@ -118,11 +118,13 @@ export default function ConsultingCarousel({ cards }: ConsultingCarouselProps) {
           </div>
 
           {/* Next Card Preview - shows a peek */}
-          <div
+          <button
+            type="button"
             className="w-[15%] flex-shrink-0 cursor-pointer opacity-50 transition-opacity duration-300 hover:opacity-70"
             onClick={goToNext}
+            aria-label="Go to next slide"
           >
-            <div className="h-full overflow-hidden rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="h-full overflow-hidden rounded-lg border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <span className="inline-block rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-900 dark:text-primary-300">
                 {nextCard.industry}
               </span>
@@ -130,7 +132,7 @@ export default function ConsultingCarousel({ cards }: ConsultingCarouselProps) {
                 {nextCard.companyType}
               </p>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
