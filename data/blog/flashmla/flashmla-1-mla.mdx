@@ -170,7 +170,7 @@ Consider the shapes involved (per batch, per head):
 - $K \in \mathbb{R}^{N \times d_h}$  
 - $QK^T \in \mathbb{R}^{N \times N}$
 
-The matrix multiplication $(N \times d_h) \cdot (d_h \times N)$ requires computing $N^2$ dot products, each of dimension $d_h$. That's $O(N^2 \cdot d_h)$ operations per head, per layer. Since $d_h$ is typically fixed (64-128), the dominant term is the quadratic dependence on sequence length.
+The matrix multiplication $(N \times d_h) \cdot (d_h \times N)$ requires computing $N^2$ dot products, each of dimension $d_h$. That's $O(N^2 \cdot d_h)$ operations per head, per layer. Since $d_h$ is typically fixed (64-256), the dominant term is the quadratic dependence on sequence length.
 
 ![Multi-Head Attention Operations](/static/images/mla/mha-matrices.png)
 
@@ -201,18 +201,9 @@ def attention_tensor_sizes(batch_size, seq_len, d_model, n_heads, dtype=torch.fl
         "QKV memory (MB)": qkv_memory / (1024**2),
         "Attention matrix memory (MB)": attn_matrix_memory / (1024**2),
     }
-
-# GPT-2 scale: 12 heads, 768 dim
-print("GPT-2 scale (d=768, 12 heads):")
-for seq_len in [1024, 4096, 16384, 65536]:
-    stats = attention_tensor_sizes(1, seq_len, 768, 12)
-    print(f"  seq_len={seq_len:>5}: attn matrix = {stats['Attention matrix memory (MB)']:>8.1f} MB")
-
-print("\nDeepSeek-V2 scale (d=5120, 128 heads):")
-for seq_len in [1024, 4096, 16384, 65536]:
-    stats = attention_tensor_sizes(1, seq_len, 5120, 128)
-    print(f"  seq_len={seq_len:>5}: attn matrix = {stats['Attention matrix memory (MB)']:>8.1f} MB")
 ```
+
+Let's compare what the attention matrix memory looks like as we scale up sequence length for GPT-2 ($d_{head}$=768, 12 heads) and DeepSeek-V2 ($d_{head}$=5120, 128 heads):
 
 | Sequence Length | GPT-2 Attention | DeepSeek-V2 Attention |
 |:---------------:|:---------------:|:---------------------:|
@@ -227,21 +218,21 @@ for seq_len in [1024, 4096, 16384, 65536]:
 
 <small>Attention matrices memory size as we scale up the sequence length for GPT-2 and DeepSeek-V2 models. <span style={{color: 'red'}}>Red</span> indicates attention matrices that won't fit on a H100 GPU's 80 GB memory.</small>     
 
-
 The quadratic scaling is brutal. At DeepSeek-V2 scale with 64K context, the attention matrix alone requires **1 TB** of memory—per layer, per forward pass. This is clearly untenable.
 
 ![Attention Memory Scaling](/static/images/mla/attention_memory_scaling.png)
 
 # KV Caching: Trading Memory for Compute
 
-Let's take a closer look the matrix operations the token generation process at inference time for the autoregressive transformer:
+Let's take a closer look at the matrix operations during the token generation process at inference time for the autoregressive transformer:
 
 <div style={{overflow: 'hidden'}}>
   <img src="/static/gifs/decoding.gif" alt="Decoding" style={{marginBottom: '-30px'}} />
 </div>
 
-Notice anything interesting? Not yet? How about if we focus on the step by step decoding process?
+Notice anything interesting 👀? Not yet? 
 
+How about if we focus on the step-by-step decoding process?
 
 <div style={{overflow: 'hidden'}}>
   <img src="/static/gifs/decoding-focus.gif" alt="Decoding Step-Wise" style={{marginBottom: '-30px'}} />
@@ -249,13 +240,19 @@ Notice anything interesting? Not yet? How about if we focus on the step by step 
 
 Here's a key insight: **during autoregressive generation, we decode one token at a time**. At step $t$, we only need to compute attention for the *new* query $q_t$ against *all previous* keys and values. The attention scores for previous tokens don't change—we're just appending a new row.
 
+> [!info] Decoding vs Prefill 
+>  
+> During prefill (processing the initial input context), we compute attention for all tokens simultaneously, resulting in the full $N \times N$ attention matrix.  
+>
+> During decoding (generating new tokens), we only compute attention for the new token's query against all previous keys and values, resulting in a single row of the attention matrix.
+
 This observation leads us to **KV caching**: instead of recomputing $K$ and $V$ for all previous generated tokens at each step during inference, we cache them and only compute the projections for the new token:
 
 <div style={{overflow: 'hidden', paddingTop: '0'}}>
   <img src="/static/gifs/kvcache.gif" alt="Decoding with KV Cache" style={{marginTop: '-5px'}} />
 </div>
 
-We cache $K$ and $V$ (not $Q$) because the keys and values for previous tokens remain unchanged—only the new token's query needs to attend to them.
+We cache $K$ and $V$  because the keys and values for previous tokens remain unchanged - only the new token's query $Q$ needs to attend to them.
 
 Here's a PyTorch implementation that makes the caching logic concrete:
 
