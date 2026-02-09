@@ -1,10 +1,8 @@
 ---
-title: 'Understanding Multi-Head Latent Attention'
-subtitle: 'FlashMLA Series Part 1'
-date: '2026-01-19'
+title: "Understanding DeepSeek's Multi-Head Latent Attention (MLA)"
+date: '2026-02-09'
 tags: ['llm', 'attention', 'transformers', 'deepseek', 'mla', 'kv-cache', 'inference']
-draft: true
-summary: "How did DeepSeek's Multi-Head Latent Attention (MLA) solve attention bottlenecks for long contexts?"
+summary: "How did DeepSeek's Multi-Head Latent Attention (MLA) solve attention bottlenecks for long contexts? Part 1 of the FlashMLA blog series."
 ---
 
 > [!info] Series Overview
@@ -15,7 +13,7 @@ summary: "How did DeepSeek's Multi-Head Latent Attention (MLA) solve attention b
 > - **Part 2**: [Flash Attention](./flashmla-2-flash-attention) *(coming soon)*
 > - **Part 3**: [FlashMLA](./flashmla-3-flashmla) *(coming soon)*
 
-All code samples from this particular post are available in this GitHub repository: [github.com/sshkhr/MLA](https://github.com/sshkhr/MLA)
+All code samples from this particular post are available in this GitHub repository: [github.com/sshkhr/MLA](https://github.com/sshkhr/mla-pytorch)
 
 # A Brief Recap of Multi-Head Scaled Dot Product Attention
 
@@ -263,58 +261,57 @@ class MultiHeadAttentionWithKVCache(nn.Module):
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
-        
+
         self.W_q = nn.Linear(d_model, d_model, bias=False)
         self.W_k = nn.Linear(d_model, d_model, bias=False)
         self.W_v = nn.Linear(d_model, d_model, bias=False)
         self.W_o = nn.Linear(d_model, d_model, bias=False)
-        
-        # Pre-allocate KV cache buffers
-        self.register_buffer('k_cache', None)
-        self.register_buffer('v_cache', None)
-    
-    def forward(self, x, use_cache=False, cache_position=0):
+
+        # Pre-allocated KV cache buffers (no allocation during decode)
+        self.register_buffer('k_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.register_buffer('v_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.cache_position = 0
+
+    def forward(self, x, use_cache=False):
         """
         Args:
             x: Input tensor. During prefill: (B, N, d_model). During decode: (B, 1, d_model)
             use_cache: Whether to use/update the KV cache
-            cache_position: Current position in sequence (for cache indexing)
         """
         B, seq_len, _ = x.shape
-        
+
         # Compute Q, K, V for current input
         Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         K = self.W_k(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         V = self.W_v(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         if use_cache:
-            if self.k_cache is None:
-                # First call: initialize cache
-                self.k_cache = K
-                self.v_cache = V
-            else:
-                # Append new K, V to cache
-                self.k_cache = torch.cat([self.k_cache, K], dim=2)
-                self.v_cache = torch.cat([self.v_cache, V], dim=2)
-            
+            # Write to pre-allocated buffer (no new allocation)
+            start = self.cache_position
+            end = start + seq_len
+            self.k_cache[:B, :, start:end, :] = K
+            self.v_cache[:B, :, start:end, :] = V
+            self.cache_position = end
+
             # Attend over full cached sequence
-            K = self.k_cache
-            V = self.v_cache
-        
+            K = self.k_cache[:B, :, :end, :]
+            V = self.v_cache[:B, :, :end, :]
+
         # Standard attention computation
         # Q: (B, n_heads, seq_len, d_h) - seq_len=1 during decode
         # K: (B, n_heads, cache_len, d_h)
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn_weights = F.softmax(scores, dim=-1)
         output = torch.matmul(attn_weights, V)
-        
+
         # Reshape and project
         output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
         return self.W_o(output)
-    
+
     def reset_cache(self):
-        self.k_cache = None
-        self.v_cache = None
+        self.k_cache.zero_()
+        self.v_cache.zero_()
+        self.cache_position = 0
 ```
 
 The complexity tradeoff is stark:
@@ -348,7 +345,7 @@ def measure_kv_cache_memory(d_model, n_heads, seq_len, dtype=torch.float16):
 | 2048   | 0.6320         | 8.5272       | 13.5x   | 6.0        |
 | 4096   | 1.3751         | 61.6298      | 44.8x   | 12.0       |
 
-At 4096 tokens:
+On an NVIDIA 5060 Ti, decoding with a context window of 4096 tokens:
 -  KV caching provides a 44.8x speedup
 -  At the cost of 12.0 MB of cache memory
 
@@ -414,197 +411,206 @@ You can compare the three attention variants using their minimal implementations
 ```python
 class MultiHeadAttention(nn.Module):
     """
-    Standard Multi-Head Attention with KV Cache.
+    Standard Multi-Head Attention with optional KV Cache.
     Each head has its own K and V projections.
-    
-    KV cache size per token: 2 * n_heads * d_h * n_layers
+
+    Uses pre-allocated cache buffers for efficient autoregressive decoding.
+
+    KV cache size per token: 2 * n_heads * d_h
     """
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model, n_heads, max_seq_len=4096):
         super().__init__()
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
-        
+
         # Each head gets its own Q, K, V projections
         self.W_q = nn.Linear(d_model, d_model, bias=False)  # (d_model, n_heads * d_h)
         self.W_k = nn.Linear(d_model, d_model, bias=False)  # (d_model, n_heads * d_h)
         self.W_v = nn.Linear(d_model, d_model, bias=False)  # (d_model, n_heads * d_h)
         self.W_o = nn.Linear(d_model, d_model, bias=False)
-        
-        self.k_cache = None
-        self.v_cache = None
-    
+
+        # Pre-allocated KV cache buffers (no allocation during decode)
+        self.register_buffer('k_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.register_buffer('v_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, seq_len, _ = x.shape
-        
+
         # Project to Q, K, V - all have n_heads heads
         Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         K = self.W_k(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         V = self.W_v(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         # Q, K, V shapes: (B, n_heads, seq_len, d_h)
-        
+
         if use_cache:
-            if self.k_cache is None:
-                self.k_cache = K
-                self.v_cache = V
-            else:
-                self.k_cache = torch.cat([self.k_cache, K], dim=2)
-                self.v_cache = torch.cat([self.v_cache, V], dim=2)
-            K, V = self.k_cache, self.v_cache
-        
+            start = self.cache_position
+            end = start + seq_len
+            self.k_cache[:B, :, start:end, :] = K
+            self.v_cache[:B, :, start:end, :] = V
+            self.cache_position = end
+            K = self.k_cache[:B, :, :end, :]
+            V = self.v_cache[:B, :, :end, :]
+
         # Standard attention
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         output = torch.matmul(attn, V)
-        
+
         output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
         return self.W_o(output)
-    
+
     def reset_cache(self):
-        self.k_cache = None
-        self.v_cache = None
-    
+        self.k_cache.zero_()
+        self.v_cache.zero_()
+        self.cache_position = 0
+
     def cache_size_bytes(self):
-        """Return current KV cache size in bytes."""
-        if self.k_cache is None:
+        if self.cache_position == 0:
             return 0
-        # k_cache and v_cache each: (B, n_heads, seq_len, d_h)
-        return self.k_cache.numel() * self.k_cache.element_size() * 2
+        return 2 * self.cache_position * self.n_heads * self.d_h * self.k_cache.element_size()
 ```
 ```python
 class GroupedQueryAttention(nn.Module):
     """
-    Grouped-Query Attention with KV Cache.
+    Grouped-Query Attention with optional KV Cache.
     Multiple query heads share each KV head.
-    
-    KV cache size per token: 2 * n_kv_heads * d_h * n_layers
+
+    Uses pre-allocated cache buffers for efficient autoregressive decoding.
+
+    KV cache size per token: 2 * n_kv_heads * d_h
     """
-    def __init__(self, d_model, n_heads, n_kv_heads):
+    def __init__(self, d_model, n_heads, n_kv_heads, max_seq_len=4096):
         super().__init__()
         assert n_heads % n_kv_heads == 0, "n_heads must be divisible by n_kv_heads"
-        
+
         self.d_model = d_model
         self.n_heads = n_heads          # Number of query heads
         self.n_kv_heads = n_kv_heads    # Number of KV heads (groups)
         self.n_groups = n_heads // n_kv_heads  # Queries per KV head
         self.d_h = d_model // n_heads
-        
+
         # Q has n_heads, but K and V only have n_kv_heads
         self.W_q = nn.Linear(d_model, n_heads * self.d_h, bias=False)
         self.W_k = nn.Linear(d_model, n_kv_heads * self.d_h, bias=False)  # Smaller!
         self.W_v = nn.Linear(d_model, n_kv_heads * self.d_h, bias=False)  # Smaller!
         self.W_o = nn.Linear(d_model, d_model, bias=False)
-        
-        self.k_cache = None
-        self.v_cache = None
-    
+
+        # Pre-allocated KV cache buffers (only n_kv_heads, not n_heads)
+        self.register_buffer('k_cache', torch.zeros(1, n_kv_heads, max_seq_len, self.d_h))
+        self.register_buffer('v_cache', torch.zeros(1, n_kv_heads, max_seq_len, self.d_h))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, seq_len, _ = x.shape
-        
+
         # Q: full n_heads, K/V: only n_kv_heads
         Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         K = self.W_k(x).view(B, seq_len, self.n_kv_heads, self.d_h).transpose(1, 2)
         V = self.W_v(x).view(B, seq_len, self.n_kv_heads, self.d_h).transpose(1, 2)
         # Q: (B, n_heads, seq_len, d_h)
         # K, V: (B, n_kv_heads, seq_len, d_h)
-        
+
         if use_cache:
-            if self.k_cache is None:
-                self.k_cache = K
-                self.v_cache = V
-            else:
-                self.k_cache = torch.cat([self.k_cache, K], dim=2)
-                self.v_cache = torch.cat([self.v_cache, V], dim=2)
-            K, V = self.k_cache, self.v_cache
-        
+            start = self.cache_position
+            end = start + seq_len
+            self.k_cache[:B, :, start:end, :] = K
+            self.v_cache[:B, :, start:end, :] = V
+            self.cache_position = end
+            K = self.k_cache[:B, :, :end, :]
+            V = self.v_cache[:B, :, :end, :]
+
         # Expand K, V to match Q's head count by repeating
         # (B, n_kv_heads, seq_len, d_h) -> (B, n_heads, seq_len, d_h)
         K = K.repeat_interleave(self.n_groups, dim=1)
         V = V.repeat_interleave(self.n_groups, dim=1)
-        
+
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         output = torch.matmul(attn, V)
-        
+
         output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
         return self.W_o(output)
-    
+
     def reset_cache(self):
-        self.k_cache = None
-        self.v_cache = None
-    
+        self.k_cache.zero_()
+        self.v_cache.zero_()
+        self.cache_position = 0
+
     def cache_size_bytes(self):
-        """Return current KV cache size in bytes."""
-        if self.k_cache is None:
+        if self.cache_position == 0:
             return 0
-        # k_cache and v_cache each: (B, n_kv_heads, seq_len, d_h)
-        return self.k_cache.numel() * self.k_cache.element_size() * 2
+        return 2 * self.cache_position * self.n_kv_heads * self.d_h * self.k_cache.element_size()
 ```
 ```python
 class MultiQueryAttention(nn.Module):
     """
-    Multi-Query Attention with KV Cache.
+    Multi-Query Attention with optional KV Cache.
     All query heads share a single K and V.
-    
-    KV cache size per token: 2 * d_h * n_layers
+
+    Uses pre-allocated cache buffers for efficient autoregressive decoding.
+
+    KV cache size per token: 2 * d_h
     (This is just GQA with n_kv_heads=1)
     """
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model, n_heads, max_seq_len=4096):
         super().__init__()
         self.d_model = d_model
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
-        
+
         # Q has n_heads, but K and V have only 1 head
         self.W_q = nn.Linear(d_model, n_heads * self.d_h, bias=False)
         self.W_k = nn.Linear(d_model, self.d_h, bias=False)  # Single head!
         self.W_v = nn.Linear(d_model, self.d_h, bias=False)  # Single head!
         self.W_o = nn.Linear(d_model, d_model, bias=False)
-        
-        self.k_cache = None
-        self.v_cache = None
-    
+
+        # Pre-allocated KV cache buffers (single head)
+        self.register_buffer('k_cache', torch.zeros(1, 1, max_seq_len, self.d_h))
+        self.register_buffer('v_cache', torch.zeros(1, 1, max_seq_len, self.d_h))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, seq_len, _ = x.shape
-        
+
         # Q: n_heads, K/V: single head
         Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
         K = self.W_k(x).view(B, seq_len, 1, self.d_h).transpose(1, 2)
         V = self.W_v(x).view(B, seq_len, 1, self.d_h).transpose(1, 2)
         # Q: (B, n_heads, seq_len, d_h)
         # K, V: (B, 1, seq_len, d_h)
-        
+
         if use_cache:
-            if self.k_cache is None:
-                self.k_cache = K
-                self.v_cache = V
-            else:
-                self.k_cache = torch.cat([self.k_cache, K], dim=2)
-                self.v_cache = torch.cat([self.v_cache, V], dim=2)
-            K, V = self.k_cache, self.v_cache
-        
+            start = self.cache_position
+            end = start + seq_len
+            self.k_cache[:B, :, start:end, :] = K
+            self.v_cache[:B, :, start:end, :] = V
+            self.cache_position = end
+            K = self.k_cache[:B, :, :end, :]
+            V = self.v_cache[:B, :, :end, :]
+
         # Broadcast K, V across all query heads
         # (B, 1, seq_len, d_h) -> (B, n_heads, seq_len, d_h)
         K = K.expand(-1, self.n_heads, -1, -1)
         V = V.expand(-1, self.n_heads, -1, -1)
-        
+
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         output = torch.matmul(attn, V)
-        
+
         output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
         return self.W_o(output)
-    
+
     def reset_cache(self):
-        self.k_cache = None
-        self.v_cache = None
-    
+        self.k_cache.zero_()
+        self.v_cache.zero_()
+        self.cache_position = 0
+
     def cache_size_bytes(self):
-        """Return current KV cache size in bytes."""
-        if self.k_cache is None:
+        if self.cache_position == 0:
             return 0
-        # k_cache and v_cache each: (B, 1, seq_len, d_h)
-        return self.k_cache.numel() * self.k_cache.element_size() * 2
+        return 2 * self.cache_position * self.d_h * self.k_cache.element_size()
 ```
 </CodeTabs>
 
@@ -710,47 +716,50 @@ Here's the implementation:
 class MultiHeadAttention(nn.Module):
     """
     Standard Multi-Head Attention.
-    
+
     KV cache stores: K and V, each of shape (B, n_heads, N, d_h)
     Cache size per token: 2 * n_heads * d_h
     """
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model, n_heads, max_seq_len=4096):
         super().__init__()
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
-        
+
         # Full-rank projections
         self.W_q = nn.Linear(d_model, d_model, bias=False)
         self.W_k = nn.Linear(d_model, d_model, bias=False)  # d -> n_heads * d_h
         self.W_v = nn.Linear(d_model, d_model, bias=False)  # d -> n_heads * d_h
         self.W_o = nn.Linear(d_model, d_model, bias=False)
-        
-        # Cache stores full K, V
-        self.k_cache = None  # (B, n_heads, N, d_h)
-        self.v_cache = None  # (B, n_heads, N, d_h)
-    
+
+        # Pre-allocated cache stores full K, V
+        self.register_buffer('k_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.register_buffer('v_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, N, _ = x.shape
-        
+
         Q = self.W_q(x).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
         K = self.W_k(x).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
         V = self.W_v(x).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         if use_cache:
-            if self.k_cache is not None:
-                K = torch.cat([self.k_cache, K], dim=2)
-                V = torch.cat([self.v_cache, V], dim=2)
-            self.k_cache = K
-            self.v_cache = V
-        
+            start = self.cache_position
+            end = start + N
+            self.k_cache[:B, :, start:end, :] = K
+            self.v_cache[:B, :, start:end, :] = V
+            self.cache_position = end
+            K = self.k_cache[:B, :, :end, :]
+            V = self.v_cache[:B, :, :end, :]
+
         # Standard attention: Q @ K^T -> softmax -> @ V
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         out = torch.matmul(attn, V)
-        
+
         out = out.transpose(1, 2).contiguous().view(B, N, -1)
         return self.W_o(out)
-    
+
     def cache_size_per_token(self):
         """Returns number of elements cached per token."""
         return 2 * self.n_heads * self.d_h  # K + V
@@ -759,62 +768,160 @@ class MultiHeadAttention(nn.Module):
 class MultiHeadLatentAttention(nn.Module):
     """
     Multi-Head Latent Attention (MLA).
-    
+
     KV cache stores: L_kv (compressed latent), shape (B, N, d_c)
     Cache size per token: d_c (much smaller than 2 * n_heads * d_h)
     """
-    def __init__(self, d_model, n_heads, d_c):
+    def __init__(self, d_model, n_heads, d_c, max_seq_len=4096):
         super().__init__()
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
         self.d_c = d_c  # Latent/compression dimension
-        
+
         # Query projection (unchanged from standard attention)
         self.W_q = nn.Linear(d_model, n_heads * self.d_h, bias=False)
-        
+
         # KV compression: down-project to shared latent
         self.W_dkv = nn.Linear(d_model, d_c, bias=False)  # d -> d_c
-        
+
         # KV expansion: up-project from latent to K and V
         self.W_uk = nn.Linear(d_c, n_heads * self.d_h, bias=False)  # d_c -> n_heads * d_h
         self.W_uv = nn.Linear(d_c, n_heads * self.d_h, bias=False)  # d_c -> n_heads * d_h
-        
+
         self.W_o = nn.Linear(n_heads * self.d_h, d_model, bias=False)
-        
-        # Cache stores ONLY the compressed latent
-        self.latent_cache = None  # (B, N, d_c) - much smaller!
-    
+
+        # Pre-allocated cache stores ONLY the compressed latent
+        self.register_buffer('latent_cache', torch.zeros(1, max_seq_len, d_c))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, N, _ = x.shape
-        
+
         # Queries: standard projection
         Q = self.W_q(x).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         # KV: compress to latent, then expand
         L_kv = self.W_dkv(x)  # (B, N, d_c) - this is what we cache!
-        
+
         if use_cache:
-            if self.latent_cache is not None:
-                L_kv = torch.cat([self.latent_cache, L_kv], dim=1)
-            self.latent_cache = L_kv
-        
+            start = self.cache_position
+            end = start + N
+            self.latent_cache[:B, start:end, :] = L_kv
+            self.cache_position = end
+            L_kv = self.latent_cache[:B, :end, :]
+
         # Expand latent to full K, V (on-the-fly, not cached)
         K = self.W_uk(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
         V = self.W_uv(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         # Standard attention from here
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         out = torch.matmul(attn, V)
-        
+
         out = out.transpose(1, 2).contiguous().view(B, N, -1)
         return self.W_o(out)
-    
+
     def cache_size_per_token(self):
         """Returns number of elements cached per token."""
         return self.d_c  # Just the latent!
 ```
 </CodeTabs>
+
+> [!help]- Query Compression and RoPE in MLA
+>
+> The implementation above uses a standard query projection (`W_q`) for simplicity. However, DeepSeek-V2/V3 also compress the queries via a low-rank decomposition, mirroring the KV compression:
+>
+> $$L_Q = \text{RMSNorm}(XW_{\text{DQ}}), \quad Q = L_Q W_{\text{UQ}}$$
+>
+> where $W_{\text{DQ}} \in \mathbb{R}^{d \times d_{cq}}$ down-projects to a query latent, RMSNorm normalizes it, and $W_{\text{UQ}} \in \mathbb{R}^{d_{cq} \times (n_h \cdot d_h)}$ up-projects back to full query dimension. DeepSeek-V2 uses $d_{cq} = 1536$.
+>
+> Unlike the KV latent, the query latent is **not cached** — it's only needed for the current token. The purpose is parameter efficiency: the two smaller matrices $W_{\text{DQ}}$ and $W_{\text{UQ}}$ have fewer total parameters than a single full-rank $W_Q$.
+>
+> The RoPE embedding is also operated on separately to preserve the positional embeddings, since standard low-rank projection would mix positional and content information. 
+>
+> This is the full architecture of MLA with query compression and RoPE (taken from the DeepSeek-V3 paper):
+>
+> ![Full MLA Architecture](/static/images/mla/deepseek-moe-mla.webp)
+>
+> Here is the full MLA implementation with query compression. We will skip the RoPE details for now, as they are not important for understanding the core idea of latent KV compression:
+>
+> ```python
+> class RMSNorm(nn.Module):
+>     """Root Mean Square Layer Normalization."""
+>     def __init__(self, dim, eps=1e-6):
+>         super().__init__()
+>         self.eps = eps
+>         self.weight = nn.Parameter(torch.ones(dim))
+>
+>     def forward(self, x):
+>         rms = torch.sqrt(torch.mean(x ** 2, dim=-1, keepdim=True) + self.eps)
+>         return x / rms * self.weight
+>
+>
+> class MultiHeadLatentAttention(nn.Module):
+>     """
+>     MLA with both query and KV compression.
+>
+>     Query: x -> W_dq -> RMSNorm -> W_uq -> Q  (not cached)
+>     KV:    x -> W_dkv -> L_kv (cached) -> W_uk/W_uv -> K, V
+>     """
+>     def __init__(self, d_model, n_heads, d_c, d_cq, max_seq_len=4096):
+>         super().__init__()
+>         self.n_heads = n_heads
+>         self.d_h = d_model // n_heads
+>         self.d_c = d_c
+>         self.d_cq = d_cq
+>
+>         # Query compression: down-project, normalize, up-project
+>         self.W_dq = nn.Linear(d_model, d_cq, bias=False)
+>         self.q_norm = RMSNorm(d_cq)
+>         self.W_uq = nn.Linear(d_cq, n_heads * self.d_h, bias=False)
+>
+>         # KV compression
+>         self.W_dkv = nn.Linear(d_model, d_c, bias=False)
+>         self.W_uk = nn.Linear(d_c, n_heads * self.d_h, bias=False)
+>         self.W_uv = nn.Linear(d_c, n_heads * self.d_h, bias=False)
+>
+>         self.W_o = nn.Linear(n_heads * self.d_h, d_model, bias=False)
+>
+>         # Pre-allocated latent cache
+>         self.register_buffer('latent_cache', torch.zeros(1, max_seq_len, d_c))
+>         self.cache_position = 0
+>
+>     def forward(self, x, use_cache=False):
+>         B, N, _ = x.shape
+>
+>         # Query: down-project -> normalize -> up-project
+>         L_q = self.q_norm(self.W_dq(x))
+>         Q = self.W_uq(L_q).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
+>
+>         # KV: compress to latent
+>         L_kv = self.W_dkv(x)
+>
+>         if use_cache:
+>             start = self.cache_position
+>             end = start + N
+>             self.latent_cache[:B, start:end, :] = L_kv
+>             self.cache_position = end
+>             L_kv = self.latent_cache[:B, :end, :]
+>
+>         # Expand latent to full K, V (on-the-fly, not cached)
+>         K = self.W_uk(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
+>         V = self.W_uv(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
+>
+>         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
+>         attn = F.softmax(scores, dim=-1)
+>         out = torch.matmul(attn, V)
+>
+>         out = out.transpose(1, 2).contiguous().view(B, N, -1)
+>         return self.W_o(out)
+>
+>     def cache_size_per_token(self):
+>         return self.d_c  # Query compression doesn't affect cache size
+> ```
+>
+> Note that query compression **does not affect cache size** — only the KV latent is cached. With the absorption trick (below), the absorbed query projection becomes $W_{Q}' = W_{\text{UQ}} \cdot W_{\text{UK}}^T$, applied after the query compression and normalization.
 
 ### The Absorption Trick: Making MLA Hardware-Friendly
 
@@ -851,47 +958,51 @@ This is remarkable: **the attention operation itself is unchanged**—it's still
 class MultiHeadLatentAttention(nn.Module):
     """
     MLA - Naive implementation.
-    
+
     Expands latent to full K, V before attention.
     Simple but requires expanding cached latents at every decode step.
     """
-    def __init__(self, d_model, n_heads, d_c):
+    def __init__(self, d_model, n_heads, d_c, max_seq_len=4096):
         super().__init__()
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
         self.d_c = d_c
-        
+
         self.W_q = nn.Linear(d_model, n_heads * self.d_h, bias=False)
         self.W_dkv = nn.Linear(d_model, d_c, bias=False)
         self.W_uk = nn.Linear(d_c, n_heads * self.d_h, bias=False)
         self.W_uv = nn.Linear(d_c, n_heads * self.d_h, bias=False)
         self.W_o = nn.Linear(n_heads * self.d_h, d_model, bias=False)
-        
-        self.latent_cache = None
-    
+
+        # Pre-allocated latent cache
+        self.register_buffer('latent_cache', torch.zeros(1, max_seq_len, d_c))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, N, _ = x.shape
-        
+
         # Standard query projection
         Q = self.W_q(x).view(B, N, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         # Compress to latent
         L_kv = self.W_dkv(x)
-        
+
         if use_cache:
-            if self.latent_cache is not None:
-                L_kv = torch.cat([self.latent_cache, L_kv], dim=1)
-            self.latent_cache = L_kv
-        
+            start = self.cache_position
+            end = start + N
+            self.latent_cache[:B, start:end, :] = L_kv
+            self.cache_position = end
+            L_kv = self.latent_cache[:B, :end, :]
+
         # EXPENSIVE: Expand full cached sequence to K, V
         K = self.W_uk(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
         V = self.W_uv(L_kv).view(B, -1, self.n_heads, self.d_h).transpose(1, 2)
-        
+
         # Attention in expanded space
         scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_h)
         attn = F.softmax(scores, dim=-1)
         out = torch.matmul(attn, V)
-        
+
         out = out.transpose(1, 2).contiguous().view(B, N, -1)
         return self.W_o(out)
 ```
@@ -899,63 +1010,61 @@ class MultiHeadLatentAttention(nn.Module):
 class MultiHeadLatentAttentionAbsorbed(nn.Module):
     """
     MLA - With weight absorption.
-    
+
     Absorbs up-projections into Q and O matrices.
     Attention computed directly in latent space - no expansion needed!
     """
-    def __init__(self, d_model, n_heads, d_c):
+    def __init__(self, d_model, n_heads, d_c, max_seq_len=4096):
         super().__init__()
         self.n_heads = n_heads
         self.d_h = d_model // n_heads
         self.d_c = d_c
-        
-        # Original weight matrices (for initialization)
-        W_q = torch.randn(d_model, n_heads * self.d_h)
-        W_uk = torch.randn(d_c, n_heads * self.d_h)
-        W_uv = torch.randn(d_c, n_heads * self.d_h)
-        W_o = torch.randn(n_heads * self.d_h, d_model)
-        
+
         # ABSORBED weights: Q projects to latent space
         # W_q' = W_q @ W_uk^T : (d_model, n_heads*d_h) @ (n_heads*d_h, d_c) -> (d_model, d_c)
         # But we want per-head absorption for proper attention
         self.W_q_absorbed = nn.Linear(d_model, n_heads * d_c, bias=False)
-        
+
         # KV down-projection (unchanged)
         self.W_dkv = nn.Linear(d_model, d_c, bias=False)
-        
+
         # ABSORBED output: combines value up-projection and output projection
         # Applied after attention over latents
         self.W_o_absorbed = nn.Linear(n_heads * d_c, d_model, bias=False)
-        
-        self.latent_cache = None
-    
+
+        # Pre-allocated latent cache
+        self.register_buffer('latent_cache', torch.zeros(1, max_seq_len, d_c))
+        self.cache_position = 0
+
     def forward(self, x, use_cache=False):
         B, N, _ = x.shape
-        
+
         # Query projected to latent-compatible space (per head)
         # Shape: (B, N, n_heads, d_c) - note d_c instead of d_h!
         Q = self.W_q_absorbed(x).view(B, N, self.n_heads, self.d_c).transpose(1, 2)
-        
+
         # Compress to latent (same as before)
         L_kv = self.W_dkv(x)  # (B, N, d_c)
-        
+
         if use_cache:
-            if self.latent_cache is not None:
-                L_kv = torch.cat([self.latent_cache, L_kv], dim=1)
-            self.latent_cache = L_kv
-        
-        # NO EXPANSION NEEDED! 
+            start = self.cache_position
+            end = start + N
+            self.latent_cache[:B, start:end, :] = L_kv
+            self.cache_position = end
+            L_kv = self.latent_cache[:B, :end, :]
+
+        # NO EXPANSION NEEDED!
         # L_kv serves as both K and V in latent space
         # Broadcast across heads: (B, 1, N, d_c) -> (B, n_heads, N, d_c)
         L_kv_expanded = L_kv.unsqueeze(1).expand(-1, self.n_heads, -1, -1)
-        
+
         # Attention directly in latent space
         scores = torch.matmul(Q, L_kv_expanded.transpose(-2, -1)) / math.sqrt(self.d_c)
         attn = F.softmax(scores, dim=-1)
-        
+
         # Output is attention-weighted latents (not full V!)
         out = torch.matmul(attn, L_kv_expanded)  # (B, n_heads, N, d_c)
-        
+
         out = out.transpose(1, 2).contiguous().view(B, N, -1)
         return self.W_o_absorbed(out)
 ```
@@ -1018,11 +1127,11 @@ If you found this post helpful, please consider citing it:
 
 ```bibtex
 @article{shekhar2026mla,
-  title   = {Understanding Multi-Head Latent Attention},
+  title   = {Understanding DeepSeek's Multi-Head Latent Attention (MLA)},
   author  = {Shekhar, Shashank},
   journal = {shashankshekhar.com},
   year    = {2026},
-  month   = {January},
+  month   = {February},
   url     = {https://shashankshekhar.com/blog/flashmla/flashmla-1-mla}
 }
 ```
