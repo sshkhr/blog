@@ -13,7 +13,7 @@ summary: "How did DeepSeek's Multi-Head Latent Attention (MLA) solve attention b
 > - **Part 2**: [Flash Attention](./flashmla-2-flash-attention) *(coming soon)*
 > - **Part 3**: [FlashMLA](./flashmla-3-flashmla) *(coming soon)*
 
-All code samples from this particular post are available in this GitHub repository: [github.com/sshkhr/MLA](https://github.com/sshkhr/mla-pytorch)
+All code samples from this particular post are available in this GitHub repository: [github.com/sshkhr/mla-pytorch](https://github.com/sshkhr/mla-pytorch)
 
 # A Brief Recap of Multi-Head Scaled Dot Product Attention
 
@@ -23,7 +23,7 @@ All code samples from this particular post are available in this GitHub reposito
 
 In scaled dot-product attention (SDPA), given a set of **queries** $Q$, **keys** $K$, and **values** $V$ (vectors derived from input tokens), attention computes a weighted sum of the values, where each query-key pair’s weight is proportional to their similarity. A simple approach to calculating similarity between tokens is by taking a dot product of the query and key vectors. The product is then scaled by the square root of the key dimension (in order to preserve an appropriate variance in the attention). Optionally, a mask is applied e.g. to compute only scores for a token based on all previous tokens in an autoregressive setting, not the future tokens. Lastly, a softmax operation is applied to get a probability distribution over the tokens. The attention weights are then used to produce a weighted sum of the values as the output:
 
-$\text{Scaled Dot-Product Attention}(Q, K, V) = \mathrm{softmax}(\frac{Q K^T}{\sqrt{d_k}})\, V$
+$\text{Scaled Dot-Product Attention}(Q, K, V) = \mathrm{softmax}(\frac{Q K^T}{\sqrt{d_{k}}})\, V$
 
 If you prefer code to math, here is a minimal PyTorch implementation of scaled dot-product attention (optimized for reading clarity, to match the diagram above):
 
@@ -76,7 +76,7 @@ class ScaledDotProductAttention(nn.Module):
         return output, attention_weights
 ```
 
-We will see more details on the exact shapes and sizes of the tensors in a bit, as this is fundamental to understanding the bottlenecks in the standard attention mechanism which necessitated MLA. But before that, we need to mention that scaled dot-product attention is usually not used in isolation. Each layer has multiple attention *heads* and the setup used is called multi-head attention. The different attention "heads" are simply several scaled dot-product attention modules running in parallel, each operating on a different learned projection of the input. Instead of one single attention computation with very large $d\_k$, we split the queries, keys, and values into (for example) 8 or 16 smaller sets (heads), perform attention in each subspace, and then concatenate the results. Here is a simple PyTorch implementation of multi-head attention that utilizes the scaled dot-product attention we defined above:
+We will see more details on the exact shapes and sizes of the tensors in a bit, as this is fundamental to understanding the bottlenecks in the standard attention mechanism which necessitated MLA. But before that, we need to mention that scaled dot-product attention is usually not used in isolation. Each layer has multiple attention *heads* and the setup used is called multi-head attention. The different attention "heads" are simply several scaled dot-product attention modules running in parallel, each operating on a different learned projection of the input. Instead of one single attention computation with very large $d_{k}$, we split the queries, keys, and values into (for example) 8 or 16 smaller sets (heads), perform attention in each subspace, and then concatenate the results. Here is a simple PyTorch implementation of multi-head attention that utilizes the scaled dot-product attention we defined above:
 
 > [!info]- Multi-Head Attention Implementation
 > ```python
@@ -338,15 +338,15 @@ def measure_kv_cache_memory(d_model, n_heads, seq_len, dtype=torch.float16):
 
 | Tokens | With Cache (s) | No Cache (s) | Speedup | Cache (MB) |
 |:------:|:--------------:|:------------:|:-------:|:----------:|
-| 128    | 0.0513         | 0.0530       | 1.0x    | 0.4        |
-| 256    | 0.0796         | 0.0892       | 1.1x    | 0.8        |
-| 512    | 0.2037         | 0.3132       | 1.5x    | 1.5        |
-| 1024   | 0.3490         | 1.4453       | 4.1x    | 3.0        |
-| 2048   | 0.6320         | 8.5272       | 13.5x   | 6.0        |
-| 4096   | 1.3751         | 61.6298      | 44.8x   | 12.0       |
+| 128    | 0.0293         | 0.0298       | 1.0x    | 0.4        |
+| 256    | 0.0585         | 0.0599       | 1.0x    | 0.8        |
+| 512    | 0.1176         | 0.1543       | 1.3x    | 1.5        |
+| 1024   | 0.2351         | 0.6065       | 2.6x    | 3.0        |
+| 2048   | 0.4851         | 3.5300       | 7.3x    | 6.0        |
+| 4096   | 0.9691         | 24.4924      | 25.3x   | 12.0       |
 
 On an NVIDIA 5060 Ti, decoding with a context window of 4096 tokens:
--  KV caching provides a 44.8x speedup
+-  KV caching provides a 25.3x speedup
 -  At the cost of 12.0 MB of cache memory
 
 ![KV Caching benchmark](/static/images/mla/kv_cache_benchmark.png)
@@ -705,9 +705,9 @@ where:
 
 The cache size per token drops from $2 \cdot n_h \cdot d_h$ (for K and V) to just $d_c$. For DeepSeek-V2 with $n_h = 128$, $d_h = 128$, and $d_c = 512$:
 
-$$\text{Compression ratio} = \frac{2 \times 128 \times 128}{512} = \frac{32768}{512} = 64\times$$
+$$\text{Compression ratio} = \frac{2 \times 128 \times 128}{512} = \frac{32768}{512} = 64$$
 
-For DeepSeek-V2's parameters, this is a **57× reduction** in KV cache size—comparable to MQA's savings, but without sacrificing the representational capacity of having many independent heads.
+For DeepSeek-V2's parameters, this is a **64X reduction** in KV cache size—comparable to MQA's savings, but without sacrificing the representational capacity of having many independent heads.
 
 Here's the implementation:
 
@@ -1097,7 +1097,7 @@ Let's compare the cache sizes across all the approaches we've covered:
 
 MLA achieves compression comparable to MQA while maintaining the representational capacity of full MHA. The key insight is that compression happens in a *learned* latent space, not by arbitrarily sharing heads.
 
-The DeepSeek team reports that MLA matches or exceeds MHA performance on their benchmarks while reducing KV cache by ~57×. This is the breakthrough that makes 128K+ context windows practical on commodity hardware.
+The DeepSeek team reports that MLA matches or exceeds MHA performance on their benchmarks while reducing KV cache by ~57X. This is the breakthrough that makes 128K+ context windows practical on commodity hardware.
 
 ## References
 
