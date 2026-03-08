@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" font-family="'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="600" fill="#ffffff" rx="8"/>
+
+  <!-- Two-tone background halves -->
+  <rect x="0" y="40" width="450" height="560" fill="#f0fdf4" opacity="0.6"/>
+  <rect x="450" y="40" width="450" height="560" fill="#eff6ff" opacity="0.6"/>
+
+  <!-- Column headers -->
+  <text x="225" y="28" text-anchor="middle" fill="#166534" font-size="15" font-weight="700" letter-spacing="1">METAL SOFTWARE MODEL</text>
+  <text x="675" y="28" text-anchor="middle" fill="#1e40af" font-size="15" font-weight="700" letter-spacing="1">APPLE SILICON HARDWARE</text>
+
+  <!-- Divider line -->
+  <line x1="450" y1="40" x2="450" y2="600" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="6,4"/>
+
+
+  <!-- ==================== ROW 1: Thread → ALU ==================== -->
+
+  <!-- Label above -->
+  <text x="225" y="72" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">Metal Thread</text>
+
+  <!-- Thread visual centered at x=225 (width=56 → starts at 197) -->
+  <g transform="translate(197, 82)">
+    <rect width="56" height="44" rx="6" fill="#dcfce7" stroke="#4ade80" stroke-width="1.5"/>
+    <path d="M12,22 Q18,12 24,22 Q30,32 36,22 Q42,12 48,22" stroke="#22c55e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Arrow -->
+  <line x1="270" y1="104" x2="420" y2="104" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="345" y="98" text-anchor="middle" fill="#94a3b8" font-size="11" font-style="italic">runs on</text>
+
+  <!-- Label above -->
+  <text x="675" y="72" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">ALU</text>
+
+  <!-- ALU box centered at x=675 (width=56 → starts at 647) -->
+  <g transform="translate(647, 82)">
+    <rect width="56" height="44" rx="6" fill="#dbeafe" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="28" y="27" text-anchor="middle" fill="#1e40af" font-size="11" font-weight="700">ALU</text>
+  </g>
+
+  <!-- Captions -->
+  <text x="225" y="148" text-anchor="middle" fill="#64748b" font-size="11">Smallest unit of execution.</text>
+  <text x="225" y="163" text-anchor="middle" fill="#64748b" font-size="11">Processes one data element.</text>
+  <text x="675" y="148" text-anchor="middle" fill="#64748b" font-size="11">Arithmetic Logic Unit.</text>
+  <text x="675" y="163" text-anchor="middle" fill="#64748b" font-size="11">128 ALUs per GPU core.</text>
+
+
+  <!-- ==================== ROW 2: Threadgroup → GPU Core ==================== -->
+
+  <!-- Label above -->
+  <text x="225" y="208" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">Metal Threadgroup</text>
+
+  <!-- Threadgroup visual centered at x=225 (width=170 → starts at 140) -->
+  <g transform="translate(140, 218)">
+    <rect width="170" height="80" rx="8" fill="#bbf7d0" stroke="#4ade80" stroke-width="2"/>
+    <!-- Row 1 of threads -->
+    <g transform="translate(10, 10)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(48, 10)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(86, 10)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(124, 10)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <!-- Row 2 of threads -->
+    <g transform="translate(10, 44)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(48, 44)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(86, 44)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(124, 44)">
+      <rect width="32" height="26" rx="4" fill="#dcfce7" stroke="#4ade80" stroke-width="1"/>
+      <path d="M6,13 Q10,7 14,13 Q18,19 22,13 Q26,7 30,13" stroke="#22c55e" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- Arrow -->
+  <line x1="325" y1="258" x2="420" y2="258" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="373" y="252" text-anchor="middle" fill="#94a3b8" font-size="11" font-style="italic">runs on</text>
+
+  <!-- Label above -->
+  <text x="675" y="208" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">GPU Core</text>
+
+  <!-- GPU Core visual centered at x=675 (width=180 → starts at 585) -->
+  <g transform="translate(585, 218)">
+    <rect width="180" height="80" rx="8" fill="#bfdbfe" stroke="#60a5fa" stroke-width="2"/>
+    <!-- ALU grid -->
+    <g transform="translate(10, 8)">
+      <rect width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="27" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="54" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="81" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="108" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="135" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+    </g>
+    <g transform="translate(10, 36)">
+      <rect width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="27" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="54" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="81" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="108" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="135" width="22" height="22" rx="3" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+    </g>
+    <!-- Threadgroup memory bar -->
+    <rect x="10" y="62" width="157" height="14" rx="3" fill="#e9d5ff" stroke="#a78bfa" stroke-width="1"/>
+    <text x="88" y="73" text-anchor="middle" fill="#7c3aed" font-size="8" font-weight="600">threadgroup memory</text>
+  </g>
+
+  <!-- Captions -->
+  <text x="225" y="320" text-anchor="middle" fill="#64748b" font-size="11">Group of threads that can synchronize</text>
+  <text x="225" y="335" text-anchor="middle" fill="#64748b" font-size="11">and share memory. Up to 1024 threads.</text>
+  <text x="675" y="320" text-anchor="middle" fill="#64748b" font-size="11">128 ALUs + schedulers + caches.</text>
+  <text x="675" y="335" text-anchor="middle" fill="#64748b" font-size="11">Executes one or more threadgroups.</text>
+
+
+  <!-- ==================== ROW 3: Grid → Full GPU ==================== -->
+
+  <!-- Label above -->
+  <text x="225" y="380" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">Metal Grid</text>
+
+  <!-- Grid visual centered at x=225 (total width ~332 → starts at 59) -->
+  <g transform="translate(59, 390)">
+    <!-- Threadgroup 0 -->
+    <rect width="72" height="46" rx="5" fill="#bbf7d0" stroke="#4ade80" stroke-width="1.5"/>
+    <g transform="translate(4, 4)">
+      <rect width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      <rect x="21" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      <rect x="42" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      <rect y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      <rect x="21" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      <rect x="42" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+    </g>
+
+    <!-- Threadgroup 1 -->
+    <g transform="translate(82, 0)">
+      <rect width="72" height="46" rx="5" fill="#bbf7d0" stroke="#4ade80" stroke-width="1.5"/>
+      <g transform="translate(4, 4)">
+        <rect width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="21" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="42" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="21" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="42" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      </g>
+    </g>
+
+    <!-- Ellipsis -->
+    <text x="232" y="28" fill="#64748b" font-size="14" font-weight="600">···</text>
+
+    <!-- Threadgroup N -->
+    <g transform="translate(260, 0)">
+      <rect width="72" height="46" rx="5" fill="#bbf7d0" stroke="#4ade80" stroke-width="1.5"/>
+      <g transform="translate(4, 4)">
+        <rect width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="21" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="42" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="21" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+        <rect x="42" y="18" width="18" height="14" rx="2" fill="#dcfce7" stroke="#4ade80" stroke-width="0.8"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- Arrow -->
+  <line x1="400" y1="413" x2="420" y2="413" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="454" y="407" text-anchor="middle" fill="#94a3b8" font-size="11" font-style="italic">runs on</text>
+
+  <!-- Label above -->
+  <text x="675" y="380" text-anchor="middle" fill="#1e293b" font-size="16" font-weight="600">Apple Silicon GPU</text>
+
+  <!-- Full GPU visual centered at x=675 (width=240 → starts at 555) -->
+  <g transform="translate(555, 390)">
+    <rect width="240" height="68" rx="8" fill="#bfdbfe" stroke="#60a5fa" stroke-width="2"/>
+    <!-- GPU cores -->
+    <g transform="translate(8, 6)">
+      <rect width="50" height="30" rx="4" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="4" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="4" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+    </g>
+    <g transform="translate(64, 6)">
+      <rect width="50" height="30" rx="4" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="4" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="4" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+    </g>
+    <text x="138" y="26" fill="#64748b" font-size="12" font-weight="600">···</text>
+    <g transform="translate(164, 6)">
+      <rect width="50" height="30" rx="4" fill="#dbeafe" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="4" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="4" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="4" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="16" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+      <rect x="28" y="16" width="9" height="9" rx="2" fill="#93c5fd"/>
+    </g>
+    <!-- Unified memory bar -->
+    <rect x="8" y="42" width="224" height="18" rx="4" fill="#e9d5ff" stroke="#a78bfa" stroke-width="1"/>
+    <text x="120" y="55" text-anchor="middle" fill="#7c3aed" font-size="8" font-weight="600">unified memory (shared with CPU)</text>
+  </g>
+
+  <!-- Captions -->
+  <text x="225" y="460" text-anchor="middle" fill="#64748b" font-size="11">All threadgroups for one kernel dispatch.</text>
+  <text x="225" y="475" text-anchor="middle" fill="#64748b" font-size="11">Distributed across cores by the GPU scheduler.</text>
+  <text x="675" y="460" text-anchor="middle" fill="#64748b" font-size="11">M1 Max: 32 cores × 128 ALUs = 4096 ALUs.</text>
+  <text x="675" y="475" text-anchor="middle" fill="#64748b" font-size="11">10.6 TFLOPS FP32, 400 GB/s memory bandwidth.</text>
+
+</svg>

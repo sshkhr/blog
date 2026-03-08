@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 620" font-family="'SF Mono', 'Fira Code', 'Consolas', monospace">
+  <defs>
+    <style>
+      .box { rx: 6; ry: 6; stroke-width: 1.5; }
+      .filename { font-size: 12px; fill: #1e293b; font-weight: 700; }
+      .desc { font-size: 10.5px; fill: #475569; }
+      .arrow { stroke: #94a3b8; stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+      .arrow-blue { stroke: #3b82f6; stroke-width: 2; fill: none; marker-end: url(#ah-blue); }
+      .dashed { stroke-dasharray: 5,4; }
+      .phase { font-size: 11px; fill: #3b82f6; font-weight: 700; letter-spacing: 1.2px; }
+      .note { font-size: 9.5px; fill: #94a3b8; font-style: italic; }
+      .legend-text { font-size: 10.5px; fill: #475569; }
+    </style>
+    <marker id="ah" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="ah-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="880" height="620" fill="#fafbfc"/>
+
+  <!-- ============================================================ -->
+  <!-- Column headers -->
+  <!-- ============================================================ -->
+  <text x="220" y="32" class="phase" text-anchor="middle">BUILD TIME</text>
+  <text x="220" y="46" font-size="9.5px" fill="#94a3b8" text-anchor="middle">pip install -e .</text>
+  <text x="660" y="32" class="phase" text-anchor="middle">RUNTIME</text>
+  <text x="660" y="46" font-size="9.5px" fill="#94a3b8" text-anchor="middle">layernorm_forward(x, γ, β)</text>
+
+  <!-- Vertical divider -->
+  <line x1="440" y1="20" x2="440" y2="545" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- ============================================================ -->
+  <!-- ROW 1: Python layer -->
+  <!-- ============================================================ -->
+
+  <!-- BUILD: setup.py (Python = purple) -->
+  <rect x="60" y="68" width="320" height="76" class="box" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="80" y="90" class="filename">setup.py</text>
+  <text x="80" y="108" class="desc">Patches UnixCCompiler for .mm files</text>
+  <text x="80" y="122" class="desc">Links -framework Metal, Foundation</text>
+  <text x="80" y="136" class="desc">Ships kernels/*.metal as package data</text>
+
+  <!-- RUNTIME: User code (Python = purple) -->
+  <rect x="500" y="81" width="320" height="50" class="box" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="520" y="101" class="filename">User Code</text>
+  <text x="520" y="115" class="desc">out = layernorm_forward(x, γ, β,</text>
+  <text x="520" y="127" class="desc">                        kernel="robust")</text>
+
+  <!-- RUNTIME: wrapper.py (Python = purple) -->
+  <rect x="500" y="200" width="320" height="50" class="box" fill="#faf5ff" stroke="#a855f7"/>
+  <text x="520" y="220" class="filename">wrapper.py</text>
+  <text x="520" y="238" class="desc">Maps kernel name → .metal path, calls _C</text>
+
+  <!-- Arrow: user → wrapper -->
+  <path d="M660,131 L660,200" class="arrow-blue"/>
+
+  <!-- ============================================================ -->
+  <!-- ROW 2: Obj-C++ layer -->
+  <!-- ============================================================ -->
+
+  <!-- BUILD: dispatch.mm (Obj-C++ = blue) -->
+  <rect x="60" y="180" width="320" height="90" class="box" fill="#eff6ff" stroke="#3b82f6"/>
+  <text x="80" y="200" class="filename">src/dispatch.mm</text>
+  <text x="80" y="218" class="desc">PipelineCache — compile .metal once, reuse</text>
+  <text x="80" y="232" class="desc">layernorm_forward() — encode Metal dispatch</text>
+  <text x="80" y="246" class="desc">start/stop_gpu_capture() — Xcode profiling</text>
+  <text x="80" y="262" class="desc" font-weight="600">PYBIND11_MODULE(TORCH_EXTENSION_NAME, m)</text>
+
+  <!-- Arrow: setup.py → dispatch.mm -->
+  <path d="M220,144 L220,180" class="arrow"/>
+  <text x="230" y="166" class="note">clang++ -ObjC++ -std=c++17</text>
+
+  <!-- ============================================================ -->
+  <!-- ROW 3: Compiled output -->
+  <!-- ============================================================ -->
+
+  <!-- BUILD: _C.so (compiled = green) -->
+  <rect x="110" y="308" width="220" height="40" class="box" fill="#f0fdf4" stroke="#22c55e"/>
+  <text x="220" y="333" class="filename" text-anchor="middle">layernorm_metal/_C.so</text>
+
+  <!-- RUNTIME: _C (compiled = green) -->
+  <rect x="550" y="308" width="220" height="40" class="box" fill="#f0fdf4" stroke="#22c55e"/>
+  <text x="660" y="333" class="filename" text-anchor="middle">_C (loaded extension)</text>
+
+  <!-- Arrow: dispatch.mm → _C.so -->
+  <path d="M220,270 L220,308" class="arrow"/>
+
+  <!-- Arrow: wrapper → _C runtime -->
+  <path d="M660,250 L660,308" class="arrow-blue"/>
+
+  <!-- Dashed: build _C.so → runtime _C -->
+  <path d="M330,328 L550,328" class="arrow dashed"/>
+  <text x="440" y="320" class="note" text-anchor="middle">import at runtime</text>
+
+  <!-- ============================================================ -->
+  <!-- ROW 4: Metal shaders -->
+  <!-- ============================================================ -->
+
+  <!-- .metal files (Metal/shader = amber) — all 7 kernels merged -->
+  <rect x="60" y="386" width="320" height="148" class="box" fill="#fefce8" stroke="#eab308"/>
+  <text x="80" y="406" class="filename">kernels/*.metal</text>
+  <text x="80" y="424" class="desc">layernorm_naive.metal        (K1)</text>
+  <text x="80" y="438" class="desc">layernorm_shared.metal       (K2)</text>
+  <text x="80" y="452" class="desc">layernorm_simd.metal         (K3)</text>
+  <text x="80" y="466" class="desc">layernorm_vectorized.metal   (K4)</text>
+  <text x="80" y="480" class="desc">layernorm_fused.metal        (K5)</text>
+  <text x="80" y="494" class="desc">layernorm_robust.metal       (K6) ← best</text>
+  <text x="80" y="508" class="desc">layernorm_regtiled.metal     (K7)</text>
+  <text x="80" y="526" class="desc" font-style="italic" fill="#94a3b8">Shipped as package data, compiled at runtime</text>
+
+  <!-- Arrow: .metal → _C.so (packaged) -->
+  <path d="M220,386 L220,348" class="arrow"/>
+  <text x="230" y="374" class="note">pkg_resources</text>
+
+  <!-- Arrow: .metal → _C runtime (compiled on first call, crosses columns) -->
+  <path d="M380,420 Q470,380 550,338" class="arrow-blue"/>
+  <text x="430" y="366" class="note" text-anchor="middle">newLibraryWithSource:</text>
+  <text x="430" y="374" class="note" text-anchor="middle">(PipelineCache)</text>
+
+  <!-- ============================================================ -->
+  <!-- ROW 5: GPU / PyTorch MPS -->
+  <!-- ============================================================ -->
+
+  <!-- PyTorch MPS system (blue, framework) — now in runtime column below _C -->
+  <rect x="500" y="386" width="320" height="58" class="box" fill="#f0f9ff" stroke="#38bdf8" stroke-dasharray="6,3"/>
+  <text x="520" y="404" class="filename">PyTorch MPS Command System</text>
+  <text x="520" y="416" class="desc" font-style="italic" fill="#94a3b8">(defined in dispatch.mm)</text>
+  <text x="520" y="430" class="desc">get_command_buffer()  get_dispatch_queue()</text>
+  <text x="520" y="440" class="desc">commit()  — submits to GPU</text>
+
+  <!-- Apple GPU (dark) -->
+  <rect x="500" y="480" width="320" height="58" class="box" fill="#1e293b" stroke="#0f172a"/>
+  <text x="660" y="504" text-anchor="middle" fill="#f8fafc" font-size="13px" font-weight="700">Apple Silicon GPU</text>
+  <text x="660" y="524" text-anchor="middle" fill="#94a3b8" font-size="10px">SIMD groups · Threadgroup memory · Unified DRAM</text>
+
+  <!-- Arrow: _C runtime → MPS -->
+  <path d="M660,348 L660,386" class="arrow-blue"/>
+
+  <!-- Arrow: MPS → GPU -->
+  <path d="M660,444 L660,480" class="arrow-blue"/>
+  <text x="668" y="468" class="note">MTLCommandBuffer</text>
+
+  <!-- ============================================================ -->
+  <!-- Legend -->
+  <!-- ============================================================ -->
+  <rect x="60" y="558" width="760" height="36" rx="6" ry="6" fill="#f8fafc" stroke="#e2e8f0"/>
+
+  <!-- Python -->
+  <rect x="82" y="568" width="16" height="16" rx="3" ry="3" fill="#faf5ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="104" y="580" class="legend-text">Python (.py)</text>
+
+  <!-- Obj-C++ -->
+  <rect x="232" y="568" width="16" height="16" rx="3" ry="3" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="254" y="580" class="legend-text">Obj-C++ (.mm)</text>
+
+  <!-- Compiled -->
+  <rect x="382" y="568" width="16" height="16" rx="3" ry="3" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="404" y="580" class="legend-text">Compiled (.so)</text>
+
+  <!-- Metal shader -->
+  <rect x="532" y="568" width="16" height="16" rx="3" ry="3" fill="#fefce8" stroke="#eab308" stroke-width="1.5"/>
+  <text x="554" y="580" class="legend-text">Metal (.metal)</text>
+
+  <!-- Arrow legend -->
+  <line x1="682" y1="576" x2="707" y2="576" stroke="#3b82f6" stroke-width="2" marker-end="url(#ah-blue)"/>
+  <text x="714" y="580" class="legend-text">Call path</text>
+
+</svg>
