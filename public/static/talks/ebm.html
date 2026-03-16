@@ -263,6 +263,8 @@ ul li::before {
   border: 1px solid var(--border);
   border-radius: 12px; overflow: hidden;
 }
+.comparison.cols-4 { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+.comparison.cols-5 { grid-template-columns: 1.4fr 1fr 1fr 1fr 1.3fr; }
 .comparison > div {
   padding: 1em 1.3em;
   border-right: 1px solid var(--border);
@@ -273,6 +275,9 @@ ul li::before {
 .comparison.cols-5 > div:nth-child(3n) { border-right: 1px solid var(--border); }
 .comparison.cols-5 > div:nth-child(5n) { border-right: none; }
 .comparison.cols-5 > div:nth-last-child(-n+5) { border-bottom: none; }
+.comparison.cols-4 > div:nth-child(3n) { border-right: 1px solid var(--border); }
+.comparison.cols-4 > div:nth-child(4n) { border-right: none; }
+.comparison.cols-4 > div:nth-last-child(-n+4) { border-bottom: none; }
 .comparison .header {
   background: var(--bg-card);
   font-weight: 600; font-size: clamp(14px, 1.3vw, 20px);
@@ -336,8 +341,12 @@ blockquote cite {
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
   .split { grid-template-columns: 1fr !important; }
-  .comparison { grid-template-columns: 1fr !important; }
   .card-grid.cols-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .comparison { grid-template-columns: 1fr !important; }
+  .comparison.cols-4 { grid-template-columns: 1fr !important; }
+  .comparison.cols-5 { grid-template-columns: 1fr !important; }
 }
 
 /* ---- Demo-specific overrides ---- */
@@ -438,6 +447,24 @@ blockquote cite {
 }
 #theme-toggle:hover { border-color: var(--accent); }
 
+/* ---- Logo ---- */
+#site-logo {
+  position: fixed; top: 10px; left: 16px; z-index: 200;
+  display: flex; align-items: center; gap: 6px;
+  text-decoration: none; opacity: 0.7; transition: opacity 0.3s;
+}
+#site-logo:hover { opacity: 1; }
+#site-logo svg { width: 34px; height: 34px; }
+
+/* ---- Slide references ---- */
+.slide-ref {
+  position: absolute; bottom: 16px; left: 6vw; right: 6vw;
+  font-size: 11px; color: var(--text-muted); line-height: 1.5;
+  font-family: var(--font-body);
+}
+.slide-ref a { color: var(--accent); text-decoration: none; }
+.slide-ref a:hover { text-decoration: underline; }
+
 /* ---- Animations ---- */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -458,6 +485,9 @@ blockquote cite {
 <div id="counter"></div>
 <div id="nav-hint">← → navigate · T toggle theme</div>
 <button id="theme-toggle" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
+<a id="site-logo" href="https://shashankshekhar.com" target="_blank" title="shashankshekhar.com">
+  <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#FF69B4" fill-rule="evenodd" d="M8.046 10.872a1 1 0 0 0-.98-1.743l-3.556 2a1 1 0 0 0 .043 1.766l2.08 1.04-2.123 1.194a1 1 0 0 0 .043 1.766l8 4a1 1 0 0 0 .894 0l8-4a1 1 0 0 0 .043-1.766l-2.123-1.194 2.08-1.04a1 1 0 0 0 .043-1.766l-3.555-2a1 1 0 1 0-.98 1.743l1.913 1.076L12 14.882l-5.868-2.934zm8.162 4.142-3.76 1.88a1 1 0 0 1-.895 0l-3.76-1.88-1.66.934L12 18.882l5.868-2.934z" clip-rule="evenodd"/><path fill="#C71585" fill-rule="evenodd" d="M11.553 3.106a1 1 0 0 1 .894 0l8 4a1 1 0 0 1 0 1.788l-8 4a1 1 0 0 1-.894 0l-8-4a1 1 0 0 1 0-1.788zM6.236 8 12 10.882 17.764 8 12 5.118z" clip-rule="evenodd"/></svg>
+</a>
 
 <div class="deck" id="deck">
 
@@ -586,7 +616,7 @@ blockquote cite {
 <!-- ============ SLIDE 9: EBM vs Autoregressive ============ -->
 <div class="slide" data-slide="8">
   <h2 class="anim">Energy-Based vs. Autoregressive</h2>
-  <div class="comparison anim anim-d1" style="grid-template-columns: 1fr 1fr 1fr;">
+  <div class="comparison anim anim-d1" >
     <div class="header"></div>
     <div class="header">Supervised AR</div>
     <div class="header">Energy-Based</div>
@@ -801,6 +831,7 @@ blockquote cite {
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 2</p>
     <h1 class="anim anim-d1">How to Train<br>Your EBM</h1>
     <p class="subtitle anim anim-d2" style="max-width:600px;margin:0.5em auto 0;">Based on Song &amp; Kingma, <em>"How to Train Your Energy-Based Models"</em> (2021)</p>
+    <div class="slide-ref">Song, Y. & Kingma, D.P. "How to Train Your Energy-Based Models." <a href="https://arxiv.org/abs/2101.03288">arXiv:2101.03288</a>, 2021.</div>
   </div>
 </div>
 
@@ -848,8 +879,8 @@ blockquote cite {
   <p class="anim anim-d2" style="margin-top:1em;">But we <em>can</em> <strong>approximately</strong> sample by running a Markov chain that converges to <span class="math-inline" id="math-mcmc-p2"></span> in the limit.</p>
   <div class="card anim anim-d3" style="margin-top:1.5em;border-left:3px solid var(--accent);">
     <h3 style="color:var(--accent);margin-bottom:0.3em;">💡 Key insight</h3>
-    <p>Run an MCMC sampler to generate <strong>approximate negative samples</strong> x⁻, then plug them into the gradient equation as if they were exact samples from p_θ.</p>
-    <p style="margin-top:0.5em;font-size:clamp(13px,1.1vw,17px);color:var(--text-muted);">The score ∇ₓ log p_θ(x) = −∇ₓ E_θ(x) doesn't need Z — so gradient-based MCMC is feasible!</p>
+    <p>Run an MCMC sampler to generate <strong>approximate negative samples</strong> x⁻, then plug them into the gradient equation as if they were exact samples from <span class="math-inline" id="math-il-101"></span>.</p>
+    <p style="margin-top:0.5em;font-size:clamp(13px,1.1vw,17px);color:var(--text-muted);">The score <span class="math-inline" id="math-il-102"></span> doesn't need Z — so gradient-based MCMC is feasible!</p>
   </div>
 </div>
 
@@ -864,7 +895,7 @@ blockquote cite {
     <li class="anim anim-d4"><span class="math-inline" id="math-lang-noise"></span> adds stochastic exploration (the noise)</li>
   </ul>
   <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">
-    When ε → 0 and K → ∞, x_K is guaranteed to distribute as p_θ(x) under regularity conditions.
+    When ε → 0 and K → ∞, <span class="math-inline" id="math-il-103"></span> is guaranteed to distribute as <span class="math-inline" id="math-il-104"></span> under regularity conditions.
   </p>
 </div>
 
@@ -915,6 +946,7 @@ blockquote cite {
       <p style="font-size:clamp(13px,1.1vw,17px);">Keep historical MCMC states in a buffer, randomly sample to initialize new chains.</p>
     </div>
   </div>
+  <div class="slide-ref">Hinton, G.E. "Training Products of Experts by Minimizing Contrastive Divergence." <em>Neural Computation</em>, 2002. · Tieleman, T. "Training RBMs Using Approximations to the Likelihood Gradient." <em>ICML</em>, 2008.</div>
 </div>
 
 <!-- ============ SLIDE 29: Score Matching section ============ -->
@@ -936,6 +968,7 @@ blockquote cite {
   <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--accent);">
     <p><span class="highlight">log Z_θ vanishes!</span> — because Z_θ is a constant with respect to x. The score only depends on the energy function, not the intractable partition function.</p>
   </div>
+  <div class="slide-ref">Hyvärinen, A. "Estimation of Non-Normalized Statistical Models by Score Matching." <em>JMLR</em>, 2005.</div>
 </div>
 
 <!-- ============ SLIDE 31: Score matching idea ============ -->
@@ -981,8 +1014,9 @@ blockquote cite {
   <p class="anim anim-d3">The noisy score has a simple closed form, so the DSM objective becomes:</p>
   <div class="math-block anim anim-d3" id="math-dsm"></div>
   <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--accent);">
-    <p><span class="highlight">No second-order derivatives, no unknown p_data</span> — just a regression problem: predict the noise direction from the noisy input.</p>
+    <p><span class="highlight">No second-order derivatives, no unknown <span class="math-inline" id="math-il-105"></span></span> — just a regression problem: predict the noise direction from the noisy input.</p>
   </div>
+  <div class="slide-ref">Vincent, P. "A Connection Between Score Matching and Denoising Autoencoders." <em>Neural Computation</em>, 2011.</div>
 </div>
 
 <!-- ============ SLIDE 35: DSM = Diffusion ============ -->
@@ -998,6 +1032,7 @@ blockquote cite {
   <p class="anim anim-d4" style="margin-top:0.8em;font-size:clamp(12px,1vw,16px);color:var(--text-muted);">
     Song &amp; Ermon 2019; Ho et al. 2020; Song et al. 2021
   </p>
+  <div class="slide-ref">Song, Y. & Ermon, S. "Generative Modeling by Estimating Gradients of the Data Distribution." <em>NeurIPS</em>, 2019. · Ho, J. et al. "Denoising Diffusion Probabilistic Models." <em>NeurIPS</em>, 2020.</div>
 </div>
 
 <!-- ============ SLIDE 36: NCE section ============ -->
@@ -1012,11 +1047,12 @@ blockquote cite {
 <!-- ============ SLIDE 37: NCE idea ============ -->
 <div class="slide" data-slide="36">
   <h2 class="anim">NCE: The Idea</h2>
-  <p class="anim anim-d1">No more trying to sample from p_θ or match its score.</p>
+  <p class="anim anim-d1">No more trying to sample from <span class="math-inline" id="math-il-106"></span> or match its score.</p>
   <p class="anim anim-d2" style="margin-top:0.8em;">Instead, train a <span class="highlight">binary classifier</span> to tell whether a sample came from the <strong>data distribution</strong> or a known <strong>noise distribution</strong>.</p>
   <div class="card anim anim-d3" style="margin-top:1.2em;border-left:3px solid var(--accent);">
     <p>Any classifier that can answer this optimally can <strong>implicitly recover the data density</strong> — this is theoretically proven (Gutmann &amp; Hyvärinen, 2010).</p>
   </div>
+  <div class="slide-ref">Gutmann, M.U. & Hyvärinen, A. "Noise-Contrastive Estimation: A New Estimation Principle for Unnormalized Statistical Models." <em>AISTATS</em>, 2010.</div>
   <p class="anim anim-d4" style="margin-top:1em;">Unique advantage: NCE <span class="highlight">learns Z</span> as a by-product — the only method among the three that does.</p>
 </div>
 
@@ -1025,16 +1061,16 @@ blockquote cite {
   <h2 class="anim">NCE: Two Sources</h2>
   <div style="display:flex;gap:20px;margin-top:0.8em;flex-wrap:wrap;">
     <div class="card anim anim-d1" style="flex:1;min-width:280px;border-left:3px solid var(--green);">
-      <h3>1. Data distribution p_data</h3>
+      <h3>1. Data distribution <span class="math-inline" id="math-il-107"></span></h3>
       <p style="font-size:clamp(14px,1.2vw,18px);">Can sample from training set.</p>
     </div>
     <div class="card anim anim-d2" style="flex:1;min-width:280px;border-left:3px solid var(--orange);">
-      <h3>2. Noise distribution q(x)</h3>
+      <h3>2. Noise distribution <span class="math-inline" id="math-il-108"></span></h3>
       <p style="font-size:clamp(14px,1.2vw,18px);">Could be Gaussian, uniform, or… the output of a <strong>pretrained autoregressive model</strong> 🧐</p>
       <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">(spoiler alert)</p>
     </div>
   </div>
-  <p class="anim anim-d3" style="margin-top:1em;">Must be able to both <strong>sample</strong> from q and <strong>evaluate its density</strong> q(x) at any point.</p>
+  <p class="anim anim-d3" style="margin-top:1em;">Must be able to both <strong>sample</strong> from q and <strong>evaluate its density</strong> <span class="math-inline" id="math-il-109"></span> at any point.</p>
   <p class="anim anim-d4" style="margin-top:0.8em;">Mix them together: draw x from either source with equal probability, then ask the classifier: <em>"which source did this come from?"</em></p>
 </div>
 
@@ -1072,7 +1108,7 @@ blockquote cite {
 <!-- ============ SLIDE 41: Comparison table ============ -->
 <div class="slide" data-slide="40">
   <h2 class="anim">Comparing Training Paradigms</h2>
-  <div class="comparison cols-5 anim anim-d1" style="grid-template-columns: 1.4fr 1fr 1fr 1fr 1.3fr; font-size:clamp(12px,1.1vw,16px);">
+  <div class="comparison cols-5 anim anim-d1" style="font-size:clamp(12px,1.1vw,16px);">
     <div class="header">Method</div>
     <div class="header">Avoids Z via</div>
     <div class="header">MCMC?</div>
@@ -1126,6 +1162,297 @@ blockquote cite {
   <div>
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 3</p>
     <h1 class="anim anim-d1">EBMs 🤝 LLMs</h1>
+  </div>
+</div>
+
+<!-- ============ SLIDE 44: JEM - Classifier as EBM ============ -->
+<div class="slide" data-slide="43">
+  <h2 class="anim">Your Classifier Is Secretly an EBM</h2>
+  <p class="subtitle anim">Grathwohl et al., <em>JEM</em>, 2020</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">A standard classifier with softmax:</p>
+  <div class="math-block anim anim-d2" id="math-jem-classifier"></div>
+  <p class="anim anim-d3" style="margin-top:0.8em;">We can reinterpret the logits as a <strong>joint energy function</strong>:</p>
+  <div class="math-block anim anim-d3" id="math-jem-joint"></div>
+  <p class="anim anim-d4" style="margin-top:0.8em;">By marginalizing out y, we get an energy over inputs:</p>
+  <div class="math-block anim anim-d4" id="math-jem-marginal"></div>
+  <div class="card anim anim-d4" style="margin-top:0.8em;border-left:3px solid var(--accent);">
+    <p><span class="highlight">There is a hidden energy-based generative model inside every discriminative classifier.</span></p>
+  </div>
+  <div class="slide-ref">Grathwohl, W. et al. "Your Classifier is Secretly an Energy Based Model and You Should Treat it Like One." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/1912.03263">arXiv:1912.03263</a></div>
+</div>
+
+<!-- ============ SLIDE 45: JEM Training ============ -->
+<div class="slide" data-slide="44">
+  <h2 class="anim">Training the Joint EBM</h2>
+  <p class="anim anim-d1">Decompose the joint log-probability:</p>
+  <div class="math-block anim anim-d1" id="math-jem-decomp"></div>
+  <div style="display:flex;gap:16px;margin-top:0.8em;flex-wrap:wrap;">
+    <div class="card anim anim-d2" style="flex:1;min-width:250px;border-top:3px solid var(--accent);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);"><span class="math-inline" id="math-il-110"></span> — generative term</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Trained via SGLD (Langevin dynamics)</p>
+    </div>
+    <div class="card anim anim-d2" style="flex:1;min-width:250px;border-top:3px solid var(--purple);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);"><span class="math-inline" id="math-il-111"></span> — discriminative term</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Standard cross-entropy loss</p>
+    </div>
+  </div>
+  <p class="anim anim-d3" style="margin-top:1em;">Results: better classification <em>and</em> better generation than single-purpose models (same architecture), plus better calibration, OOD detection, and adversarial robustness.</p>
+</div>
+
+<!-- ============ SLIDE 46: ELECTRA ============ -->
+<div class="slide" data-slide="45">
+  <h2 class="anim">ELECTRA</h2>
+  <p class="subtitle anim">Pre-Training Text Encoders as Discriminators</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">A small <strong>generator</strong> (MLM) fills in masked tokens. A larger <strong>discriminator</strong> classifies each token as original or replaced.</p>
+  <div style="display:flex;gap:16px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d2" style="flex:1;min-width:280px;">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">Why it's better than BERT MLM</h3>
+      <ul style="font-size:clamp(13px,1.1vw,16px);">
+        <li><span class="highlight">Dense signal</span> over all tokens (not just ~15% masked)</li>
+        <li>No [MASK] token mismatch between pre-training and fine-tuning</li>
+        <li>3–7× sample efficiency over BERT</li>
+      </ul>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:280px;">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">The EBM connection</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">ELECTRA's discriminator is doing <strong>negative sampling</strong> — distinguishing real tokens (data) from fake tokens (generator). This is NCE with the generator as the noise distribution!</p>
+    </div>
+  </div>
+  <div class="slide-ref">Clark, K. et al. "ELECTRA: Pre-training Text Encoders as Discriminators Rather Than Generators." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/2003.10555">arXiv:2003.10555</a></div>
+</div>
+
+<!-- ============ SLIDE 47: Electric ============ -->
+<div class="slide" data-slide="46">
+  <h2 class="anim">Electric: Energy-Based Cloze Models</h2>
+  <p class="subtitle anim">Clark et al., 2020</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">Electric takes ELECTRA's insight further — from <em>negative sampling</em> to proper <em>noise contrastive estimation</em>:</p>
+  <div style="display:flex;gap:16px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d2" style="flex:1;min-width:280px;border-left:3px solid var(--orange);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">ELECTRA</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Discriminator classifies real vs. fake tokens. Ignores the noise distribution.</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:280px;border-left:3px solid var(--accent);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">Electric</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Given fake tokens (noise), <span class="highlight">learns to model data tokens via NCE</span>. Produces calibrated per-token pseudo-probabilities.</p>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">
+    Electric outputs <span class="math-inline" id="math-electric-p"></span> — an energy-based cloze probability for each token given its context. No autoregressive factorization needed.
+  </p>
+  <div class="slide-ref">Clark, K. et al. "Pre-Training Transformers as Energy-Based Cloze Models." <em>EMNLP</em>, 2020. <a href="https://arxiv.org/abs/2012.08561">arXiv:2012.08561</a></div>
+</div>
+
+<!-- ============ SLIDE 48: Residual EBMs for Text ============ -->
+<div class="slide" data-slide="47">
+  <h2 class="anim">Residual EBMs for Text</h2>
+  <p class="subtitle anim">Deng et al., 2020</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">Take a pretrained autoregressive LM and multiply its distribution by an energy correction from a bidirectional model:</p>
+  <div class="math-block anim anim-d2" id="math-residual-ebm"></div>
+  <div style="display:flex;gap:16px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d3" style="flex:1;min-width:250px;text-align:center;">
+      <p style="font-size:22px;">🔄</p>
+      <p style="font-size:clamp(13px,1.1vw,16px);"><strong>AR model</strong> handles fluency and local coherence (token-by-token)</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:250px;text-align:center;">
+      <p style="font-size:22px;">🌐</p>
+      <p style="font-size:clamp(13px,1.1vw,16px);"><strong>Bidirectional energy</strong> provides global, sequence-level quality correction</p>
+    </div>
+  </div>
+  <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--accent);">
+    <p>💡 <span class="highlight">Energy-based models as "verifiers"</span> — the EBM doesn't generate, it scores and corrects. Trained end-to-end via NCE.</p>
+  </div>
+  <div class="slide-ref">Deng, Y. et al. "Residual Energy-Based Models for Text Generation." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/2004.11714">arXiv:2004.11714</a></div>
+</div>
+
+<!-- ============ SLIDE 49: EDLM Problem ============ -->
+<div class="slide" data-slide="48">
+  <h2 class="anim">EDLM: The Problem with Parallel Text Generation</h2>
+  <p class="subtitle anim">Zhao et al., 2025</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">Discrete diffusion models for text unmask tokens in parallel, but predict each token <strong>independently</strong>:</p>
+  <div class="math-block anim anim-d2" id="math-edlm-factored"></div>
+  <p class="anim anim-d3" style="margin-top:0.8em;">It's like having 10 people each independently write one word of a sentence — each word is reasonable given the context, but together the sentence may be <span class="highlight-red">incoherent</span>.</p>
+  <div class="card anim anim-d4" style="border-left:3px solid var(--red);">
+    <p>The more parallel the model tries to be (fewer denoising steps), the worse this factorization error gets. This is the fundamental gap between diffusion and AR quality for language.</p>
+  </div>
+  <div class="slide-ref">Ye, J. et al. "Energy-Based Diffusion Language Models for Text Generation." <a href="https://arxiv.org/abs/2410.21357">arXiv:2410.21357</a>, 2024.</div>
+</div>
+
+<!-- ============ SLIDE 50: EDLM Solution ============ -->
+<div class="slide" data-slide="49">
+  <h2 class="anim">EDLM: Residual Energy Correction</h2>
+  <p class="anim anim-d1">Apply the residual EBM idea <em>at every denoising step</em>:</p>
+  <div class="math-block anim anim-d2" id="math-edlm-joint"></div>
+  <p class="anim anim-d3" style="margin-top:0.8em;">Two ways to get the energy function:</p>
+  <div style="display:flex;gap:16px;margin-top:0.8em;flex-wrap:wrap;">
+    <div class="card anim anim-d3" style="flex:1;min-width:280px;border-left:3px solid var(--blue);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">EDLM-AR</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Plug in a <strong>pretrained AR model</strong> as the energy. Turns into parallel sampling from an AR model via importance weighting. One AR forward pass scores a complete sequence.</p>
+    </div>
+    <div class="card anim anim-d4" style="flex:1;min-width:280px;border-left:3px solid var(--orange);">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">EDLM-NCE</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">Train a small <strong>energy head</strong> via NCE on top of the diffusion model. Positives = clean data, negatives = diffusion model's own predictions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 51: EDLM Results ============ -->
+<div class="slide" data-slide="50">
+  <h2 class="anim">EDLM: Results</h2>
+  <p class="anim anim-d1">Inference: draw <strong>k candidates</strong> from diffusion model, score with energy, resample via importance weights.</p>
+  <div class="card anim anim-d2" style="border-left:3px solid var(--accent);">
+    <h3 style="color:var(--accent);margin-bottom:0.3em;">Key finding</h3>
+    <p style="font-size:clamp(14px,1.2vw,18px);">Correction matters most in <strong>early denoising steps</strong> (high masking ratio → worst factorization error). Apply importance sampling only for t ∈ [0.8, 1.0] to get most benefit at a fraction of the cost.</p>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d3" style="flex:1;min-width:180px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">49%</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">generative perplexity improvement</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:180px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">1.3×</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">sampling speedup at same quality</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:180px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">400k</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">fine-tuning steps (NCE variant)</p>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">First diffusion model to seriously challenge autoregressive quality on language.</p>
+</div>
+
+<!-- ============ SLIDE 52: EBT Paradigm ============ -->
+<div class="slide" data-slide="51">
+  <h2 class="anim">Energy-Based Transformers</h2>
+  <p class="subtitle anim">Gladstone et al., 2025 — A radically different paradigm</p>
+  <p class="anim anim-d1" style="margin-top:0.8em;">Unlike EDLM which adds an energy correction, EBT makes the <span class="highlight">entire model</span> an energy function:</p>
+  <div class="math-block anim anim-d2" id="math-ebt-energy"></div>
+  <p class="anim anim-d3">Inference = <strong>gradient descent</strong> from random noise to a converged prediction:</p>
+  <div class="math-block anim anim-d3" id="math-ebt-inference"></div>
+  <p class="anim anim-d4" style="margin-top:0.8em;">Each gradient step is one unit of <em>thinking</em>. The model is simultaneously a <strong>generator</strong> (via energy minimization) and a <strong>verifier</strong> (via the energy scalar) — unified in a single model.</p>
+  <div class="slide-ref">Gladstone, A. et al. "Energy-Based Transformers are Scalable Learners and Thinkers." <a href="https://arxiv.org/abs/2507.02092">arXiv:2507.02092</a>, 2025.</div>
+</div>
+
+<!-- ============ SLIDE 53: EBT System 2 ============ -->
+<div class="slide" data-slide="52">
+  <h2 class="anim">Three Facets of System 2 Thinking</h2>
+  <div class="comparison cols-4 anim anim-d1" style="font-size:clamp(13px,1.2vw,17px);">
+    <div class="header">Architecture</div>
+    <div class="header">Dynamic Compute</div>
+    <div class="header">Uncertainty</div>
+    <div class="header">Verification</div>
+    <div style="font-weight:600;">FF Transformers</div>
+    <div style="text-align:center;color:var(--red);">✗</div>
+    <div style="text-align:center;color:var(--red);">✗</div>
+    <div style="text-align:center;color:var(--red);">✗</div>
+    <div style="font-weight:600;">Diffusion Transformers</div>
+    <div style="text-align:center;color:var(--green);">✓</div>
+    <div style="text-align:center;color:var(--red);">✗</div>
+    <div style="text-align:center;color:var(--red);">✗</div>
+    <div style="font-weight:600;">EBTs</div>
+    <div style="text-align:center;color:var(--green);">✓</div>
+    <div style="text-align:center;color:var(--green);">✓</div>
+    <div style="text-align:center;color:var(--green);">✓</div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d2" style="flex:1;min-width:200px;">
+      <h3 style="font-size:clamp(13px,1.2vw,17px);">🎯 Dynamic Compute</h3>
+      <p style="font-size:clamp(12px,1vw,15px);">Iterate more on harder predictions. Same compute for "the" as "serendipitous"? Not anymore.</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:200px;">
+      <h3 style="font-size:clamp(13px,1.2vw,17px);">📊 Uncertainty</h3>
+      <p style="font-size:clamp(12px,1vw,15px);">Energy at convergence directly quantifies confidence. Easy tokens → low energy. Hard tokens → high energy.</p>
+    </div>
+    <div class="card anim anim-d4" style="flex:1;min-width:200px;">
+      <h3 style="font-size:clamp(13px,1.2vw,17px);">✅ Verification</h3>
+      <p style="font-size:clamp(12px,1vw,15px);">Best-of-N sampling <em>without a separate reward model</em>. The energy IS the verifier.</p>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top:0.8em;color:var(--text-muted);">All three emerge from unsupervised pretraining — no RL, no verifiable rewards.</p>
+</div>
+
+<!-- ============ SLIDE 54: EBT Scaling ============ -->
+<div class="slide" data-slide="53">
+  <h2 class="anim">EBT: Scaling Results</h2>
+  <div style="display:flex;gap:12px;margin-top:0.8em;flex-wrap:wrap;">
+    <div class="card anim anim-d1" style="flex:1;min-width:150px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">35%</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">faster scaling on data</p>
+    </div>
+    <div class="card anim anim-d1" style="flex:1;min-width:150px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">28%</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">faster on batch size</p>
+    </div>
+    <div class="card anim anim-d1" style="flex:1;min-width:150px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">57%</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">faster on depth</p>
+    </div>
+    <div class="card anim anim-d1" style="flex:1;min-width:150px;text-align:center;">
+      <p style="font-size:28px;font-weight:700;color:var(--accent);">29%</p>
+      <p style="font-size:clamp(12px,1vw,15px);color:var(--text-muted);">inference improvement via thinking</p>
+    </div>
+  </div>
+  <p class="anim anim-d2" style="margin-top:1em;">First architecture to <strong>out-scale Transformer++</strong> across multiple axes simultaneously (data, batch size, parameters, FLOPs, depth).</p>
+  <div class="card anim anim-d3" style="margin-top:0.8em;border-left:3px solid var(--orange);">
+    <h3 style="color:var(--orange);margin-bottom:0.3em;">The P vs NP intuition</h3>
+    <p style="font-size:clamp(14px,1.2vw,18px);">Despite slightly worse pretraining perplexity, EBTs beat Transformer++ on downstream tasks. <strong>Verification generalizes better than generation</strong> — learning to score is easier than learning to produce.</p>
+  </div>
+</div>
+
+<!-- ============ SLIDE 55: EBT Thinking at Inference ============ -->
+<div class="slide" data-slide="54">
+  <h2 class="anim">Thinking at Inference Time</h2>
+  <p class="anim anim-d1">EBTs can improve by using <strong>more forward passes</strong> — Transformer++ cannot.</p>
+  <div style="display:flex;gap:16px;margin-top:1em;flex-wrap:wrap;">
+    <div class="card anim anim-d2" style="flex:1;min-width:280px;">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">OOD thinking boost</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">As data becomes more <strong>out-of-distribution</strong>, thinking helps <em>more</em> — roughly linear relationship. Just like humans engage deliberate reasoning for unfamiliar problems.</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;min-width:280px;">
+      <h3 style="font-size:clamp(14px,1.3vw,18px);">Thinking scales with training</h3>
+      <p style="font-size:clamp(13px,1.1vw,16px);">As the model sees more data, the benefit from self-verification increases from <strong>4–8%</strong> → <strong>10–14%</strong>. Extrapolation to Llama-3 scale suggests potentially massive gains.</p>
+    </div>
+  </div>
+  <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--red);">
+    <h3 style="font-size:clamp(14px,1.3vw,18px);">Current limitations</h3>
+    <p style="font-size:clamp(13px,1.1vw,16px);">Experiments up to 800M parameters. Training overhead 3.3–6.6×. Struggles with multi-modal distributions (merges nearby modes). Open question: do advantages persist at GPT-4 scale?</p>
+  </div>
+</div>
+
+<!-- ============ SLIDE 56: The Spectrum ============ -->
+<div class="slide" data-slide="55">
+  <h2 class="anim">The Spectrum of Energy-Based LLMs</h2>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-top:1em;">
+    <div class="card anim anim-d1" style="border-left:3px solid var(--blue);">
+      <h3 style="font-size:clamp(15px,1.4vw,20px);color:var(--blue);">Conservative: EBM as correction layer</h3>
+      <p style="font-size:clamp(14px,1.2vw,18px);">JEM, Electric, Residual EBMs, EDLM — keep existing models, add energy-based scoring on top. Practical, already works at scale. The EBM captures what the base model misses.</p>
+    </div>
+    <div class="card anim anim-d2" style="border-left:3px solid var(--purple);">
+      <h3 style="font-size:clamp(15px,1.4vw,20px);color:var(--purple);">Radical: EBM as the whole model</h3>
+      <p style="font-size:clamp(14px,1.2vw,18px);">EBTs — the transformer IS the energy function. Theoretically cleaner, remarkable scaling properties, built-in verification. Not yet demonstrated at frontier scale.</p>
+    </div>
+  </div>
+  <div class="card anim anim-d3" style="margin-top:1em;border-left:3px solid var(--accent);">
+    <p style="font-size:clamp(15px,1.3vw,20px);"><strong>The common thread:</strong> both approaches show that scoring complete configurations holistically — the energy-based way — improves generation quality, provides built-in verification, and enables test-time compute scaling.</p>
+  </div>
+</div>
+
+<!-- ============ SLIDE 57: Thank You ============ -->
+<div class="slide title-slide" data-slide="56">
+  <div>
+    <h1 class="anim" style="font-size:clamp(36px,4vw,64px);">Thank you!</h1>
+    <p class="subtitle anim anim-d1" style="font-size:clamp(16px,1.5vw,24px);color:var(--text-dim);margin-top:0.5em;">
+      Energy-based models: from Boltzmann machines to modern transformers
+    </p>
+    <div style="margin-top:2em;" class="anim anim-d2">
+      <p style="font-size:clamp(14px,1.3vw,20px);color:var(--text-muted);">Shashank Shekhar &nbsp;·&nbsp; Toronto LLM Meetup &nbsp;·&nbsp; March 17, 2026</p>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:2em;justify-content:center;flex-wrap:wrap;" class="anim anim-d3">
+      <div style="text-align:center;">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Key references</p>
+        <p style="font-size:clamp(12px,1vw,14px);color:var(--text-dim);">Song &amp; Kingma 2021 · Grathwohl et al. 2020 · Deng et al. 2020</p>
+        <p style="font-size:clamp(12px,1vw,14px);color:var(--text-dim);">Zhao et al. 2025 (EDLM) · Gladstone et al. 2025 (EBT)</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1260,9 +1587,9 @@ renderMath('math-softmax', '\\text{softmax}(z_i / T)', false);
 renderMath('math-Z', 'Z = \\int \\exp(-E(x))\\, dx');
 renderMath('math-nll', 'L(\\theta) = \\mathbb{E}_{x \\sim p}[-\\log p_\\theta(x)]');
 renderMath('math-grad', '\\nabla_\\theta L(\\theta) = \\underbrace{\\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)]}_{\\color{#1D9E75}{\\text{Positive Phase}}} - \\underbrace{\\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]}_{\\color{#E24B4A}{\\text{Negative Phase}}}');
-renderMath('math-pos', '\\nabla_\\theta (-\\log p(x)) = {\\color{#1D9E75}{\\nabla_\\theta E(x)}} - \\mathbb{E}_{x\' \\sim p_\\theta}[\\nabla_\\theta E(x\')]');
+renderMath('math-pos', '\\nabla_\\theta L(\\theta) = {\\color{#1D9E75}{\\underbrace{\\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)]}_{\\text{Positive Phase}}}} - \\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]');
 renderMath('math-pos-update', '\\Theta := \\Theta - \\lambda \\cdot \\mathbb{E}_{x \\sim \\mathcal{D}}\\left[\\frac{\\partial E_\\mathcal{G}}{\\partial \\Theta}\\right]');
-renderMath('math-neg', '\\nabla_\\theta (-\\log p(x)) = \\nabla_\\theta E(x) - {\\color{#E24B4A}{\\mathbb{E}_{x\' \\sim p_\\theta}[\\nabla_\\theta E(x\')]}}');
+renderMath('math-neg', '\\nabla_\\theta L(\\theta) = \\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)] - {\\color{#E24B4A}{\\underbrace{\\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]}_{\\text{Negative Phase}}}}');
 renderMath('math-neg-update', '\\Theta := \\Theta + \\lambda \\cdot \\mathbb{E}_{x \\sim p_\\Theta}\\left[\\frac{\\partial E_\\mathcal{G}}{\\partial \\Theta}\\right]');
 renderMath('math-recap1', 'E(x, y) \\rightarrow \\mathbb{R}', false);
 
@@ -1293,6 +1620,31 @@ renderMath('math-dsm', 'J_{\\text{DSM}}(\\theta) = \\mathbb{E}_{x \\sim p_{\\tex
 renderMath('math-nce-posterior', '\\frac{\\tilde{p}_\\theta(x)}{\\tilde{p}_\\theta(x) + q(x)} \\;\\approx\\; \\frac{p_{\\text{data}}(x)}{p_{\\text{data}}(x) + q(x)}');
 renderMath('math-nce-loss', 'L_{\\text{NCE}}(\\theta) = \\mathbb{E}_{x \\sim p_{\\text{data}}}\\!\\left[\\log \\sigma\\!\\left(\\log \\tilde{p}_\\theta(x) - \\log q(x)\\right)\\right] + \\mathbb{E}_{x \\sim q}\\!\\left[\\log \\sigma\\!\\left(\\log q(x) - \\log \\tilde{p}_\\theta(x)\\right)\\right]');
 renderMath('math-nce-result', 'p_{\\theta^*}(x) \\equiv p_{\\text{data}}(x)', false);
+
+// Part 3 math
+renderMath('math-jem-classifier', 'p_\\theta(y \\mid x) = \\frac{\\exp(f_\\theta(x)[y])}{\\sum_{y\'} \\exp(f_\\theta(x)[y\'])}');
+renderMath('math-jem-joint', 'p_\\theta(x, y) = \\frac{\\exp(f_\\theta(x)[y])}{Z(\\theta)}, \\quad E_\\theta(x,y) = -f_\\theta(x)[y]');
+renderMath('math-jem-marginal', 'E_\\theta(x) = -\\text{LogSumExp}_y\\, f_\\theta(x)[y] = -\\log \\sum_y \\exp(f_\\theta(x)[y])');
+renderMath('math-jem-decomp', '\\log p_\\theta(x, y) = \\underbrace{\\log p_\\theta(x)}_{\\text{SGLD}} + \\underbrace{\\log p_\\theta(y \\mid x)}_{\\text{cross-entropy}}');
+renderMath('math-electric-p', '\\hat{p}_\\theta(x_i \\mid x_{\\backslash i})', false);
+renderMath('math-residual-ebm', 'P(x) = P_{\\text{LM}}(x) \\cdot \\frac{\\exp(-E_\\theta(x))}{Z}');
+renderMath('math-edlm-factored', 'p_\\theta(x_0 \\mid x_t) = \\prod_i p_\\theta(x_0^i \\mid x_t) \\quad \\text{(independent per token!)}');
+renderMath('math-edlm-joint', 'p_{\\theta,\\phi}(x_0 \\mid x_t) = p_\\theta(x_0 \\mid x_t) \\cdot \\frac{\\exp(-E_\\phi(x_0, x_t, t))}{Z_\\phi(x_t)}');
+renderMath('math-ebt-energy', 'E_\\theta(x, \\hat{y}) \\rightarrow \\text{scalar} \\quad \\text{(how compatible is prediction } \\hat{y} \\text{ with context } x \\text{?)}');
+renderMath('math-ebt-inference', '\\hat{y}_{i+1} = \\hat{y}_i - \\alpha \\cdot \\nabla_{\\hat{y}_i} E_\\theta(x, \\hat{y}_i) \\quad \\text{(gradient w.r.t. prediction, not parameters)}');
+
+// Inline math auto-fixes
+renderMath('math-il-101', 'p_\\theta', false);
+renderMath('math-il-102', '\\nabla_x \\log p_\\theta(x) = -\\nabla_x E_\\theta(x)', false);
+renderMath('math-il-103', 'x_K', false);
+renderMath('math-il-104', 'p_\\theta(x)', false);
+renderMath('math-il-105', 'p_{\\text{data}}', false);
+renderMath('math-il-106', 'p_\\theta', false);
+renderMath('math-il-107', 'p_{\\text{data}}', false);
+renderMath('math-il-108', 'q(x)', false);
+renderMath('math-il-109', 'q(x)', false);
+renderMath('math-il-110', '\\log p_\\theta(x)', false);
+renderMath('math-il-111', '\\log p_\\theta(y|x)', false);
 
 // ===========================================================================
 // 3D ENERGY LANDSCAPE DEMO
