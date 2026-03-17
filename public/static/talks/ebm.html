@@ -458,12 +458,137 @@ blockquote cite {
 
 /* ---- Slide references ---- */
 .slide-ref {
-  position: absolute; bottom: 16px; left: 6vw; right: 6vw;
+  position: absolute; bottom: 16px;
+  left: 240px; right: 100px;
   font-size: 11px; color: var(--text-muted); line-height: 1.5;
   font-family: var(--font-body);
+  text-align: center;
 }
 .slide-ref a { color: var(--accent); text-decoration: none; }
 .slide-ref a:hover { text-decoration: underline; }
+
+/* ---- MCMC Demo ---- */
+#mcmc-wrap {
+  position: relative; width: 100%; height: 100%;
+  display: grid; grid-template-columns: 1fr 260px;
+  border-radius: 12px; overflow: hidden;
+  background: var(--bg-card);
+}
+#mcmc-viewport { position: relative; overflow: hidden; }
+#mcmc-viewport canvas { display: block; width: 100%; height: 100%; }
+#mcmc-panel {
+  border-left: 1px solid var(--border);
+  background: var(--bg-card-alt);
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+#mcmc-panel .mp-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+}
+#mcmc-panel .mp-section h4 {
+  font-family: var(--font-body); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--text-muted); margin-bottom: 8px;
+}
+#mcmc-panel .mp-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+#mcmc-panel .mp-row label { font-size: 11px; color: var(--text-dim); }
+#mcmc-panel .mp-row .mv { font-family: var(--font-mono); font-size: 11px; color: var(--text); }
+#mcmc-panel input[type=range] { width: 100%; margin: 2px 0 6px; accent-color: var(--accent); }
+#mcmc-panel .mp-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+#mcmc-panel .mp-btn {
+  flex: 1; padding: 5px 8px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--bg-card-alt);
+  color: var(--text-dim); font-family: var(--font-body);
+  font-size: 11px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; text-align: center;
+}
+#mcmc-panel .mp-btn:hover { background: var(--border); color: var(--text); }
+#mcmc-panel .mp-btn.pri { background: var(--accent); color: #fff; border-color: var(--accent); }
+#mcmc-panel .mp-btn.pri:hover { background: #17b880; }
+#mcmc-panel .mp-btn.dan { border-color: var(--red); color: var(--red); }
+#mcmc-panel .mp-btn.dan:hover { background: var(--red); color: #fff; }
+.mcmc-tabs {
+  display: flex; gap: 2px; background: var(--bg); border-radius: 6px; padding: 2px;
+}
+.mcmc-tabs button {
+  padding: 4px 12px; border-radius: 4px; border: none;
+  background: transparent; color: var(--text-muted);
+  font-family: var(--font-body); font-size: 11px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.mcmc-tabs button.active { background: var(--accent); color: #fff; }
+.mcmc-tabs button:hover:not(.active) { color: var(--text); }
+#mcmc-legend {
+  position: absolute; bottom: 8px; left: 8px;
+  background: var(--overlay-bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; font-size: 10px;
+  color: var(--text-muted); line-height: 1.6; z-index: 10;
+}
+#mcmc-legend .mdot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; vertical-align: middle; margin-right: 3px;
+}
+#mcmc-progress {
+  height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px;
+}
+#mcmc-progress-bar {
+  height: 100%; background: var(--accent); width: 0%;
+  transition: width 0.12s; border-radius: 2px;
+}
+.mcmc-explainer {
+  font-size: 10px; line-height: 1.55; color: var(--text-muted);
+}
+.mp-hidden { display: none !important; }
+
+/* ---- Collapsible details ---- */
+details.derivation {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 0.6em 0;
+  overflow: hidden;
+}
+details.derivation summary {
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.2vw, 18px);
+  font-weight: 500;
+  color: var(--accent);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+details.derivation summary::-webkit-details-marker { display: none; }
+details.derivation summary::before {
+  content: '▸';
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 0.85em;
+}
+details.derivation[open] summary::before { transform: rotate(90deg); }
+details.derivation .deriv-body {
+  padding: 0 1.2em 1em;
+  border-top: 1px solid var(--border);
+}
+details.derivation .deriv-body .math-block {
+  margin: 0.6em 0;
+  padding: 0.6em 1em;
+  font-size: 0.95em;
+  border-left: none;
+}
+details.derivation .deriv-body p {
+  font-size: clamp(12px, 1.1vw, 16px);
+  margin: 0.4em 0;
+}
 
 /* ---- Animations ---- */
 @keyframes fadeInUp {
@@ -578,12 +703,34 @@ blockquote cite {
   </div>
 </div>
 
-<!-- ============ SLIDE 7: Energy Function ============ -->
+<!-- ============ SLIDE 7: Energy Function (unconditional) ============ -->
 <div class="slide" data-slide="6">
   <h2 class="anim">The Energy Function</h2>
+  <div class="math-block anim anim-d1" id="math-efn-uncon"></div>
+  <p class="anim anim-d2" style="margin-top:0.8em;">
+    The energy function <em>is</em> the model. It maps every possible configuration <strong>x</strong> to a scalar — shaping the landscape you just saw.
+  </p>
+  <div style="display:flex;gap:24px;margin-top:1em;">
+    <div class="card anim anim-d3" style="flex:1;text-align:center;">
+      <p style="font-size:28px;">⬇️</p>
+      <p><span class="highlight">Low energy</span> = "looks like real data"</p>
+    </div>
+    <div class="card anim anim-d3" style="flex:1;text-align:center;">
+      <p style="font-size:28px;">⬆️</p>
+      <p><span class="highlight-red">High energy</span> = "doesn't look like data"</p>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top:1em;">
+    Unlike a loss function (a training-time objective over <strong>θ</strong>), the energy function defines the model itself — any function <span class="math-inline" id="math-efn-any"></span> is valid. No normalization constraints, no factorization required.
+  </p>
+</div>
+
+<!-- ============ SLIDE 8: Energy Function (compatibility) ============ -->
+<div class="slide" data-slide="7">
+  <h2 class="anim">The Compatibility View</h2>
   <div class="math-block anim anim-d1" id="math-efn"></div>
   <p class="anim anim-d2" style="margin-top:0.8em;">
-    Given an input <strong>x</strong> and a candidate answer <strong>y</strong>, the energy function returns
+    More generally, given an input <strong>x</strong> and a candidate answer <strong>y</strong>, the energy function returns
     <em>"how incompatible are they?"</em>
   </p>
   <div style="display:flex;gap:24px;margin-top:1em;">
@@ -603,7 +750,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 8: Inference ============ -->
-<div class="slide" data-slide="7">
+<div class="slide" data-slide="8">
   <h2 class="anim">Inference</h2>
   <div class="math-block anim anim-d1" id="math-inference"></div>
   <p class="anim anim-d2" style="margin-top:1em;">Find Y that minimizes E</p>
@@ -614,7 +761,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 9: EBM vs Autoregressive ============ -->
-<div class="slide" data-slide="8">
+<div class="slide" data-slide="9">
   <h2 class="anim">Energy-Based vs. Autoregressive</h2>
   <div class="comparison anim anim-d1" >
     <div class="header"></div>
@@ -633,7 +780,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 10: Boltzmann Distribution ============ -->
-<div class="slide" data-slide="9">
+<div class="slide" data-slide="10">
   <h2 class="anim">Energy–Probability Duality</h2>
   <p class="subtitle anim" style="margin-bottom:0.8em;">The Boltzmann Distribution</p>
   <div class="math-block anim anim-d1" id="math-boltzmann"></div>
@@ -649,10 +796,10 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 11: Temperature demo ============ -->
-<div class="slide" data-slide="10" id="slide-temp">
+<div class="slide" data-slide="11" id="slide-temp">
   <div class="split left-text">
     <div>
-      <h2 class="anim">Temperature as Normalizer</h2>
+      <h2 class="anim">Temperature as a Sharpness Control</h2>
       <p class="anim anim-d1">Temperature controls how <em>peaked</em> vs. <em>flat</em> the probability distribution is.</p>
       <ul style="margin-top:1em;">
         <li class="anim anim-d2"><span class="highlight">Low T</span> → sharp peaks (deterministic)</li>
@@ -692,7 +839,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 12: Connection to transformers ============ -->
-<div class="slide" data-slide="11">
+<div class="slide" data-slide="12">
   <h2 class="anim">Connection to Transformer Decoding</h2>
   <p class="anim anim-d1" style="max-width:900px;">
     When a transformer produces logits <span class="math-inline" id="math-logits"></span>
@@ -710,8 +857,8 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 13: Partition function problem ============ -->
-<div class="slide" data-slide="12">
-  <h2 class="anim">The Partition Function Problem</h2>
+<div class="slide" data-slide="13">
+  <h2 class="anim">The Partition Function (Problem)</h2>
   <div class="math-block anim anim-d1" id="math-Z"></div>
   <p class="anim anim-d2">Sum (or integral) over <em>all possible</em> configurations X</p>
   <div style="display:flex;gap:20px;margin-top:1em;flex-wrap:wrap;">
@@ -725,34 +872,79 @@ blockquote cite {
     </div>
   </div>
   <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">
-    The intractable partition function was one reason EBMs fell out of fashion.
+    The intractable partition function was one reason EBMs fell out of fashion. We will revisit it in a moment.
   </p>
 </div>
 
-<!-- ============ SLIDE 14: Two-phase training ============ -->
-<div class="slide" data-slide="13">
+<!-- ============ SLIDE 14: Likelihood Estimation ============ -->
+<div class="slide" data-slide="14">
+  <h2 class="anim">Likelihood Estimation</h2>
+  <p class="anim anim-d1">Train the EBM by minimizing the negative log-likelihood:</p>
+  <div class="math-block anim anim-d1" id="math-nll"></div>
+
+  <div class="anim anim-d2">
+    <details class="derivation">
+      <summary>Step 1 — Expand the NLL</summary>
+      <div class="deriv-body">
+        <div class="math-block" id="math-deriv-step1a"></div>
+        <div class="math-block" id="math-deriv-step1b"></div>
+        <div class="math-block" id="math-deriv-expand"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="anim anim-d3">
+    <details class="derivation">
+      <summary>Step 2 — Take the gradient w.r.t. θ</summary>
+      <div class="deriv-body">
+        <div class="math-block" id="math-deriv-gradstep"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="anim anim-d3">
+    <details class="derivation">
+      <summary>Step 3 — The key identity: ∇<sub>θ</sub> log Z<sub>θ</sub></summary>
+      <div class="deriv-body">
+        <div class="math-block" id="math-deriv-id1"></div>
+        <div class="math-block" id="math-deriv-id2"></div>
+        <div class="math-block" id="math-deriv-identity"></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="anim anim-d4" style="margin-top:0.8em;">
+    <p style="text-align:center;">Combining steps 2 and 3:</p>
+    <div class="math-block" id="math-grad-nolabel"></div>
+  </div>
+</div>
+
+<!-- ============ SLIDE 15: Two-phase breakdown ============ -->
+<div class="slide" data-slide="15">
   <h2 class="anim">Two-Phase Training</h2>
-  <p class="anim anim-d1">Training the EBM to match a target distribution by minimizing the negative log-likelihood:</p>
-  <div class="math-block anim anim-d2" id="math-nll"></div>
-  <p class="anim anim-d3">The gradient decomposes into two terms:</p>
-  <div class="math-block anim anim-d3" id="math-grad"></div>
+  <div class="math-block anim anim-d1" id="math-grad2"></div>
   <div style="display:flex;gap:20px;margin-top:1em;">
-    <div class="card anim anim-d4" style="flex:1;border-left:3px solid var(--green);text-align:center;">
+    <div class="card anim anim-d2" style="flex:1;border-left:3px solid var(--green);text-align:center;">
       <h3 style="color:var(--green);margin-bottom:0.3em;">Positive Phase</h3>
       <p style="font-size:clamp(13px,1.2vw,18px);">Push energy <strong>down</strong> on real data</p>
+      <p style="font-size:clamp(11px,1vw,14px);color:var(--text-muted);margin-top:0.3em;">Just requires a dataset — tractable</p>
     </div>
-    <div class="card anim anim-d4" style="flex:1;border-left:3px solid var(--red);text-align:center;">
+    <div class="card anim anim-d2" style="flex:1;border-left:3px solid var(--red);text-align:center;">
       <h3 style="color:var(--red);margin-bottom:0.3em;">Negative Phase</h3>
       <p style="font-size:clamp(13px,1.2vw,18px);">Push energy <strong>up</strong> on model samples</p>
+      <p style="font-size:clamp(11px,1vw,14px);color:var(--text-muted);margin-top:0.3em;">Requires sampling from p<sub>θ</sub> — the hard part</p>
     </div>
   </div>
-  <p class="anim anim-d4" style="margin-top:0.8em;text-align:center;">
-    <span class="highlight">Independent of partition function Z(θ)!</span>
+  <blockquote class="anim anim-d3" style="margin-top:1em;">
+    Without the negative phase, the model assigns low energy everywhere — it learns "real data is good" but never learns <em>what is bad</em>.
+  </blockquote>
+  <p class="anim anim-d4" style="margin-top:0.6em;text-align:center;">
+    <span class="highlight">The gradient is independent of Z(θ) — but sampling from p<sub>θ</sub> is not!</span>
   </p>
 </div>
 
 <!-- ============ SLIDE 15: Positive Phase ============ -->
-<div class="slide" data-slide="14">
+<div class="slide" data-slide="16">
   <h2 class="anim">Positive Phase</h2>
   <div class="math-block anim anim-d1" id="math-pos"></div>
   <p class="anim anim-d2" style="margin-top:1em;">
@@ -766,21 +958,23 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 16: Negative Phase ============ -->
-<div class="slide" data-slide="15">
+<div class="slide" data-slide="17">
   <h2 class="anim">Negative Phase</h2>
   <div class="math-block anim anim-d1" id="math-neg"></div>
   <p class="anim anim-d2" style="margin-top:1em;">
     <span class="highlight-red">Push energy UP on model samples.</span>
   </p>
   <p class="anim anim-d3" style="margin-top:0.8em;">
-    The expectation is on the <strong>model distribution</strong> — sampling from the model with current parameters.
-    The update maximizes energy at points the model currently thinks are likely.
+    We sample from <strong>p<sub>θ</sub></strong> — the model's current distribution. These are points where the model has placed high probability (low energy). The update raises energy on these points, eroding misallocated probability mass.
+  </p>
+  <p class="anim anim-d3" style="margin-top:0.5em;color:var(--text-dim);">
+    Combined with the positive phase, the effect is: keep probability on real data, remove it from everywhere else.
   </p>
   <div class="math-block anim anim-d4" id="math-neg-update"></div>
 </div>
 
 <!-- ============ SLIDE 17: Two-phase demo ============ -->
-<div class="slide" data-slide="16" id="slide-twophase">
+<div class="slide" data-slide="18" id="slide-twophase">
   <h2 class="anim" style="margin-bottom:0.4em;">Two-Phase Training Demo</h2>
   <div class="demo-container anim anim-d1" id="twophase-host" style="max-height: 72vh; overflow-y: auto;">
     <!-- Two-phase demo renders here -->
@@ -788,7 +982,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 18: First phase tractable ============ -->
-<div class="slide" data-slide="17">
+<div class="slide" data-slide="19">
   <h2 class="anim">Why Both Phases Matter</h2>
   <div style="display:flex;gap:20px;flex-wrap:wrap;">
     <div class="card anim anim-d1" style="flex:1;min-width:300px;border-left:3px solid var(--green);">
@@ -799,14 +993,14 @@ blockquote cite {
     </div>
     <div class="card anim anim-d2" style="flex:1;min-width:300px;border-left:3px solid var(--red);">
       <h3>Negative phase is essential</h3>
-      <p>Need some notion of <strong>incorrect configurations</strong> to push energy up on.</p>
-      <p style="margin-top:0.5em;color:var(--orange);">But the denominator is <strong>intractable</strong> for high dimensions — this is where the difficulty comes from.</p>
+      <p><span class="highlight">Provides contrast</span> — teaches the model what <em>doesn't</em> look like data by pushing energy up on incorrect configurations.</p>
+      <p style="margin-top:0.5em;">But sampling from p<sub>θ</sub> is <span class="highlight-red">intractable</span> in high dimensions — this is where the difficulty comes from.</p>
     </div>
   </div>
 </div>
 
 <!-- ============ SLIDE 19: Recap ============ -->
-<div class="slide" data-slide="18">
+<div class="slide" data-slide="20">
   <h2 class="anim">Recap</h2>
   <div style="display:flex;flex-direction:column;gap:16px;max-width:850px;">
     <div class="card anim anim-d1" style="border-left:3px solid var(--accent);">
@@ -826,7 +1020,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 20: Part 2 header ============ -->
-<div class="slide section-header" data-slide="19">
+<div class="slide section-header" data-slide="21">
   <div>
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 2</p>
     <h1 class="anim anim-d1">How to Train<br>Your EBM</h1>
@@ -836,7 +1030,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 21: Reminder ============ -->
-<div class="slide" data-slide="20">
+<div class="slide" data-slide="22">
   <h2 class="anim">The core challenge</h2>
   <p class="anim anim-d1">We derived the gradient of the negative log-likelihood:</p>
   <div class="math-block anim anim-d2" id="math-p2-grad"></div>
@@ -846,7 +1040,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 22: Three approaches ============ -->
-<div class="slide" data-slide="21">
+<div class="slide" data-slide="23">
   <h2 class="anim">Three approaches</h2>
   <div style="display:flex;flex-direction:column;gap:16px;max-width:800px;">
     <div class="card anim anim-d1" style="border-left:3px solid var(--accent);">
@@ -865,7 +1059,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 23: MCMC section ============ -->
-<div class="slide section-header" data-slide="22">
+<div class="slide section-header" data-slide="24">
   <div>
     <p class="subtitle anim">Approach 1</p>
     <h1 class="anim anim-d1">Markov Chain<br>Monte Carlo</h1>
@@ -873,7 +1067,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 24: MCMC idea ============ -->
-<div class="slide" data-slide="23">
+<div class="slide" data-slide="25">
   <h2 class="anim">MCMC: The Idea</h2>
   <p class="anim anim-d1">Can't sample from <span class="math-inline" id="math-mcmc-p"></span> exactly — the partition function blocks us.</p>
   <p class="anim anim-d2" style="margin-top:1em;">But we <em>can</em> <strong>approximately</strong> sample by running a Markov chain that converges to <span class="math-inline" id="math-mcmc-p2"></span> in the limit.</p>
@@ -885,7 +1079,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 25: Langevin Dynamics ============ -->
-<div class="slide" data-slide="24">
+<div class="slide" data-slide="26">
   <h2 class="anim">Langevin Dynamics</h2>
   <p class="anim anim-d1">Starting from a random point, iteratively follow the energy gradient with noise:</p>
   <div class="math-block anim anim-d2" id="math-langevin"></div>
@@ -900,7 +1094,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 26: Langevin gradient ============ -->
-<div class="slide" data-slide="25">
+<div class="slide" data-slide="27">
   <h2 class="anim">MCMC + Gradient Update</h2>
   <p class="anim anim-d1">Once we have Langevin samples, plug them into the two-phase gradient:</p>
   <div class="math-block anim anim-d2" id="math-langevin-grad"></div>
@@ -917,7 +1111,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 27: Problem with Langevin ============ -->
-<div class="slide" data-slide="26">
+<div class="slide" data-slide="28">
   <h2 class="anim">The Problem with MCMC</h2>
   <p class="anim anim-d1">Langevin dynamics can take a <strong>very long time</strong> to converge, especially in high-dimensional spaces with multiple modes.</p>
   <p class="anim anim-d2" style="margin-top:0.8em;">If we need 10,000 Langevin steps per sample, and we need samples for <em>every gradient update</em> during training, the whole thing is <span class="highlight-red">prohibitively slow</span>.</p>
@@ -928,7 +1122,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 28: Contrastive Divergence ============ -->
-<div class="slide" data-slide="27">
+<div class="slide" data-slide="29">
   <h2 class="anim">Hack: Contrastive Divergence</h2>
   <p class="subtitle anim">Hinton, 2002</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Don't start the chain from a random point — <span class="highlight">start from a data point</span>.</p>
@@ -949,8 +1143,23 @@ blockquote cite {
   <div class="slide-ref">Hinton, G.E. "Training Products of Experts by Minimizing Contrastive Divergence." <em>Neural Computation</em>, 2002. · Tieleman, T. "Training RBMs Using Approximations to the Likelihood Gradient." <em>ICML</em>, 2008.</div>
 </div>
 
-<!-- ============ SLIDE 29: Score Matching section ============ -->
-<div class="slide section-header" data-slide="28">
+<!-- ============ SLIDE 29: MCMC Interactive Demo ============ -->
+<div class="slide" data-slide="30" id="slide-mcmc" style="padding:2vh 2vw;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:0.4em;">
+    <h2 class="anim" style="margin:0;">MCMC Sampling Demo</h2>
+    <div class="mcmc-tabs anim anim-d1">
+      <button class="active" data-mcmc="langevin">Langevin Dynamics</button>
+      <button data-mcmc="cd">Contrastive Divergence</button>
+    </div>
+    <span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--text-muted);">Step: <span id="mcmc-step" style="color:var(--accent);">0</span></span>
+  </div>
+  <div class="demo-container anim anim-d1" id="mcmc-host" style="flex:1;min-height:0;height:calc(90vh - 8em);">
+    <!-- MCMC demo renders here -->
+  </div>
+</div>
+
+<!-- ============ SLIDE 30: Score Matching section ============ -->
+<div class="slide section-header" data-slide="31">
   <div>
     <p class="subtitle anim">Approach 2</p>
     <h1 class="anim anim-d1">Score Matching</h1>
@@ -959,9 +1168,9 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 30: Score function ============ -->
-<div class="slide" data-slide="29">
+<div class="slide" data-slide="32">
   <h2 class="anim">The Score Function</h2>
-  <p class="anim anim-d1">The <strong>score</strong> of a distribution is the gradient of the log-density with respect to the input:</p>
+  <p class="anim anim-d1">The <strong>score</strong> of a distribution is the gradient of the log of probability density with respect to the input:</p>
   <div class="math-block anim anim-d2" id="math-score-def"></div>
   <p class="anim anim-d3" style="margin-top:1em;">For an EBM with <span class="math-inline" id="math-sm-ebm"></span>:</p>
   <div class="math-block anim anim-d3" id="math-score-ebm"></div>
@@ -972,9 +1181,9 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 31: Score matching idea ============ -->
-<div class="slide" data-slide="30">
+<div class="slide" data-slide="33">
   <h2 class="anim">Why Scores Are Enough</h2>
-  <p class="anim anim-d1">If two continuously differentiable log-PDFs have equal first derivatives everywhere, and both integrate to 1, they must be <span class="highlight">the same distribution</span>.</p>
+  <p class="anim anim-d1">If two continuously differentiable log probability density functions (PDFs) have equal first derivatives everywhere, and both integrate to 1, they must be <span class="highlight">the same distribution</span>.</p>
   <p class="anim anim-d2" style="margin-top:1em;">So we can learn the right distribution by <strong>matching scores</strong> rather than matching probabilities:</p>
   <div class="math-block anim anim-d3" id="math-score-match-idea"></div>
   <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">
@@ -983,7 +1192,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 32: Fisher Divergence ============ -->
-<div class="slide" data-slide="31">
+<div class="slide" data-slide="34">
   <h2 class="anim">Fisher Divergence</h2>
   <p class="anim anim-d1">Formally, minimize the Fisher divergence between model and data scores:</p>
   <div class="math-block anim anim-d2" id="math-fisher"></div>
@@ -995,7 +1204,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 33: Hessian Trace ============ -->
-<div class="slide" data-slide="32">
+<div class="slide" data-slide="35">
   <h2 class="anim">Integration by Parts Trick</h2>
   <p class="anim anim-d1">Hyvärinen (2005) showed the Fisher divergence can be rewritten using only the model's score and its Jacobian:</p>
   <div class="math-block anim anim-d2" id="math-hessian"></div>
@@ -1006,7 +1215,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 34: Denoising Score Matching ============ -->
-<div class="slide" data-slide="33">
+<div class="slide" data-slide="36">
   <h2 class="anim">Denoising Score Matching</h2>
   <p class="subtitle anim">Vincent, 2011</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Instead of score-matching clean data, score-match on <span class="highlight">data + noise</span>:</p>
@@ -1020,7 +1229,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 35: DSM = Diffusion ============ -->
-<div class="slide" data-slide="34">
+<div class="slide" data-slide="37">
   <h2 class="anim">Score Matching → Diffusion Models</h2>
   <p class="anim anim-d1">If we perform denoising score matching at <strong>many noise levels</strong> — from pure noise down to near-zero noise — we get a <em>multi-scale</em> score model.</p>
   <p class="anim anim-d2" style="margin-top:0.8em;">Sample by starting from noise and gradually denoising via Langevin dynamics at decreasing noise scales (<strong>annealed Langevin dynamics</strong>).</p>
@@ -1036,7 +1245,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 36: NCE section ============ -->
-<div class="slide section-header" data-slide="35">
+<div class="slide section-header" data-slide="38">
   <div>
     <p class="subtitle anim">Approach 3</p>
     <h1 class="anim anim-d1">Noise Contrastive<br>Estimation</h1>
@@ -1045,7 +1254,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 37: NCE idea ============ -->
-<div class="slide" data-slide="36">
+<div class="slide" data-slide="39">
   <h2 class="anim">NCE: The Idea</h2>
   <p class="anim anim-d1">No more trying to sample from <span class="math-inline" id="math-il-106"></span> or match its score.</p>
   <p class="anim anim-d2" style="margin-top:0.8em;">Instead, train a <span class="highlight">binary classifier</span> to tell whether a sample came from the <strong>data distribution</strong> or a known <strong>noise distribution</strong>.</p>
@@ -1057,7 +1266,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 38: NCE Setup ============ -->
-<div class="slide" data-slide="37">
+<div class="slide" data-slide="40">
   <h2 class="anim">NCE: Two Sources</h2>
   <div style="display:flex;gap:20px;margin-top:0.8em;flex-wrap:wrap;">
     <div class="card anim anim-d1" style="flex:1;min-width:280px;border-left:3px solid var(--green);">
@@ -1075,7 +1284,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 39: NCE Objective ============ -->
-<div class="slide" data-slide="38">
+<div class="slide" data-slide="41">
   <h2 class="anim">NCE: The Objective</h2>
   <p class="anim anim-d1">At optimality, the classifier's posterior matches the true posterior:</p>
   <div class="math-block anim anim-d2" id="math-nce-posterior"></div>
@@ -1085,7 +1294,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 40: Hard negatives ============ -->
-<div class="slide" data-slide="39">
+<div class="slide" data-slide="42">
   <h2 class="anim">Why Hard Negatives Matter</h2>
   <p class="anim anim-d1">The closer the noise distribution is to the data distribution, the <strong>better representations</strong> are needed to distinguish them.</p>
   <div style="display:flex;gap:16px;margin-top:1.2em;flex-wrap:wrap;">
@@ -1106,7 +1315,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 41: Comparison table ============ -->
-<div class="slide" data-slide="40">
+<div class="slide" data-slide="43">
   <h2 class="anim">Comparing Training Paradigms</h2>
   <div class="comparison cols-5 anim anim-d1" style="font-size:clamp(12px,1.1vw,16px);">
     <div class="header">Method</div>
@@ -1138,7 +1347,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 42: Part 2 Recap ============ -->
-<div class="slide" data-slide="41">
+<div class="slide" data-slide="44">
   <h2 class="anim">Part 2 Recap</h2>
   <div style="display:flex;flex-direction:column;gap:14px;max-width:880px;">
     <div class="card anim anim-d1" style="border-left:3px solid var(--accent);">
@@ -1158,7 +1367,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 43: Part 3 header ============ -->
-<div class="slide section-header" data-slide="42">
+<div class="slide section-header" data-slide="45">
   <div>
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 3</p>
     <h1 class="anim anim-d1">EBMs 🤝 LLMs</h1>
@@ -1166,7 +1375,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 44: JEM - Classifier as EBM ============ -->
-<div class="slide" data-slide="43">
+<div class="slide" data-slide="46">
   <h2 class="anim">Your Classifier Is Secretly an EBM</h2>
   <p class="subtitle anim">Grathwohl et al., <em>JEM</em>, 2020</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">A standard classifier with softmax:</p>
@@ -1182,7 +1391,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 45: JEM Training ============ -->
-<div class="slide" data-slide="44">
+<div class="slide" data-slide="47">
   <h2 class="anim">Training the Joint EBM</h2>
   <p class="anim anim-d1">Decompose the joint log-probability:</p>
   <div class="math-block anim anim-d1" id="math-jem-decomp"></div>
@@ -1200,7 +1409,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 46: ELECTRA ============ -->
-<div class="slide" data-slide="45">
+<div class="slide" data-slide="48">
   <h2 class="anim">ELECTRA</h2>
   <p class="subtitle anim">Pre-Training Text Encoders as Discriminators</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">A small <strong>generator</strong> (MLM) fills in masked tokens. A larger <strong>discriminator</strong> classifies each token as original or replaced.</p>
@@ -1222,7 +1431,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 47: Electric ============ -->
-<div class="slide" data-slide="46">
+<div class="slide" data-slide="49">
   <h2 class="anim">Electric: Energy-Based Cloze Models</h2>
   <p class="subtitle anim">Clark et al., 2020</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Electric takes ELECTRA's insight further — from <em>negative sampling</em> to proper <em>noise contrastive estimation</em>:</p>
@@ -1243,7 +1452,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 48: Residual EBMs for Text ============ -->
-<div class="slide" data-slide="47">
+<div class="slide" data-slide="50">
   <h2 class="anim">Residual EBMs for Text</h2>
   <p class="subtitle anim">Deng et al., 2020</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Take a pretrained autoregressive LM and multiply its distribution by an energy correction from a bidirectional model:</p>
@@ -1265,7 +1474,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 49: EDLM Problem ============ -->
-<div class="slide" data-slide="48">
+<div class="slide" data-slide="51">
   <h2 class="anim">EDLM: The Problem with Parallel Text Generation</h2>
   <p class="subtitle anim">Zhao et al., 2025</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Discrete diffusion models for text unmask tokens in parallel, but predict each token <strong>independently</strong>:</p>
@@ -1278,7 +1487,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 50: EDLM Solution ============ -->
-<div class="slide" data-slide="49">
+<div class="slide" data-slide="52">
   <h2 class="anim">EDLM: Residual Energy Correction</h2>
   <p class="anim anim-d1">Apply the residual EBM idea <em>at every denoising step</em>:</p>
   <div class="math-block anim anim-d2" id="math-edlm-joint"></div>
@@ -1296,7 +1505,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 51: EDLM Results ============ -->
-<div class="slide" data-slide="50">
+<div class="slide" data-slide="53">
   <h2 class="anim">EDLM: Results</h2>
   <p class="anim anim-d1">Inference: draw <strong>k candidates</strong> from diffusion model, score with energy, resample via importance weights.</p>
   <div class="card anim anim-d2" style="border-left:3px solid var(--accent);">
@@ -1321,7 +1530,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 52: EBT Paradigm ============ -->
-<div class="slide" data-slide="51">
+<div class="slide" data-slide="54">
   <h2 class="anim">Energy-Based Transformers</h2>
   <p class="subtitle anim">Gladstone et al., 2025 — A radically different paradigm</p>
   <p class="anim anim-d1" style="margin-top:0.8em;">Unlike EDLM which adds an energy correction, EBT makes the <span class="highlight">entire model</span> an energy function:</p>
@@ -1333,7 +1542,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 53: EBT System 2 ============ -->
-<div class="slide" data-slide="52">
+<div class="slide" data-slide="55">
   <h2 class="anim">Three Facets of System 2 Thinking</h2>
   <div class="comparison cols-4 anim anim-d1" style="font-size:clamp(13px,1.2vw,17px);">
     <div class="header">Architecture</div>
@@ -1371,7 +1580,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 54: EBT Scaling ============ -->
-<div class="slide" data-slide="53">
+<div class="slide" data-slide="56">
   <h2 class="anim">EBT: Scaling Results</h2>
   <div style="display:flex;gap:12px;margin-top:0.8em;flex-wrap:wrap;">
     <div class="card anim anim-d1" style="flex:1;min-width:150px;text-align:center;">
@@ -1399,7 +1608,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 55: EBT Thinking at Inference ============ -->
-<div class="slide" data-slide="54">
+<div class="slide" data-slide="57">
   <h2 class="anim">Thinking at Inference Time</h2>
   <p class="anim anim-d1">EBTs can improve by using <strong>more forward passes</strong> — Transformer++ cannot.</p>
   <div style="display:flex;gap:16px;margin-top:1em;flex-wrap:wrap;">
@@ -1419,7 +1628,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 56: The Spectrum ============ -->
-<div class="slide" data-slide="55">
+<div class="slide" data-slide="58">
   <h2 class="anim">The Spectrum of Energy-Based LLMs</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:1em;">
     <div class="card anim anim-d1" style="border-left:3px solid var(--blue);">
@@ -1437,7 +1646,7 @@ blockquote cite {
 </div>
 
 <!-- ============ SLIDE 57: Thank You ============ -->
-<div class="slide title-slide" data-slide="56">
+<div class="slide title-slide" data-slide="59">
   <div>
     <h1 class="anim" style="font-size:clamp(36px,4vw,64px);">Thank you!</h1>
     <p class="subtitle anim anim-d1" style="font-size:clamp(16px,1.5vw,24px);color:var(--text-dim);margin-top:0.5em;">
@@ -1521,8 +1730,9 @@ function goTo(n) {
   document.getElementById('counter').textContent = (current + 1) + ' / ' + totalSlides;
   // Initialize demos if needed
   if (current === 5) initLandscape();
-  if (current === 10) initTempDemo();
-  if (current === 16) initTwoPhase();
+  if (current === 11) initTempDemo();
+  if (current === 18) initTwoPhase();
+  if (current === 30) initMCMCDemo();
 }
 
 // Keyboard nav
@@ -1537,6 +1747,18 @@ document.addEventListener('keydown', e => {
 // Click nav (left 30% = back, right 70% = forward) — but not on interactive areas
 document.addEventListener('click', e => {
   if (e.target.closest('.demo-container') || e.target.closest('button') || e.target.closest('input')) return;
+  // If clicking a summary inside a closed details, let it expand (don't navigate)
+  const summary = e.target.closest('details.derivation > summary');
+  if (summary) {
+    const details = summary.parentElement;
+    if (!details.open) return; // about to open — let browser handle it
+    // already open — close it and don't navigate
+    details.removeAttribute('open');
+    e.preventDefault();
+    return;
+  }
+  // If clicking inside an open derivation body, don't navigate
+  if (e.target.closest('details.derivation[open]')) return;
   const x = e.clientX / window.innerWidth;
   if (x < 0.3) goTo(current - 1);
   else goTo(current + 1);
@@ -1578,6 +1800,8 @@ function renderMath(id, tex, displayMode = true) {
   }
 }
 
+renderMath('math-efn-uncon', 'E(x;\\,\\theta) : \\mathcal{X} \\rightarrow \\mathbb{R}');
+renderMath('math-efn-any', 'f: \\mathcal{X} \\rightarrow \\mathbb{R}', false);
 renderMath('math-efn', 'E(x, y) \\rightarrow \\text{scalar}');
 renderMath('math-inference', 'Y^* = \\arg\\min_Y E(Y, X)');
 renderMath('math-boltzmann', 'p(x) = \\frac{\\exp(-E(x) / T)}{Z}');
@@ -1586,11 +1810,20 @@ renderMath('math-logits', 'z_1, z_2, \\ldots, z_V', false);
 renderMath('math-softmax', '\\text{softmax}(z_i / T)', false);
 renderMath('math-Z', 'Z = \\int \\exp(-E(x))\\, dx');
 renderMath('math-nll', 'L(\\theta) = \\mathbb{E}_{x \\sim p}[-\\log p_\\theta(x)]');
+renderMath('math-deriv-step1a', 'L(\\theta) = \\mathbb{E}_{x \\sim p_{\\text{data}}}\\!\\left[-\\log \\frac{\\exp(-E_\\theta(x))}{Z_\\theta}\\right]');
+renderMath('math-deriv-step1b', '= \\mathbb{E}_{x \\sim p_{\\text{data}}}\\!\\left[E_\\theta(x) + \\log Z_\\theta\\right]');
+renderMath('math-deriv-expand', '= \\mathbb{E}_{x \\sim p_{\\text{data}}}[E_\\theta(x)] + \\log Z_\\theta');
+renderMath('math-deriv-gradstep', '\\nabla_\\theta L(\\theta) = \\mathbb{E}_{x \\sim p_{\\text{data}}}[\\nabla_\\theta E_\\theta(x)] \\;+\\; \\nabla_\\theta \\log Z_\\theta');
+renderMath('math-deriv-id1', '\\nabla_\\theta \\log Z_\\theta = \\frac{1}{Z_\\theta} \\nabla_\\theta \\!\\int \\!\\exp(-E_\\theta(x))\\,dx = \\frac{1}{Z_\\theta} \\!\\int \\!\\exp(-E_\\theta(x))\\,(-\\nabla_\\theta E_\\theta(x))\\,dx');
+renderMath('math-deriv-id2', '= -\\!\\int \\frac{\\exp(-E_\\theta(x))}{Z_\\theta} \\nabla_\\theta E_\\theta(x)\\,dx');
+renderMath('math-deriv-identity', '= -\\mathbb{E}_{x \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x)]');
+renderMath('math-grad-nolabel', '\\nabla_\\theta L(\\theta) = \\mathbb{E}_{x^+ \\sim p_{\\text{data}}}[\\nabla_\\theta E_\\theta(x^+)] - \\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]');
 renderMath('math-grad', '\\nabla_\\theta L(\\theta) = \\underbrace{\\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)]}_{\\color{#1D9E75}{\\text{Positive Phase}}} - \\underbrace{\\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]}_{\\color{#E24B4A}{\\text{Negative Phase}}}');
+renderMath('math-grad2', '\\nabla_\\theta L(\\theta) = \\underbrace{\\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)]}_{\\color{#1D9E75}{\\text{Positive Phase}}} - \\underbrace{\\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]}_{\\color{#E24B4A}{\\text{Negative Phase}}}');
 renderMath('math-pos', '\\nabla_\\theta L(\\theta) = {\\color{#1D9E75}{\\underbrace{\\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)]}_{\\text{Positive Phase}}}} - \\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]');
-renderMath('math-pos-update', '\\Theta := \\Theta - \\lambda \\cdot \\mathbb{E}_{x \\sim \\mathcal{D}}\\left[\\frac{\\partial E_\\mathcal{G}}{\\partial \\Theta}\\right]');
+renderMath('math-pos-update', '\\theta := \\theta - \\lambda \\cdot \\mathbb{E}_{x \\sim \\mathcal{D}}\\left[\\frac{\\partial E_\\theta}{\\partial \\theta}\\right]');
 renderMath('math-neg', '\\nabla_\\theta L(\\theta) = \\mathbb{E}_{x^+ \\sim p}[\\nabla_\\theta E_\\theta(x^+)] - {\\color{#E24B4A}{\\underbrace{\\mathbb{E}_{x^- \\sim p_\\theta}[\\nabla_\\theta E_\\theta(x^-)]}_{\\text{Negative Phase}}}}');
-renderMath('math-neg-update', '\\Theta := \\Theta + \\lambda \\cdot \\mathbb{E}_{x \\sim p_\\Theta}\\left[\\frac{\\partial E_\\mathcal{G}}{\\partial \\Theta}\\right]');
+renderMath('math-neg-update', '\\theta := \\theta + \\lambda \\cdot \\mathbb{E}_{x \\sim p_\\theta}\\left[\\frac{\\partial E_\\theta}{\\partial \\theta}\\right]');
 renderMath('math-recap1', 'E(x, y) \\rightarrow \\mathbb{R}', false);
 
 // Part 2 math
@@ -2090,8 +2323,300 @@ function rebuildLandscapeTheme() {
 
 // Init demos if starting on those slides
 if (current === 5) initLandscape();
-if (current === 10) initTempDemo();
-if (current === 16) initTwoPhase();
+if (current === 11) initTempDemo();
+if (current === 18) initTwoPhase();
+if (current === 30) initMCMCDemo();
+
+// ===========================================================================
+// MCMC SAMPLING DEMO
+// ===========================================================================
+var mcmcInited = false;
+function initMCMCDemo() {
+  if (mcmcInited) return;
+  mcmcInited = true;
+
+  const host = document.getElementById('mcmc-host');
+  host.innerHTML = `
+    <div id="mcmc-wrap">
+      <div id="mcmc-viewport">
+        <canvas id="mcmc-canvas"></canvas>
+        <div id="mcmc-legend"></div>
+      </div>
+      <div id="mcmc-panel">
+        <div id="mp-langevin">
+          <div class="mp-section">
+            <h4>Parameters</h4>
+            <div class="mp-row"><label>Step size (ε)</label><span class="mv" id="mv-eps">0.10</span></div>
+            <input type="range" min="0.02" max="0.3" step="0.01" value="0.10" id="ms-eps">
+            <div class="mp-row"><label>Noise scale</label><span class="mv" id="mv-noise">1.0</span></div>
+            <input type="range" min="0" max="3" step="0.1" value="1.0" id="ms-noise">
+            <div class="mp-row"><label>Particles</label><span class="mv" id="mv-npart">12</span></div>
+            <input type="range" min="4" max="30" step="1" value="12" id="ms-npart">
+          </div>
+          <div class="mp-section">
+            <h4>Controls</h4>
+            <div class="mp-btns">
+              <button class="mp-btn pri" id="mb-play">▶ Play</button>
+              <button class="mp-btn" id="mb-step">Step</button>
+            </div>
+            <div class="mp-btns" style="margin-top:4px;">
+              <button class="mp-btn dan" id="mb-reset">Reset</button>
+            </div>
+          </div>
+          <div class="mp-section">
+            <h4>What's happening</h4>
+            <div class="mcmc-explainer">Particles start from <strong>random noise</strong> and follow the <span style="color:var(--blue);">energy gradient ↓</span> with injected <span style="color:var(--orange);">noise</span>. After many steps they become samples from p<sub>θ</sub> — the <span style="color:var(--red);">negative samples</span> for training.</div>
+          </div>
+        </div>
+        <div id="mp-cd" class="mp-hidden">
+          <div class="mp-section">
+            <h4>CD-k Steps</h4>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px;">
+              <span style="font-family:var(--font-mono);font-size:24px;font-weight:600;color:var(--accent);" id="mv-cdk">10</span>
+              <span style="font-size:11px;color:var(--text-muted);">MCMC steps from data</span>
+            </div>
+            <input type="range" min="1" max="100" step="1" value="10" id="ms-cdk">
+            <div class="mp-row"><label>Step size (ε)</label><span class="mv" id="mv-cdeps">0.10</span></div>
+            <input type="range" min="0.02" max="0.3" step="0.01" value="0.10" id="ms-cdeps">
+          </div>
+          <div class="mp-section">
+            <h4>Controls</h4>
+            <div class="mp-btns">
+              <button class="mp-btn pri" id="mb-cdplay">▶ Play</button>
+              <button class="mp-btn" id="mb-cdstep">Step</button>
+            </div>
+            <div class="mp-btns" style="margin-top:4px;">
+              <button class="mp-btn dan" id="mb-cdreset">Reset</button>
+            </div>
+            <div class="mp-row" style="margin-top:8px;"><label>Progress</label><span class="mv" id="mv-cdprog">0 / 10</span></div>
+            <div id="mcmc-progress"><div id="mcmc-progress-bar"></div></div>
+          </div>
+          <div class="mp-section">
+            <h4>What's happening</h4>
+            <div class="mcmc-explainer"><strong>Contrastive Divergence:</strong> start from <span style="color:var(--green);">data points</span>, run <strong>k</strong> MCMC steps. With k=1: <span style="color:var(--red);">negatives</span> stay close (biased but fast). With large k: they explore further, approaching true samples.</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ---- Energy function ----
+  const mcWells = [
+    { cx:-1.6, cy:-1.0, amp:1.3, sx:1.2, sy:1.3 },
+    { cx: 1.4, cy: 1.2, amp:1.1, sx:1.3, sy:1.1 },
+    { cx: 0.5, cy:-1.5, amp:0.9, sx:1.1, sy:1.2 },
+  ];
+  const mcDataPts = mcWells.map(w => ({ x:w.cx, z:w.cy }));
+
+  function mcEnergy(x, z) {
+    let e = 0.04*(x*x+z*z);
+    for (const w of mcWells) { const dx=(x-w.cx)/w.sx, dz=(z-w.cy)/w.sy; e -= w.amp*Math.exp(-0.5*(dx*dx+dz*dz)); }
+    return e;
+  }
+  function mcGrad(x, z) {
+    const ep=0.005;
+    return { dx:(mcEnergy(x+ep,z)-mcEnergy(x-ep,z))/(2*ep), dz:(mcEnergy(x,z+ep)-mcEnergy(x,z-ep))/(2*ep) };
+  }
+  const MC_HS=0.7, MC_LIFT=0.15, MC_RANGE=3.5;
+  function mcSurfY(x,z){ return mcEnergy(x,z)*MC_HS+MC_LIFT; }
+
+  // ---- Three.js setup ----
+  const mcCanvas = document.getElementById('mcmc-canvas');
+  const mcVP = document.getElementById('mcmc-viewport');
+  const mcR = new THREE.WebGLRenderer({ canvas:mcCanvas, antialias:true });
+  mcR.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  const isLt = currentTheme==='light';
+  mcR.setClearColor(isLt?0xffffff:0x1a1a24, isLt?1:0);
+  const mcScene = new THREE.Scene();
+  const mcCam = new THREE.PerspectiveCamera(50,1,0.1,1000);
+  mcScene.add(new THREE.AmbientLight(0xffffff,0.55));
+  const mcDir = new THREE.DirectionalLight(0xffffff,0.75);
+  mcDir.position.set(5,10,7); mcScene.add(mcDir);
+
+  function mcResize() {
+    const r=mcVP.getBoundingClientRect();
+    mcR.setSize(r.width,r.height);
+    mcCam.aspect=r.width/r.height; mcCam.updateProjectionMatrix();
+  }
+  mcResize();
+  new ResizeObserver(mcResize).observe(mcVP);
+
+  // ---- Surface ----
+  const SS=80, SR=MC_RANGE;
+  const cL=new THREE.Color(0x042C53), cML2=new THREE.Color(0x1D9E75), cMH2=new THREE.Color(0xEF9F27), cH=new THREE.Color(0xE24B4A);
+  function mcLerp(t){ t=Math.max(0,Math.min(1,t)); if(t<0.33)return cL.clone().lerp(cML2,t/0.33); if(t<0.66)return cML2.clone().lerp(cMH2,(t-0.33)/0.33); return cMH2.clone().lerp(cH,(t-0.66)/0.34); }
+
+  (function buildMcSurf(){
+    const geo=new THREE.PlaneBufferGeometry(SR*2,SR*2,SS,SS);
+    geo.rotateX(-Math.PI/2);
+    const pos=geo.attributes.position;
+    let mn=Infinity,mx=-Infinity;const es=[];
+    for(let i=0;i<pos.count;i++){const e=mcEnergy(pos.getX(i),pos.getZ(i));es.push(e);if(e<mn)mn=e;if(e>mx)mx=e;}
+    const cols=new Float32Array(pos.count*3);
+    for(let i=0;i<pos.count;i++){const t=mx>mn?(es[i]-mn)/(mx-mn):0.5;pos.setY(i,es[i]*MC_HS);const c=mcLerp(t);cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b;}
+    geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
+    geo.computeVertexNormals();
+    mcScene.add(new THREE.Mesh(geo,new THREE.MeshPhongMaterial({vertexColors:true,side:THREE.DoubleSide,shininess:40,transparent:true,opacity:0.75})));
+    mcScene.add(new THREE.Mesh(geo.clone(),new THREE.MeshBasicMaterial({color:0x888888,wireframe:true,transparent:true,opacity:0.08})));
+  })();
+
+  // grid & axes
+  const mcGrid=new THREE.GridHelper(SR*2,12,isLt?0xcccccc:0x333333,isLt?0xdddddd:0x222222);
+  mcGrid.position.y=-4;mcGrid.material.opacity=0.25;mcGrid.material.transparent=true;mcScene.add(mcGrid);
+  const mcAxMat=new THREE.LineBasicMaterial({color:isLt?0x999999:0x555555});
+  const mcL=SR+0.5;
+  [[new THREE.Vector3(-mcL,0,0),new THREE.Vector3(mcL,0,0)],[new THREE.Vector3(0,-4,0),new THREE.Vector3(0,3,0)],[new THREE.Vector3(0,0,-mcL),new THREE.Vector3(0,0,mcL)]].forEach(p=>{mcScene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),mcAxMat));});
+
+  // camera orbit
+  let mcDrag=false,mcPX=0,mcPY=0,mcT=Math.PI/3.5,mcP=Math.PI/3.8,mcRad=10;
+  function mcUpdateCam(){mcCam.position.set(mcRad*Math.sin(mcP)*Math.cos(mcT),mcRad*Math.cos(mcP),mcRad*Math.sin(mcP)*Math.sin(mcT));mcCam.lookAt(0,-0.5,0);}
+  mcUpdateCam();
+  mcCanvas.addEventListener('pointerdown',e=>{mcDrag=true;mcPX=e.clientX;mcPY=e.clientY;mcCanvas.setPointerCapture(e.pointerId);});
+  mcCanvas.addEventListener('pointermove',e=>{if(!mcDrag)return;mcT-=(e.clientX-mcPX)*0.007;mcP=Math.max(0.2,Math.min(Math.PI/2.1,mcP+(e.clientY-mcPY)*0.007));mcPX=e.clientX;mcPY=e.clientY;mcUpdateCam();});
+  mcCanvas.addEventListener('pointerup',()=>{mcDrag=false;});
+  mcCanvas.addEventListener('wheel',e=>{e.preventDefault();mcRad=Math.max(5,Math.min(20,mcRad+e.deltaY*0.01));mcUpdateCam();},{passive:false});
+
+  // ---- Particle helpers ----
+  function mcSphere(col,r){const g=new THREE.SphereGeometry(r||0.1,12,12);return new THREE.Mesh(g,new THREE.MeshPhongMaterial({color:col,emissive:new THREE.Color(col).multiplyScalar(0.3)}));}
+
+  // ---- Langevin state ----
+  let lgP=[],lgM=[],lgTr=[],lgStep=0,lgPlay=false;
+  function lgInit(){
+    lgClear();lgStep=0;document.getElementById('mcmc-step').textContent='0';
+    const n=parseInt(document.getElementById('ms-npart').value);
+    for(let i=0;i<n;i++){
+      const x=(Math.random()-0.5)*MC_RANGE*1.6,z=(Math.random()-0.5)*MC_RANGE*1.6;
+      const m=mcSphere(0xffffff,0.1);m.position.set(x,mcSurfY(x,z),z);mcScene.add(m);lgM.push(m);
+      lgP.push({x,z,trail:[{x,z}]});
+      const tg=new THREE.BufferGeometry();const tm=new THREE.LineBasicMaterial({color:0x4EAEFF,transparent:true,opacity:0.65});
+      const tl=new THREE.Line(tg,tm);mcScene.add(tl);lgTr.push(tl);
+    }
+  }
+  function lgClear(){
+    for(const m of lgM){mcScene.remove(m);m.geometry.dispose();m.material.dispose();}lgM=[];lgP=[];
+    for(const t of lgTr){mcScene.remove(t);t.geometry.dispose();t.material.dispose();}lgTr=[];
+    lgPlay=false;document.getElementById('mb-play').textContent='▶ Play';
+  }
+  function lgDoStep(){
+    const eps=parseFloat(document.getElementById('ms-eps').value),ns=parseFloat(document.getElementById('ms-noise').value);
+    for(let i=0;i<lgP.length;i++){
+      const p=lgP[i],g=mcGrad(p.x,p.z),e2=eps*eps/2;
+      p.x=Math.max(-MC_RANGE,Math.min(MC_RANGE,p.x-e2*g.dx+eps*ns*(Math.random()-0.5)));
+      p.z=Math.max(-MC_RANGE,Math.min(MC_RANGE,p.z-e2*g.dz+eps*ns*(Math.random()-0.5)));
+      p.trail.push({x:p.x,z:p.z});if(p.trail.length>200)p.trail.shift();
+      lgM[i].position.set(p.x,mcSurfY(p.x,p.z),p.z);
+      const pts=p.trail.map(t=>new THREE.Vector3(t.x,mcSurfY(t.x,t.z)+0.06,t.z));
+      lgTr[i].geometry.dispose();lgTr[i].geometry=new THREE.BufferGeometry().setFromPoints(pts);
+    }
+    lgStep++;document.getElementById('mcmc-step').textContent=lgStep;
+  }
+
+  // ---- CD state ----
+  let cdDM=[],cdNM=[],cdNP=[],cdTr2=[],cdS=0,cdK=10,cdPl=false,cdDn=false;
+  function cdInit(){
+    cdClear();cdS=0;cdK=parseInt(document.getElementById('ms-cdk').value);cdDn=false;
+    document.getElementById('mb-cdplay').textContent='▶ Play';cdUpdProg();
+    for(const dp of mcDataPts){
+      for(let j=0;j<4;j++){
+        const ox=dp.x+(Math.random()-0.5)*0.5,oz=dp.z+(Math.random()-0.5)*0.5;
+        const m=mcSphere(0x1D9E75,0.12);m.position.set(ox,mcSurfY(ox,oz),oz);mcScene.add(m);
+        cdDM.push({mesh:m,x:ox,z:oz});
+      }
+    }
+  }
+  function cdClear(){
+    for(const m of cdDM){mcScene.remove(m.mesh);m.mesh.geometry.dispose();m.mesh.material.dispose();}cdDM=[];
+    for(const m of cdNM){mcScene.remove(m);m.geometry.dispose();m.material.dispose();}cdNM=[];
+    for(const t of cdTr2){mcScene.remove(t);t.geometry.dispose();t.material.dispose();}cdTr2=[];
+    cdNP=[];cdPl=false;
+  }
+  function cdSpawn(){
+    for(const dp of cdDM){
+      const nm=mcSphere(0xE24B4A,0.12);nm.position.set(dp.x,mcSurfY(dp.x,dp.z),dp.z);mcScene.add(nm);cdNM.push(nm);
+      cdNP.push({x:dp.x,z:dp.z,trail:[{x:dp.x,z:dp.z}]});
+      const tg=new THREE.BufferGeometry();const tm=new THREE.LineBasicMaterial({color:0xE24B4A,transparent:true,opacity:0.7});
+      const tl=new THREE.Line(tg,tm);mcScene.add(tl);cdTr2.push(tl);
+    }
+  }
+  function cdUpdProg(){
+    cdK=parseInt(document.getElementById('ms-cdk').value);
+    const pct=cdK>0?(cdS/cdK)*100:0;
+    document.getElementById('mv-cdprog').textContent=cdS+' / '+cdK;
+    document.getElementById('mcmc-progress-bar').style.width=Math.min(pct,100)+'%';
+    document.getElementById('mcmc-step').textContent=cdS;
+  }
+  function cdDoStep(){
+    cdK=parseInt(document.getElementById('ms-cdk').value);
+    if(cdS>=cdK){cdDn=true;cdPl=false;document.getElementById('mb-cdplay').textContent='▶ Play';return;}
+    if(cdNP.length===0)cdSpawn();
+    const eps=parseFloat(document.getElementById('ms-cdeps').value);
+    for(let i=0;i<cdNP.length;i++){
+      const p=cdNP[i],g=mcGrad(p.x,p.z),e2=eps*eps/2;
+      p.x=Math.max(-MC_RANGE,Math.min(MC_RANGE,p.x-e2*g.dx+eps*(Math.random()-0.5)));
+      p.z=Math.max(-MC_RANGE,Math.min(MC_RANGE,p.z-e2*g.dz+eps*(Math.random()-0.5)));
+      p.trail.push({x:p.x,z:p.z});
+      cdNM[i].position.set(p.x,mcSurfY(p.x,p.z),p.z);
+      const pts=p.trail.map(t=>new THREE.Vector3(t.x,mcSurfY(t.x,t.z)+0.06,t.z));
+      cdTr2[i].geometry.dispose();cdTr2[i].geometry=new THREE.BufferGeometry().setFromPoints(pts);
+    }
+    cdS++;cdUpdProg();
+  }
+
+  // ---- Mode switching ----
+  let mcMode='langevin';
+  function mcSwitch(mode){
+    mcMode=mode;
+    document.querySelectorAll('.mcmc-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.mcmc===mode));
+    document.getElementById('mp-langevin').classList.toggle('mp-hidden',mode!=='langevin');
+    document.getElementById('mp-cd').classList.toggle('mp-hidden',mode!=='cd');
+    lgClear();cdClear();
+    document.getElementById('mcmc-step').textContent='0';
+    if(mode==='langevin'){
+      lgInit();
+      document.getElementById('mcmc-legend').innerHTML='<div><span class="mdot" style="background:#fff;"></span>Particles</div><div><span class="mdot" style="background:rgba(78,174,255,0.7);"></span>Trails</div>';
+    } else {
+      cdInit();cdUpdProg();
+      document.getElementById('mcmc-legend').innerHTML='<div><span class="mdot" style="background:#1D9E75;"></span>Data (x⁺)</div><div><span class="mdot" style="background:#E24B4A;"></span>Negatives (x⁻)</div>';
+    }
+  }
+  document.querySelectorAll('.mcmc-tabs button').forEach(b=>b.addEventListener('click',()=>mcSwitch(b.dataset.mcmc)));
+
+  // ---- Langevin controls ----
+  document.getElementById('ms-eps').addEventListener('input',e=>{document.getElementById('mv-eps').textContent=parseFloat(e.target.value).toFixed(2);});
+  document.getElementById('ms-noise').addEventListener('input',e=>{document.getElementById('mv-noise').textContent=parseFloat(e.target.value).toFixed(1);});
+  document.getElementById('ms-npart').addEventListener('input',e=>{
+    document.getElementById('mv-npart').textContent=e.target.value;
+    if(mcMode==='langevin'){const was=lgPlay;lgClear();lgStep=0;document.getElementById('mcmc-step').textContent='0';lgInit();if(was){lgPlay=true;document.getElementById('mb-play').textContent='⏸ Pause';}}
+  });
+  document.getElementById('mb-play').addEventListener('click',()=>{lgPlay=!lgPlay;document.getElementById('mb-play').textContent=lgPlay?'⏸ Pause':'▶ Play';});
+  document.getElementById('mb-step').addEventListener('click',()=>{if(mcMode==='langevin')lgDoStep();});
+  document.getElementById('mb-reset').addEventListener('click',()=>{lgClear();lgStep=0;document.getElementById('mcmc-step').textContent='0';lgInit();});
+
+  // ---- CD controls ----
+  document.getElementById('ms-cdk').addEventListener('input',e=>{document.getElementById('mv-cdk').textContent=e.target.value;cdK=parseInt(e.target.value);cdUpdProg();});
+  document.getElementById('ms-cdeps').addEventListener('input',e=>{document.getElementById('mv-cdeps').textContent=parseFloat(e.target.value).toFixed(2);});
+  document.getElementById('mb-cdplay').addEventListener('click',()=>{
+    cdK=parseInt(document.getElementById('ms-cdk').value);
+    if(cdDn||cdS>=cdK){cdClear();cdS=0;document.getElementById('mcmc-step').textContent='0';cdInit();cdUpdProg();}
+    cdPl=!cdPl;document.getElementById('mb-cdplay').textContent=cdPl?'⏸ Pause':'▶ Play';
+  });
+  document.getElementById('mb-cdstep').addEventListener('click',()=>{cdK=parseInt(document.getElementById('ms-cdk').value);if(cdS<cdK)cdDoStep();});
+  document.getElementById('mb-cdreset').addEventListener('click',()=>{cdClear();cdS=0;document.getElementById('mcmc-step').textContent='0';cdInit();cdUpdProg();});
+
+  // ---- Render loop ----
+  let mcFC=0;
+  function mcAnimate(){
+    requestAnimationFrame(mcAnimate);
+    mcFC++;
+    if(lgPlay&&mcMode==='langevin'&&mcFC%2===0)lgDoStep();
+    if(cdPl&&mcMode==='cd'&&mcFC%2===0)cdDoStep();
+    mcR.render(mcScene,mcCam);
+  }
+
+  // ---- Init default mode ----
+  document.getElementById('mcmc-legend').innerHTML='<div><span class="mdot" style="background:#fff;"></span>Particles</div><div><span class="mdot" style="background:rgba(78,174,255,0.7);"></span>Trails</div>';
+  lgInit();
+  mcAnimate();
+}
 </script>
 
 </body>
