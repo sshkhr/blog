@@ -121,6 +121,9 @@ html, body {
   width: 100vw; height: 100vh;
   position: relative;
 }
+@supports (height: 100dvh) {
+  .deck { height: 100dvh; }
+}
 
 .slide {
   position: absolute; inset: 0;
@@ -338,15 +341,102 @@ blockquote cite {
   color: var(--text-muted); margin-top: 1em;
 }
 
+/* ---- Reference popup (mobile) ---- */
+#ref-toggle {
+  display: none;
+  position: fixed; bottom: 16px; right: 90px;
+  z-index: 150;
+  background: none; border: none;
+  padding: 0;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-muted); cursor: pointer;
+  opacity: 0.6;
+  letter-spacing: 0.5px;
+}
+#ref-toggle:hover { opacity: 1; }
+#ref-popup {
+  display: none;
+  position: fixed; bottom: 44px; left: 16px; right: 16px;
+  z-index: 150;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 11px; color: var(--text-muted); line-height: 1.5;
+  font-family: var(--font-body);
+  max-height: 30vh; overflow-y: auto;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+}
+#ref-popup.visible { display: block; }
+#ref-popup a { color: var(--accent); text-decoration: none; }
+
 /* ---- Responsive ---- */
 @media (max-width: 900px) {
   .split { grid-template-columns: 1fr !important; }
   .card-grid.cols-3 { grid-template-columns: 1fr; }
 }
 @media (max-width: 600px) {
-  .comparison { grid-template-columns: 1fr !important; }
-  .comparison.cols-4 { grid-template-columns: 1fr !important; }
-  .comparison.cols-5 { grid-template-columns: 1fr !important; }
+  .card-grid.cols-2 { grid-template-columns: 1fr; }
+  /* Hide inline refs, show popup button instead */
+  .slide-ref { display: none; }
+  #ref-toggle { display: block; }
+  /* Slide layout: top-align, clear icon bar */
+  .slide { justify-content: flex-start; overflow-y: auto; padding-top: 52px; }
+  .slide.section-header, .slide.title-slide { justify-content: center; padding-top: 4vh; }
+  h2 { font-size: clamp(18px, 4.5vw, 28px); }
+  /* Tables: keep columns, scroll horizontally if needed */
+  .comparison { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .comparison > div { padding: 0.6em 0.8em; }
+  .comparison .header { font-size: clamp(11px, 2vw, 14px); }
+  .comparison { grid-template-columns: repeat(3, minmax(100px, 1fr)) !important; }
+  .comparison.cols-4 { grid-template-columns: repeat(4, minmax(90px, 1fr)) !important; }
+  .comparison.cols-5 { grid-template-columns: repeat(5, minmax(90px, 1fr)) !important; }
+  /* MCMC: stack panel below */
+  #mcmc-wrap { grid-template-columns: 1fr; }
+  #mcmc-panel { border-left: none; border-top: 1px solid var(--border); max-height: 240px; }
+  #landscape-host { height: 300px !important; }
+  /* Landscape: controls below canvas */
+  #landscape-wrap { display: flex; flex-direction: column; }
+  .lsc-controls { position: static; flex-direction: row; flex-wrap: wrap; padding: 8px; gap: 8px; }
+  .lsc-panel { min-width: 0; flex: 1; }
+  .lsc-legend { position: static; text-align: center; padding: 4px 8px; font-size: 10px; }
+  /* Temperature demo: reduce chart heights */
+  #temp-demo-wrap div[style*="height:180px"] { height: 130px !important; }
+  #temp-demo-wrap div[style*="height:160px"] { height: 110px !important; }
+  /* Two-phase demo: reduce chart heights */
+  #twophase-wrap div[style*="height:220px"] { height: 160px !important; }
+  #twophase-wrap div[style*="height:180px"] { height: 130px !important; }
+  /* MCMC header wrapping */
+  #slide-mcmc > div:first-child { flex-wrap: wrap; }
+  #slide-mcmc > div:first-child > span { margin-left: 0; }
+  .mcmc-tabs { flex-wrap: wrap; }
+  .mcmc-tabs button { font-size: 10px; padding: 3px 8px; }
+  #mcmc-host { height: calc(75vh - 6em) !important; }
+  /* Site logo: button style */
+  #site-logo {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 50%; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); opacity: 1;
+  }
+  #site-logo svg { width: 22px; height: 22px; }
+}
+@media (max-width: 480px) {
+  .slide { padding: 46px 4vw 3vh; }
+  .slide.section-header, .slide.title-slide { padding-top: 3vh; }
+  .card { min-width: 0 !important; }
+  #landscape-host { height: 260px !important; }
+  #landscape-wrap { min-height: 240px; }
+  #site-logo { top: 8px; left: 10px; width: 32px; height: 32px; }
+  #site-logo svg { width: 18px; height: 18px; }
+  #theme-toggle { width: 32px; height: 32px; font-size: 14px; top: 8px; right: 12px; }
+  #counter { font-size: 10px; bottom: 8px; right: 12px; }
+  #nav-hint { font-size: 9px; bottom: 8px; left: 12px; }
+  #ref-toggle { bottom: 8px; font-size: 9px; right: 62px; }
+  #ref-popup { bottom: 32px; }
+  #progress { height: 2px; }
+  .math-block { padding: 0.8em 1em; overflow-x: auto; }
+  .math-block .katex { font-size: 1.1em; }
+  h1 { margin-bottom: 0.3em; }
+  h2 { margin-bottom: 0.4em; }
 }
 
 /* ---- Demo-specific overrides ---- */
@@ -613,6 +703,8 @@ details.derivation .deriv-body p {
 <a id="site-logo" href="https://shashankshekhar.com" target="_blank" title="shashankshekhar.com">
   <svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" fill="none" viewBox="0 0 24 24"><path fill="#FF69B4" fill-rule="evenodd" d="M8.046 10.872a1 1 0 0 0-.98-1.743l-3.556 2a1 1 0 0 0 .043 1.766l2.08 1.04-2.123 1.194a1 1 0 0 0 .043 1.766l8 4a1 1 0 0 0 .894 0l8-4a1 1 0 0 0 .043-1.766l-2.123-1.194 2.08-1.04a1 1 0 0 0 .043-1.766l-3.555-2a1 1 0 1 0-.98 1.743l1.913 1.076L12 14.882l-5.868-2.934zm8.162 4.142-3.76 1.88a1 1 0 0 1-.895 0l-3.76-1.88-1.66.934L12 18.882l5.868-2.934z" clip-rule="evenodd"/><path fill="#C71585" fill-rule="evenodd" d="M11.553 3.106a1 1 0 0 1 .894 0l8 4a1 1 0 0 1 0 1.788l-8 4a1 1 0 0 1-.894 0l-8-4a1 1 0 0 1 0-1.788zM6.236 8 12 10.882 17.764 8 12 5.118z" clip-rule="evenodd"/></svg>
 </a>
+<button id="ref-toggle">References</button>
+<div id="ref-popup"></div>
 
 <div class="deck" id="deck">
 
@@ -710,7 +802,7 @@ details.derivation .deriv-body p {
   <p class="anim anim-d2" style="margin-top:0.8em;">
     The energy function <em>is</em> the model. It maps every possible configuration <strong>x</strong> to a scalar — shaping the landscape you just saw.
   </p>
-  <div style="display:flex;gap:24px;margin-top:1em;">
+  <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:1em;">
     <div class="card anim anim-d3" style="flex:1;text-align:center;">
       <p style="font-size:28px;">⬇️</p>
       <p><span class="highlight">Low energy</span> = "looks like real data"</p>
@@ -733,7 +825,7 @@ details.derivation .deriv-body p {
     More generally, given an input <strong>x</strong> and a candidate answer <strong>y</strong>, the energy function returns
     <em>"how incompatible are they?"</em>
   </p>
-  <div style="display:flex;gap:24px;margin-top:1em;">
+  <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:1em;">
     <div class="card anim anim-d3" style="flex:1;text-align:center;">
       <p style="font-size:28px;">⬆️</p>
       <p><span class="highlight-red">High energy</span> = incompatible</p>
@@ -749,7 +841,7 @@ details.derivation .deriv-body p {
   </blockquote>
 </div>
 
-<!-- ============ SLIDE 8: Inference ============ -->
+<!-- ============ SLIDE 9: Inference ============ -->
 <div class="slide" data-slide="8">
   <h2 class="anim">Inference</h2>
   <div class="math-block anim anim-d1" id="math-inference"></div>
@@ -760,7 +852,7 @@ details.derivation .deriv-body p {
   </ul>
 </div>
 
-<!-- ============ SLIDE 9: EBM vs Autoregressive ============ -->
+<!-- ============ SLIDE 10: EBM vs Autoregressive ============ -->
 <div class="slide" data-slide="9">
   <h2 class="anim">Energy-Based vs. Autoregressive</h2>
   <div class="comparison anim anim-d1" >
@@ -779,7 +871,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 10: Boltzmann Distribution ============ -->
+<!-- ============ SLIDE 11: Boltzmann Distribution ============ -->
 <div class="slide" data-slide="10">
   <h2 class="anim">Energy–Probability Duality</h2>
   <p class="subtitle anim" style="margin-bottom:0.8em;">The Boltzmann Distribution</p>
@@ -795,7 +887,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 11: Temperature demo ============ -->
+<!-- ============ SLIDE 12: Temperature demo ============ -->
 <div class="slide" data-slide="11" id="slide-temp">
   <div class="split left-text">
     <div>
@@ -838,7 +930,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 12: Connection to transformers ============ -->
+<!-- ============ SLIDE 13: Connection to transformers ============ -->
 <div class="slide" data-slide="12">
   <h2 class="anim">Connection to Transformer Decoding</h2>
   <p class="anim anim-d1" style="max-width:900px;">
@@ -856,7 +948,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 13: Partition function problem ============ -->
+<!-- ============ SLIDE 14: Partition function problem ============ -->
 <div class="slide" data-slide="13">
   <h2 class="anim">The Partition Function (Problem)</h2>
   <div class="math-block anim anim-d1" id="math-Z"></div>
@@ -876,7 +968,7 @@ details.derivation .deriv-body p {
   </p>
 </div>
 
-<!-- ============ SLIDE 14: Likelihood Estimation ============ -->
+<!-- ============ SLIDE 15: Likelihood Estimation ============ -->
 <div class="slide" data-slide="14">
   <h2 class="anim">Likelihood Estimation</h2>
   <p class="anim anim-d1">Train the EBM by minimizing the negative log-likelihood:</p>
@@ -904,7 +996,7 @@ details.derivation .deriv-body p {
 
   <div class="anim anim-d3">
     <details class="derivation">
-      <summary>Step 3 — The key identity: ∇<sub>θ</sub> log Z<sub>θ</sub></summary>
+      <summary>Step 3 — The key identity: <span class="math-inline" id="math-il-112"></span></summary>
       <div class="deriv-body">
         <div class="math-block" id="math-deriv-id1"></div>
         <div class="math-block" id="math-deriv-id2"></div>
@@ -919,12 +1011,12 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 15: Two-phase breakdown ============ -->
+<!-- ============ SLIDE 16: Two-phase breakdown ============ -->
 <div class="slide" data-slide="15">
   <h2 class="anim">Two-Phase Training</h2>
   <div class="math-block anim anim-d1" id="math-grad2"></div>
-  <div style="display:flex;gap:20px;margin-top:1em;">
-    <div class="card anim anim-d2" style="flex:1;border-left:3px solid var(--green);text-align:center;">
+  <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:1em;">
+    <div class="card anim anim-d2" style="flex:1;min-width:200px;border-left:3px solid var(--green);text-align:center;">
       <h3 style="color:var(--green);margin-bottom:0.3em;">Positive Phase</h3>
       <p style="font-size:clamp(13px,1.2vw,18px);">Push energy <strong>down</strong> on real data</p>
       <p style="font-size:clamp(11px,1vw,14px);color:var(--text-muted);margin-top:0.3em;">Just requires a dataset — tractable</p>
@@ -932,18 +1024,18 @@ details.derivation .deriv-body p {
     <div class="card anim anim-d2" style="flex:1;border-left:3px solid var(--red);text-align:center;">
       <h3 style="color:var(--red);margin-bottom:0.3em;">Negative Phase</h3>
       <p style="font-size:clamp(13px,1.2vw,18px);">Push energy <strong>up</strong> on model samples</p>
-      <p style="font-size:clamp(11px,1vw,14px);color:var(--text-muted);margin-top:0.3em;">Requires sampling from p<sub>θ</sub> — the hard part</p>
+      <p style="font-size:clamp(11px,1vw,14px);color:var(--text-muted);margin-top:0.3em;">Requires sampling from <span class="math-inline" id="math-il-113"></span> — the hard part</p>
     </div>
   </div>
   <blockquote class="anim anim-d3" style="margin-top:1em;">
     Without the negative phase, the model assigns low energy everywhere — it learns "real data is good" but never learns <em>what is bad</em>.
   </blockquote>
   <p class="anim anim-d4" style="margin-top:0.6em;text-align:center;">
-    <span class="highlight">The gradient is independent of Z(θ) — but sampling from p<sub>θ</sub> is not!</span>
+    <span class="highlight">The gradient is independent of <span class="math-inline" id="math-il-114"></span> — but sampling from <span class="math-inline" id="math-il-115"></span> is not!</span>
   </p>
 </div>
 
-<!-- ============ SLIDE 15: Positive Phase ============ -->
+<!-- ============ SLIDE 17: Positive Phase ============ -->
 <div class="slide" data-slide="16">
   <h2 class="anim">Positive Phase</h2>
   <div class="math-block anim anim-d1" id="math-pos"></div>
@@ -957,7 +1049,7 @@ details.derivation .deriv-body p {
   <div class="math-block anim anim-d4" id="math-pos-update"></div>
 </div>
 
-<!-- ============ SLIDE 16: Negative Phase ============ -->
+<!-- ============ SLIDE 18: Negative Phase ============ -->
 <div class="slide" data-slide="17">
   <h2 class="anim">Negative Phase</h2>
   <div class="math-block anim anim-d1" id="math-neg"></div>
@@ -965,7 +1057,7 @@ details.derivation .deriv-body p {
     <span class="highlight-red">Push energy UP on model samples.</span>
   </p>
   <p class="anim anim-d3" style="margin-top:0.8em;">
-    We sample from <strong>p<sub>θ</sub></strong> — the model's current distribution. These are points where the model has placed high probability (low energy). The update raises energy on these points, eroding misallocated probability mass.
+    We sample from <strong><span class="math-inline" id="math-il-116"></span></strong> — the model's current distribution. These are points where the model has placed high probability (low energy). The update raises energy on these points, eroding misallocated probability mass.
   </p>
   <p class="anim anim-d3" style="margin-top:0.5em;color:var(--text-dim);">
     Combined with the positive phase, the effect is: keep probability on real data, remove it from everywhere else.
@@ -973,7 +1065,7 @@ details.derivation .deriv-body p {
   <div class="math-block anim anim-d4" id="math-neg-update"></div>
 </div>
 
-<!-- ============ SLIDE 17: Two-phase demo ============ -->
+<!-- ============ SLIDE 19: Two-phase demo ============ -->
 <div class="slide" data-slide="18" id="slide-twophase">
   <h2 class="anim" style="margin-bottom:0.4em;">Two-Phase Training Demo</h2>
   <div class="demo-container anim anim-d1" id="twophase-host" style="max-height: 72vh; overflow-y: auto;">
@@ -981,7 +1073,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 18: First phase tractable ============ -->
+<!-- ============ SLIDE 20: First phase tractable ============ -->
 <div class="slide" data-slide="19">
   <h2 class="anim">Why Both Phases Matter</h2>
   <div style="display:flex;gap:20px;flex-wrap:wrap;">
@@ -994,12 +1086,12 @@ details.derivation .deriv-body p {
     <div class="card anim anim-d2" style="flex:1;min-width:300px;border-left:3px solid var(--red);">
       <h3>Negative phase is essential</h3>
       <p><span class="highlight">Provides contrast</span> — teaches the model what <em>doesn't</em> look like data by pushing energy up on incorrect configurations.</p>
-      <p style="margin-top:0.5em;">But sampling from p<sub>θ</sub> is <span class="highlight-red">intractable</span> in high dimensions — this is where the difficulty comes from.</p>
+      <p style="margin-top:0.5em;">But sampling from <span class="math-inline" id="math-il-117"></span> is <span class="highlight-red">intractable</span> in high dimensions — this is where the difficulty comes from.</p>
     </div>
   </div>
 </div>
 
-<!-- ============ SLIDE 19: Recap ============ -->
+<!-- ============ SLIDE 21: Recap ============ -->
 <div class="slide" data-slide="20">
   <h2 class="anim">Recap</h2>
   <div style="display:flex;flex-direction:column;gap:16px;max-width:850px;">
@@ -1019,7 +1111,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 20: Part 2 header ============ -->
+<!-- ============ SLIDE 22: Part 2 header ============ -->
 <div class="slide section-header" data-slide="21">
   <div>
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 2</p>
@@ -1029,7 +1121,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 21: Reminder ============ -->
+<!-- ============ SLIDE 23: Reminder ============ -->
 <div class="slide" data-slide="22">
   <h2 class="anim">The core challenge</h2>
   <p class="anim anim-d1">We derived the gradient of the negative log-likelihood:</p>
@@ -1039,7 +1131,7 @@ details.derivation .deriv-body p {
   <p class="anim anim-d4" style="margin-top:1em;">where <span class="math-inline" id="math-p2-Z-inline"></span> is <span class="highlight-red">intractable</span> for large dimensions. So how do we handle this?</p>
 </div>
 
-<!-- ============ SLIDE 22: Three approaches ============ -->
+<!-- ============ SLIDE 24: Three approaches ============ -->
 <div class="slide" data-slide="23">
   <h2 class="anim">Three approaches</h2>
   <div style="display:flex;flex-direction:column;gap:16px;max-width:800px;">
@@ -1058,7 +1150,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 23: MCMC section ============ -->
+<!-- ============ SLIDE 25: MCMC section ============ -->
 <div class="slide section-header" data-slide="24">
   <div>
     <p class="subtitle anim">Approach 1</p>
@@ -1066,7 +1158,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 24: MCMC idea ============ -->
+<!-- ============ SLIDE 26: MCMC idea ============ -->
 <div class="slide" data-slide="25">
   <h2 class="anim">MCMC: The Idea</h2>
   <p class="anim anim-d1">Can't sample from <span class="math-inline" id="math-mcmc-p"></span> exactly — the partition function blocks us.</p>
@@ -1078,7 +1170,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 25: Langevin Dynamics ============ -->
+<!-- ============ SLIDE 27: Langevin Dynamics ============ -->
 <div class="slide" data-slide="26">
   <h2 class="anim">Langevin Dynamics</h2>
   <p class="anim anim-d1">Starting from a random point, iteratively follow the energy gradient with noise:</p>
@@ -1093,12 +1185,12 @@ details.derivation .deriv-body p {
   </p>
 </div>
 
-<!-- ============ SLIDE 26: Langevin gradient ============ -->
+<!-- ============ SLIDE 28: Langevin gradient ============ -->
 <div class="slide" data-slide="27">
   <h2 class="anim">MCMC + Gradient Update</h2>
   <p class="anim anim-d1">Once we have Langevin samples, plug them into the two-phase gradient:</p>
   <div class="math-block anim anim-d2" id="math-langevin-grad"></div>
-  <div style="display:flex;gap:16px;margin-top:1em;">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:1em;">
     <div class="card anim anim-d3" style="flex:1;text-align:center;border-top:3px solid var(--green);">
       <p style="font-size:clamp(13px,1.2vw,18px);"><span class="math-inline" id="math-lg-pos"></span></p>
       <p style="font-size:clamp(12px,1vw,16px);color:var(--text-muted);">Data samples (minibatch)</p>
@@ -1110,7 +1202,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 27: Problem with Langevin ============ -->
+<!-- ============ SLIDE 29: Problem with Langevin ============ -->
 <div class="slide" data-slide="28">
   <h2 class="anim">The Problem with MCMC</h2>
   <p class="anim anim-d1">Langevin dynamics can take a <strong>very long time</strong> to converge, especially in high-dimensional spaces with multiple modes.</p>
@@ -1121,7 +1213,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 28: Contrastive Divergence ============ -->
+<!-- ============ SLIDE 30: Contrastive Divergence ============ -->
 <div class="slide" data-slide="29">
   <h2 class="anim">Hack: Contrastive Divergence</h2>
   <p class="subtitle anim">Hinton, 2002</p>
@@ -1143,7 +1235,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Hinton, G.E. "Training Products of Experts by Minimizing Contrastive Divergence." <em>Neural Computation</em>, 2002. · Tieleman, T. "Training RBMs Using Approximations to the Likelihood Gradient." <em>ICML</em>, 2008.</div>
 </div>
 
-<!-- ============ SLIDE 29: MCMC Interactive Demo ============ -->
+<!-- ============ SLIDE 31: MCMC Interactive Demo ============ -->
 <div class="slide" data-slide="30" id="slide-mcmc" style="padding:2vh 2vw;">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:0.4em;">
     <h2 class="anim" style="margin:0;">MCMC Sampling Demo</h2>
@@ -1158,7 +1250,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 30: Score Matching section ============ -->
+<!-- ============ SLIDE 32: Score Matching section ============ -->
 <div class="slide section-header" data-slide="31">
   <div>
     <p class="subtitle anim">Approach 2</p>
@@ -1167,7 +1259,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 30: Score function ============ -->
+<!-- ============ SLIDE 33: Score function ============ -->
 <div class="slide" data-slide="32">
   <h2 class="anim">The Score Function</h2>
   <p class="anim anim-d1">The <strong>score</strong> of a distribution is the gradient of the log of probability density with respect to the input:</p>
@@ -1180,7 +1272,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Hyvärinen, A. "Estimation of Non-Normalized Statistical Models by Score Matching." <em>JMLR</em>, 2005.</div>
 </div>
 
-<!-- ============ SLIDE 31: Score matching idea ============ -->
+<!-- ============ SLIDE 34: Score matching idea ============ -->
 <div class="slide" data-slide="33">
   <h2 class="anim">Why Scores Are Enough</h2>
   <p class="anim anim-d1">If two continuously differentiable log probability density functions (PDFs) have equal first derivatives everywhere, and both integrate to 1, they must be <span class="highlight">the same distribution</span>.</p>
@@ -1191,7 +1283,7 @@ details.derivation .deriv-body p {
   </p>
 </div>
 
-<!-- ============ SLIDE 32: Fisher Divergence ============ -->
+<!-- ============ SLIDE 35: Fisher Divergence ============ -->
 <div class="slide" data-slide="34">
   <h2 class="anim">Fisher Divergence</h2>
   <p class="anim anim-d1">Formally, minimize the Fisher divergence between model and data scores:</p>
@@ -1201,22 +1293,22 @@ details.derivation .deriv-body p {
   <p class="anim anim-d3" style="margin-top:0.8em;">Expanding the squared norm:</p>
   <div class="math-block anim anim-d3" id="math-fisher-expand"></div>
   <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--red);">
-    <p><span class="highlight-red">Problem:</span> the cross-term contains <span class="math-inline" id="math-fisher-problem"></span> — we don't know p<sub>data</sub>, only samples from it!</p>
+    <p><span class="highlight-red">Problem:</span> the cross-term contains <span class="math-inline" id="math-fisher-problem"></span> — we don't know <span class="math-inline" id="math-il-118"></span>, only samples from it!</p>
   </div>
 </div>
 
-<!-- ============ SLIDE 33: Hessian Trace ============ -->
+<!-- ============ SLIDE 36: Hessian Trace ============ -->
 <div class="slide" data-slide="35">
   <h2 class="anim">Integration by Parts Trick</h2>
   <p class="anim anim-d1">Hyvärinen (2005) showed the Fisher divergence can be rewritten using only the model's score and its Jacobian:</p>
   <div class="math-block anim anim-d2" id="math-hessian"></div>
-  <p class="anim anim-d3" style="margin-top:1em;">We only need the model's score <span class="math-inline" id="math-hess-score"></span> and its Jacobian (the <strong>Hessian of E<sub>θ</sub></strong>).</p>
+  <p class="anim anim-d3" style="margin-top:1em;">We only need the model's score <span class="math-inline" id="math-hess-score"></span> and its Jacobian (the <strong>Hessian of <span class="math-inline" id="math-il-119"></span></strong>).</p>
   <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--red);">
     <p><span class="highlight-red">But:</span> the trace requires <em>second-order derivatives</em> — O(d) backward passes for dimensionality d. Computationally infeasible for high dimensions.</p>
   </div>
 </div>
 
-<!-- ============ SLIDE 34: Denoising Score Matching ============ -->
+<!-- ============ SLIDE 37: Denoising Score Matching ============ -->
 <div class="slide" data-slide="36">
   <h2 class="anim">Denoising Score Matching</h2>
   <p class="subtitle anim">Vincent, 2011</p>
@@ -1231,7 +1323,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Vincent, P. "A Connection Between Score Matching and Denoising Autoencoders." <em>Neural Computation</em>, 2011.</div>
 </div>
 
-<!-- ============ SLIDE 35: DSM = Diffusion ============ -->
+<!-- ============ SLIDE 38: DSM = Diffusion ============ -->
 <div class="slide" data-slide="37">
   <h2 class="anim">Diffusion Models from the EBM Lens</h2>
   <p class="anim anim-d1">If we perform denoising score matching at <strong>many noise levels</strong> — from pure noise down to near-zero noise — we get a <em>multi-scale</em> score model.</p>
@@ -1247,7 +1339,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Song, Y. & Ermon, S. "Generative Modeling by Estimating Gradients of the Data Distribution." <em>NeurIPS</em>, 2019. · Ho, J. et al. "Denoising Diffusion Probabilistic Models." <em>NeurIPS</em>, 2020.</div>
 </div>
 
-<!-- ============ SLIDE 36: NCE section ============ -->
+<!-- ============ SLIDE 39: NCE section ============ -->
 <div class="slide section-header" data-slide="38">
   <div>
     <p class="subtitle anim">Approach 3</p>
@@ -1256,7 +1348,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 37: NCE idea ============ -->
+<!-- ============ SLIDE 40: NCE idea ============ -->
 <div class="slide" data-slide="39">
   <h2 class="anim">NCE: The Idea</h2>
   <p class="anim anim-d1">No more trying to sample from <span class="math-inline" id="math-il-106"></span> or match its score.</p>
@@ -1268,7 +1360,7 @@ details.derivation .deriv-body p {
   <p class="anim anim-d4" style="margin-top:1em;">Unique advantage: NCE <span class="highlight">learns Z</span> as a by-product — the only method among the three that does.</p>
 </div>
 
-<!-- ============ SLIDE 38: NCE Setup ============ -->
+<!-- ============ SLIDE 41: NCE Setup ============ -->
 <div class="slide" data-slide="40">
   <h2 class="anim">NCE: Two Sources</h2>
   <div style="display:flex;gap:20px;margin-top:0.8em;flex-wrap:wrap;">
@@ -1282,31 +1374,31 @@ details.derivation .deriv-body p {
       <p style="font-size:12px;color:var(--text-muted);margin-top:4px;">(spoiler alert)</p>
     </div>
   </div>
-  <p class="anim anim-d3" style="margin-top:1em;">Must be able to both <strong>sample</strong> from p<sub>noise</sub> and <strong>evaluate its density</strong> <span class="math-inline" id="math-il-109"></span> at any point.</p>
+  <p class="anim anim-d3" style="margin-top:1em;">Must be able to both <strong>sample</strong> from <span class="math-inline" id="math-il-120"></span> and <strong>evaluate its density</strong> <span class="math-inline" id="math-il-109"></span> at any point.</p>
   <p class="anim anim-d4" style="margin-top:0.8em;">Mix them together: draw x from either source with equal probability, then ask the classifier: <em>"which source did this come from?"</em></p>
 </div>
 
-<!-- ============ SLIDE 39: NCE Optimality ============ -->
+<!-- ============ SLIDE 42: NCE Optimality ============ -->
 <div class="slide" data-slide="41">
   <h2 class="anim">NCE: At Optimality</h2>
   <p class="anim anim-d1">At optimality, the classifier's posterior matches the true posterior:</p>
   <div class="math-block anim anim-d2" id="math-nce-posterior"></div>
   <p class="anim anim-d3" style="margin-top:1em;">When the classifier is optimal, <span class="math-inline" id="math-nce-result"></span> — the model has recovered the data distribution.</p>
   <div class="card anim anim-d4" style="margin-top:1em;border-left:3px solid var(--accent);">
-    <p>NCE defines <span class="math-inline" id="math-nce-reparam"></span>, making the log-normalizer a <strong>learnable scalar</strong> optimized jointly with θ. At convergence, c → −log Z<sub>θ</sub>. This is the only training paradigm among the three that actually <span class="highlight">recovers Z</span>.</p>
+    <p>NCE defines <span class="math-inline" id="math-nce-reparam"></span>, making the log-normalizer a <strong>learnable scalar</strong> optimized jointly with θ. At convergence, c → −log <span class="math-inline" id="math-il-121"></span>. This is the only training paradigm among the three that actually <span class="highlight">recovers Z</span>.</p>
   </div>
 </div>
 
-<!-- ============ SLIDE 40: NCE Objective ============ -->
+<!-- ============ SLIDE 43: NCE Objective ============ -->
 <div class="slide" data-slide="42">
   <h2 class="anim">NCE: The Objective</h2>
   <p class="anim anim-d1">The NCE loss is a binary cross-entropy — classify each sample as data or noise:</p>
   <div class="math-block anim anim-d2" id="math-nce-loss"></div>
-  <p class="anim anim-d3" style="margin-top:1em;">This serves as our <span class="highlight">training loss for the EBM</span>: the energy function E<sub>θ</sub> is updated so that the model assigns high density to data samples and low density to noise samples — the positive and negative phases emerge naturally from the two cross-entropy terms.</p>
+  <p class="anim anim-d3" style="margin-top:1em;">This serves as our <span class="highlight">training loss for the EBM</span>: the energy function <span class="math-inline" id="math-il-122"></span> is updated so that the model assigns high density to data samples and low density to noise samples — the positive and negative phases emerge naturally from the two cross-entropy terms.</p>
   <p class="anim anim-d4" style="margin-top:0.8em;color:var(--text-dim);">No MCMC sampling, no Hessian, no score functions — just a classifier and a good noise distribution.</p>
 </div>
 
-<!-- ============ SLIDE 40: Hard negatives ============ -->
+<!-- ============ SLIDE 44: Hard negatives ============ -->
 <div class="slide" data-slide="43">
   <h2 class="anim">Why Hard Negatives Matter</h2>
   <p class="anim anim-d1">The closer the noise distribution is to the data distribution, the <strong>better representations</strong> are needed to distinguish them.</p>
@@ -1327,7 +1419,7 @@ details.derivation .deriv-body p {
   </p>
 </div>
 
-<!-- ============ SLIDE 41: Comparison table ============ -->
+<!-- ============ SLIDE 45: Comparison table ============ -->
 <div class="slide" data-slide="44">
   <h2 class="anim">Comparing Training Paradigms</h2>
   <div class="comparison cols-5 anim anim-d1" style="font-size:clamp(12px,1.1vw,16px);">
@@ -1359,7 +1451,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 42: Part 2 Recap ============ -->
+<!-- ============ SLIDE 46: Part 2 Recap ============ -->
 <div class="slide" data-slide="45">
   <h2 class="anim">Part 2 Recap</h2>
   <div style="display:flex;flex-direction:column;gap:14px;max-width:880px;">
@@ -1379,7 +1471,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 43: Part 3 header ============ -->
+<!-- ============ SLIDE 47: Part 3 header ============ -->
 <div class="slide section-header" data-slide="46">
   <div>
     <p class="subtitle anim" style="margin-bottom:0.5em;">Part 3</p>
@@ -1387,7 +1479,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 44: JEM - Classifier as EBM ============ -->
+<!-- ============ SLIDE 48: JEM - Classifier as EBM ============ -->
 <div class="slide" data-slide="47">
   <h2 class="anim">Your Classifier Is Secretly an EBM</h2>
   <p class="subtitle anim">Grathwohl et al., <em>JEM</em>, 2020</p>
@@ -1399,7 +1491,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Grathwohl, W. et al. "Your Classifier is Secretly an Energy Based Model and You Should Treat it Like One." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/1912.03263">arXiv:1912.03263</a></div>
 </div>
 
-<!-- ============ SLIDE 45: JEM - Reinterpretation ============ -->
+<!-- ============ SLIDE 49: JEM - Reinterpretation ============ -->
 <div class="slide" data-slide="48">
   <h2 class="anim">The JEM Reinterpretation</h2>
   <div class="split equal">
@@ -1422,7 +1514,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Figure from Grathwohl et al., 2020</div>
 </div>
 
-<!-- ============ SLIDE 45: JEM Training ============ -->
+<!-- ============ SLIDE 50: JEM Training ============ -->
 <div class="slide" data-slide="49">
   <h2 class="anim">Training the Joint EBM</h2>
   <p class="anim anim-d1">Decompose the joint log-probability:</p>
@@ -1447,7 +1539,7 @@ details.derivation .deriv-body p {
   </ul>
 </div>
 
-<!-- ============ SLIDE 46: ELECTRA ============ -->
+<!-- ============ SLIDE 51: ELECTRA ============ -->
 <div class="slide" data-slide="50">
   <h2 class="anim">ELECTRA</h2>
   <p class="subtitle anim">Pre-Training Text Encoders as Discriminators</p>
@@ -1470,7 +1562,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Clark, K. et al. "ELECTRA: Pre-training Text Encoders as Discriminators Rather Than Generators." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/2003.10555">arXiv:2003.10555</a></div>
 </div>
 
-<!-- ============ SLIDE 47: ELECTRA as EBM ============ -->
+<!-- ============ SLIDE 52: ELECTRA as EBM ============ -->
 <div class="slide" data-slide="51">
   <h2 class="anim">ELECTRA: The EBM Connection</h2>
   <p class="anim anim-d1" style="margin-top:0.8em;">ELECTRA's discriminator is doing <strong>negative sampling</strong> — distinguishing real tokens (data) from fake tokens (generator output).</p>
@@ -1488,7 +1580,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Clark, K. et al. "ELECTRA: Pre-training Text Encoders as Discriminators Rather Than Generators." <em>ICLR</em>, 2020.</div>
 </div>
 
-<!-- ============ SLIDE 47: Electric - Architecture ============ -->
+<!-- ============ SLIDE 53: Electric - Architecture ============ -->
 <div class="slide" data-slide="52">
   <h2 class="anim">Electric: Energy-Based Cloze Models</h2>
   <p class="subtitle anim">Clark et al., 2020</p>
@@ -1507,7 +1599,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Clark, K. et al. "Pre-Training Transformers as Energy-Based Cloze Models." <em>EMNLP</em>, 2020. <a href="https://arxiv.org/abs/2012.08561">arXiv:2012.08561</a></div>
 </div>
 
-<!-- ============ SLIDE 48: Electric - EBM Formulation ============ -->
+<!-- ============ SLIDE 54: Electric - EBM Formulation ============ -->
 <div class="slide" data-slide="53">
   <h2 class="anim">Electric: From Classification to Density</h2>
   <p class="anim anim-d1" style="margin-top:0.8em;">Electric takes ELECTRA's insight further — from <em>binary classification</em> to proper <em>noise contrastive estimation</em>:</p>
@@ -1527,7 +1619,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Clark, K. et al. "Pre-Training Transformers as Energy-Based Cloze Models." <em>EMNLP</em>, 2020.</div>
 </div>
 
-<!-- ============ SLIDE 48: Residual EBMs for Text ============ -->
+<!-- ============ SLIDE 55: Residual EBMs for Text ============ -->
 <div class="slide" data-slide="54">
   <h2 class="anim">Residual EBMs for Text</h2>
   <p class="subtitle anim">Deng et al., 2020</p>
@@ -1549,7 +1641,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Deng, Y. et al. "Residual Energy-Based Models for Text Generation." <em>ICLR</em>, 2020. <a href="https://arxiv.org/abs/2004.11714">arXiv:2004.11714</a></div>
 </div>
 
-<!-- ============ SLIDE 49: EDLM Problem ============ -->
+<!-- ============ SLIDE 56: EDLM Problem ============ -->
 <div class="slide" data-slide="55">
   <h2 class="anim">EDLM: The Problem with Parallel Text Generation</h2>
   <p class="subtitle anim">Zhao et al., 2025</p>
@@ -1562,7 +1654,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Ye, J. et al. "Energy-Based Diffusion Language Models for Text Generation." <a href="https://arxiv.org/abs/2410.21357">arXiv:2410.21357</a>, 2024.</div>
 </div>
 
-<!-- ============ SLIDE 50: EDLM Solution ============ -->
+<!-- ============ SLIDE 57: EDLM Solution ============ -->
 <div class="slide" data-slide="56">
   <h2 class="anim">EDLM: Residual Energy Correction</h2>
   <p class="anim anim-d1">Apply the residual EBM idea <em>at every denoising step</em>:</p>
@@ -1580,7 +1672,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 51: EDLM Results ============ -->
+<!-- ============ SLIDE 58: EDLM Results ============ -->
 <div class="slide" data-slide="57">
   <h2 class="anim">EDLM: Results</h2>
   <p class="anim anim-d1">Inference: draw <strong>k candidates</strong> from diffusion model, score with energy, resample via importance weights.</p>
@@ -1605,7 +1697,7 @@ details.derivation .deriv-body p {
   <p class="anim anim-d4" style="margin-top:1em;color:var(--text-muted);">First diffusion model to seriously challenge autoregressive quality on language.</p>
 </div>
 
-<!-- ============ SLIDE 52: EBT Paradigm ============ -->
+<!-- ============ SLIDE 59: EBT Paradigm ============ -->
 <div class="slide" data-slide="58">
   <h2 class="anim">Energy-Based Transformers</h2>
   <p class="subtitle anim">Gladstone et al., 2025 — A radically different paradigm</p>
@@ -1624,7 +1716,7 @@ details.derivation .deriv-body p {
   <div class="slide-ref">Gladstone, A. et al. "Energy-Based Transformers are Scalable Learners and Thinkers." <a href="https://arxiv.org/abs/2507.02092">arXiv:2507.02092</a>, 2025.</div>
 </div>
 
-<!-- ============ SLIDE 53: EBT System 2 ============ -->
+<!-- ============ SLIDE 60: EBT System 2 ============ -->
 <div class="slide" data-slide="59">
   <h2 class="anim">Three Facets of System 2 Thinking</h2>
   <div class="comparison cols-4 anim anim-d1" style="font-size:clamp(13px,1.2vw,17px);">
@@ -1662,7 +1754,7 @@ details.derivation .deriv-body p {
   <p class="anim anim-d4" style="margin-top:0.8em;color:var(--text-muted);">All three emerge from unsupervised pretraining — no RL, no verifiable rewards.</p>
 </div>
 
-<!-- ============ SLIDE 54: EBT Scaling ============ -->
+<!-- ============ SLIDE 61: EBT Scaling ============ -->
 <div class="slide" data-slide="60">
   <h2 class="anim">EBT: Scaling Results</h2>
   <div style="display:flex;gap:12px;margin-top:0.8em;flex-wrap:wrap;">
@@ -1690,7 +1782,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 55: EBT Thinking at Inference ============ -->
+<!-- ============ SLIDE 62: EBT Thinking at Inference ============ -->
 <div class="slide" data-slide="61">
   <h2 class="anim">Thinking at Inference Time</h2>
   <p class="anim anim-d1">EBTs can improve by using <strong>more forward passes</strong> — Transformer++ cannot.</p>
@@ -1710,7 +1802,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 56: Further Reading ============ -->
+<!-- ============ SLIDE 63: Further Reading ============ -->
 <div class="slide" data-slide="62">
   <h2 class="anim">Further Reading</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:0.8em;">
@@ -1735,7 +1827,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 57: The Spectrum ============ -->
+<!-- ============ SLIDE 64: The Spectrum ============ -->
 <div class="slide" data-slide="63">
   <h2 class="anim">The Spectrum of Energy-Based LLMs</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:1em;">
@@ -1754,7 +1846,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 58: Takeaways ============ -->
+<!-- ============ SLIDE 65: Takeaways ============ -->
 <div class="slide" data-slide="64">
   <h2 class="anim">Four Takeaways</h2>
   <div style="display:flex;flex-direction:column;gap:14px;margin-top:1em;">
@@ -1777,7 +1869,7 @@ details.derivation .deriv-body p {
   </div>
 </div>
 
-<!-- ============ SLIDE 59: Thank You ============ -->
+<!-- ============ SLIDE 66: Thank You ============ -->
 <div class="slide title-slide" data-slide="65">
   <div>
     <h1 class="anim" style="font-size:clamp(36px,4vw,64px);">Thank you!</h1>
@@ -1861,12 +1953,41 @@ function goTo(n) {
   setTimeout(() => slides[prev].classList.remove('exiting'), 500);
   document.getElementById('progress').style.width = ((current / (totalSlides - 1)) * 100) + '%';
   document.getElementById('counter').textContent = (current + 1) + ' / ' + totalSlides;
+  // Reset scroll position so slides start at top
+  slides[current].scrollTop = 0;
+  // Update reference popup button visibility
+  updateRefToggle();
   // Initialize demos if needed
   if (current === 5) initLandscape();
   if (current === 11) initTempDemo();
   if (current === 18) initTwoPhase();
   if (current === 30) initMCMCDemo();
 }
+
+// Reference popup for mobile
+function updateRefToggle() {
+  var refBtn = document.getElementById('ref-toggle');
+  var refPopup = document.getElementById('ref-popup');
+  refPopup.classList.remove('visible');
+  var refEl = slides[current].querySelector('.slide-ref');
+  // Button visibility is controlled by CSS media query; just toggle content availability
+  refBtn.style.visibility = refEl ? 'visible' : 'hidden';
+}
+document.getElementById('ref-toggle').addEventListener('click', function(e) {
+  e.stopPropagation();
+  var refEl = slides[current].querySelector('.slide-ref');
+  var popup = document.getElementById('ref-popup');
+  if (refEl) {
+    popup.innerHTML = refEl.innerHTML;
+    popup.classList.toggle('visible');
+  }
+});
+// Close ref popup on outside click
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#ref-popup') && !e.target.closest('#ref-toggle')) {
+    document.getElementById('ref-popup').classList.remove('visible');
+  }
+}, true);
 
 // Keyboard nav
 document.addEventListener('keydown', e => {
@@ -1879,7 +2000,7 @@ document.addEventListener('keydown', e => {
 
 // Click nav (left 30% = back, right 70% = forward) — but not on interactive areas
 document.addEventListener('click', e => {
-  if (e.target.closest('.demo-container') || e.target.closest('button') || e.target.closest('input')) return;
+  if (e.target.closest('.demo-container') || e.target.closest('button') || e.target.closest('input') || e.target.closest('#ref-popup')) return;
   // If clicking a summary inside a closed details, let it expand (don't navigate)
   const summary = e.target.closest('details.derivation > summary');
   if (summary) {
@@ -1921,6 +2042,7 @@ current = readHash();
 slides[current].classList.add('active');
 document.getElementById('progress').style.width = ((current / (totalSlides - 1)) * 100) + '%';
 document.getElementById('counter').textContent = (current + 1) + ' / ' + totalSlides;
+updateRefToggle();
 
 // ===========================================================================
 // KATEX RENDERING
@@ -2019,6 +2141,18 @@ renderMath('math-il-108', 'p_{\\text{noise}}(x)', false);
 renderMath('math-il-109', 'p_{\\text{noise}}(x)', false);
 renderMath('math-il-110', '\\log p_\\theta(x)', false);
 renderMath('math-il-111', '\\log p_\\theta(y|x)', false);
+renderMath('math-il-112', '\\nabla_\\theta \\log Z_\\theta', false);
+renderMath('math-il-113', 'p_\\theta', false);
+renderMath('math-il-114', 'Z(\\theta)', false);
+renderMath('math-il-115', 'p_\\theta', false);
+renderMath('math-il-116', 'p_\\theta', false);
+renderMath('math-il-117', 'p_\\theta', false);
+renderMath('math-il-118', 'p_{\\text{data}}', false);
+renderMath('math-il-119', 'E_\\theta', false);
+renderMath('math-il-120', 'p_{\\text{noise}}', false);
+renderMath('math-il-121', 'Z_\\theta', false);
+renderMath('math-il-122', 'E_\\theta', false);
+renderMath('math-il-123', 'p_\\theta', false);
 
 // ===========================================================================
 // 3D ENERGY LANDSCAPE DEMO
@@ -2506,7 +2640,7 @@ function initMCMCDemo() {
           </div>
           <div class="mp-section">
             <h4>What's happening</h4>
-            <div class="mcmc-explainer">Particles start from <strong>random noise</strong> and follow the <span style="color:var(--blue);">energy gradient ↓</span> with injected <span style="color:var(--orange);">noise</span>. After many steps they become samples from p<sub>θ</sub> — the <span style="color:var(--red);">negative samples</span> for training.</div>
+            <div class="mcmc-explainer">Particles start from <strong>random noise</strong> and follow the <span style="color:var(--blue);">energy gradient ↓</span> with injected <span style="color:var(--orange);">noise</span>. After many steps they become samples from <span class="math-inline" id="math-il-123"></span> — the <span style="color:var(--red);">negative samples</span> for training.</div>
           </div>
         </div>
         <div id="mp-cd" class="mp-hidden">
