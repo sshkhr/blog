@@ -15,7 +15,7 @@
 }
 
 /* Subtle border for code blocks */
-.prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+.prose :where(pre):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
   @apply rounded-lg border-2 border-gray-300 dark:border dark:border-gray-700;
 }
 
