@@ -22,15 +22,35 @@ module.exports = {
         14: '3.5rem',
       },
       fontFamily: {
-        sans: ['var(--font-space-grotesk)', ...fontFamily.sans],
+        sans: ['var(--font-inter)', ...fontFamily.sans],
+        display: ['var(--font-space-grotesk)', ...fontFamily.sans],
       },
       colors: {
-        primary: colors.pink,
+        primary: {
+          50: '#fdf2f8',
+          100: '#fce7f3',
+          200: '#f9c6e3',
+          300: '#f49fcf',
+          400: '#e06aaf',
+          500: '#c71585',
+          600: '#ad1274',
+          700: '#8f0f5f',
+          800: '#750e4e',
+          900: '#621143',
+          950: '#3b0524',
+        },
         gray: colors.gray,
+        sepia: {
+          50: '#faf8f5',
+          100: '#f5f0eb',
+        },
       },
       typography: ({ theme }) => ({
         DEFAULT: {
           css: {
+            fontSize: '1rem',
+            lineHeight: '1.75',
+            maxWidth: '680px',
             a: {
               color: theme('colors.primary.500'),
               '&:hover': {
@@ -38,12 +58,51 @@ module.exports = {
               },
               code: { color: theme('colors.primary.400') },
             },
+            'h1,h2,h3,h4,h5,h6': {
+              fontFamily: theme('fontFamily.display').join(', '),
+            },
             'h1,h2': {
               fontWeight: '700',
               letterSpacing: theme('letterSpacing.tight'),
             },
+            h1: {
+              fontSize: '1.75rem',
+              marginTop: '2em',
+              marginBottom: '0.75em',
+            },
+            h2: {
+              fontSize: '1.375rem',
+              marginTop: '2em',
+              marginBottom: '0.75em',
+            },
             h3: {
               fontWeight: '600',
+              fontSize: '1.125rem',
+              marginTop: '1.75em',
+              marginBottom: '0.5em',
+            },
+            h4: {
+              fontSize: '1rem',
+              marginTop: '1.5em',
+              marginBottom: '0.5em',
+            },
+            p: {
+              marginTop: '1.25em',
+              marginBottom: '1.25em',
+            },
+            pre: {
+              marginTop: '1.75em',
+              marginBottom: '1.75em',
+              backgroundColor: theme('colors.gray.100'),
+              color: theme('colors.gray.800'),
+            },
+            img: {
+              marginTop: '2em',
+              marginBottom: '2em',
+            },
+            table: {
+              marginTop: '1.5em',
+              marginBottom: '1.5em',
             },
             code: {
               color: theme('colors.indigo.500'),
@@ -61,6 +120,10 @@ module.exports = {
             },
             'h1,h2,h3,h4,h5,h6': {
               color: theme('colors.gray.100'),
+            },
+            pre: {
+              backgroundColor: '#011627',
+              color: '#d6deeb',
             },
           },
         },

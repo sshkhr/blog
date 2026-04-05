@@ -13,7 +13,7 @@ export default function Home({ posts }) {
       <div className="mt-7 justify-between space-y-4">
         <div className="flex flex-col md:flex-row">
           <div id="div1" className="mb-4 text-left md:mb-0 md:basis-1/2">
-            <h1 className="text-3xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-none md:text-5xl md:leading-tight lg:text-6xl lg:leading-none">
+            <h1 className="font-display text-3xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-4xl sm:leading-none md:text-5xl md:leading-tight lg:text-6xl lg:leading-none">
               hi, <span>i'm </span>
               <span className="whitespace-nowrap text-primary-500 dark:text-primary-300">
                 shashank shekhar
@@ -53,7 +53,7 @@ export default function Home({ posts }) {
       </div>
       <div className="divide-y divide-gray-200 pt-2 dark:divide-gray-700">
         <div className="mt-4 space-y-2 pb-2 pt-6 md:mt-0 md:space-y-4">
-          <h2 className="text-2xl font-extrabold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-3xl sm:leading-none md:text-4xl md:leading-none">
+          <h2 className="font-display text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-none md:text-3xl md:leading-none">
             Latest Posts
           </h2>
           <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
@@ -70,7 +70,7 @@ export default function Home({ posts }) {
                   <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                     <dl>
                       <dt className="sr-only">Published on</dt>
-                      <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+                      <dd className="text-sm font-normal leading-6 text-gray-400 dark:text-gray-500">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                       </dd>
                     </dl>
