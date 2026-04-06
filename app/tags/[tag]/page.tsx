@@ -2,7 +2,7 @@ import { slug } from 'github-slugger'
 import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer'
 import siteMetadata from '@/data/siteMetadata'
 import ListLayout from '@/layouts/ListLayoutWithTags'
-import { allBlogs } from 'contentlayer/generated'
+import { allBlogs, allLogs } from 'contentlayer/generated'
 import tagData from 'app/tag-data.json'
 import { genPageMetadata } from 'app/seo'
 import { Metadata } from 'next'
@@ -37,21 +37,28 @@ export default async function TagPage({ params }: { params: { tag: string } }) {
   const tag = decodeURI(params.tag)
   const title = tag[0].toUpperCase() + tag.split(' ').join('-').slice(1)
 
-  const filteredPosts = allCoreContent(
+  const filteredBlogs = allCoreContent(
     sortPosts(allBlogs.filter((post) => post.tags && post.tags.map((t) => slug(t)).includes(tag)))
+  )
+  const filteredLogs = allCoreContent(
+    sortPosts(allLogs.filter((post) => post.tags && post.tags.map((t) => slug(t)).includes(tag)))
+  )
+
+  // Merge and sort by date
+  const allFiltered = [...filteredBlogs, ...filteredLogs].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   )
 
   // Fetch view counts only for non-draft posts
   const viewCounts = await Promise.all(
-    filteredPosts.map(async (post) => {
-      // Skip fetching for draft posts
+    allFiltered.map(async (post) => {
       if (post.draft) return 0
       const count = await redis.get<number>(['pageviews', 'projects', post.slug].join(':'))
       return count ?? 0
     })
   )
 
-  const postsWithViews = filteredPosts.map((post, i) => ({
+  const postsWithViews = allFiltered.map((post, i) => ({
     ...post,
     totalViews: viewCounts[i],
   }))
