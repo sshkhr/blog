@@ -7,8 +7,11 @@ import CustomLink from './Link'
 import TableWrapper from './TableWrapper'
 import dynamic from 'next/dynamic'
 
-// 1. Dynamically import the actual CodeTabs component (to avoid SSR)
+// Dynamically import client-only components (to avoid SSR)
 const CodeTabs = dynamic(() => import('@/components/CodeTabs'), {
+  ssr: false,
+})
+const EmbeddedSlide = dynamic(() => import('@/components/EmbeddedSlide'), {
   ssr: false,
 })
 
@@ -20,4 +23,5 @@ export const components: MDXComponents = {
   table: TableWrapper,
   BlogNewsletterForm,
   CodeTabs,
+  EmbeddedSlide,
 }

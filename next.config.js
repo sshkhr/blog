@@ -13,7 +13,7 @@ const ContentSecurityPolicy = `
   media-src 'self' *.s3.amazonaws.com blob: data:;
   connect-src *;
   font-src 'self' fonts.gstatic.com cdn.jsdelivr.net;
-  frame-src giscus.app platform.twitter.com disqus.com *.youtube.com app.cal.com;
+  frame-src 'self' giscus.app platform.twitter.com disqus.com *.youtube.com app.cal.com;
 `
 
 const securityHeaders = [
@@ -30,7 +30,7 @@ const securityHeaders = [
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
   {
     key: 'X-Frame-Options',
-    value: 'DENY',
+    value: 'SAMEORIGIN',
   },
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
   {

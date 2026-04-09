@@ -12,9 +12,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-  // Set theme early to prevent flash
+  // Set theme early to prevent flash (URL param overrides localStorage for iframe embedding)
   (function(){
-    var t = localStorage.getItem('ebm-theme') || 'dark';
+    var params = new URLSearchParams(window.location.search);
+    var t = params.get('theme') || localStorage.getItem('ebm-theme') || 'dark';
     document.documentElement.setAttribute('data-theme', t);
   })();
 </script>
@@ -692,6 +693,65 @@ details.derivation .deriv-body p {
 .slide.active .anim-d2 { animation-delay: 0.3s; }
 .slide.active .anim-d3 { animation-delay: 0.45s; }
 .slide.active .anim-d4 { animation-delay: 0.6s; }
+
+/* ---- Iframe embed overrides ---- */
+html.in-iframe, html.in-iframe body {
+  height: 100%; overflow: hidden; margin: 0;
+}
+html.in-iframe .deck {
+  height: 100%; width: 100%;
+}
+/* Hide all non-active slides */
+html.in-iframe .slide {
+  display: none !important;
+}
+/* Show only the active slide — fill iframe, no scrolling */
+html.in-iframe .slide.active {
+  display: flex !important;
+  flex-direction: column;
+  position: absolute; inset: 0;
+  overflow: hidden;
+  padding: 8px !important;
+  transform: none; transition: none;
+}
+html.in-iframe .slide.active h2 { display: none; }
+/* Hide text panel in split layouts — blog post has the text */
+html.in-iframe .split.left-text > div:first-child { display: none; }
+html.in-iframe .split { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+/* Demo containers grow to fill all remaining space */
+html.in-iframe .demo-container {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+/* Landscape: canvas wrapper fills container */
+html.in-iframe #landscape-wrap { height: 100%; }
+/* Temp & Two-Phase demos: flex column layout, charts grow to fill */
+html.in-iframe #temp-demo-wrap,
+html.in-iframe #twophase-wrap {
+  height: 100%; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+html.in-iframe #temp-demo-wrap .td-row,
+html.in-iframe #temp-demo-wrap .chart-label,
+html.in-iframe #twophase-wrap .tp-row,
+html.in-iframe #twophase-wrap .chart-label {
+  flex-shrink: 0;
+}
+/* Override inline fixed heights on chart wrapper divs so they flex */
+html.in-iframe #temp-demo-wrap > div[style*="height"],
+html.in-iframe #twophase-wrap > div[style*="height"] {
+  height: auto !important;
+  flex: 1 1 0;
+  min-height: 60px;
+}
+/* MCMC: let viewport fill remaining space after tabs */
+html.in-iframe #mcmc-host { flex: 1 1 auto !important; min-height: 0 !important; }
+html.in-iframe #mcmc-wrap { height: 100% !important; }
+html.in-iframe .mcmc-tabs { margin-left: 0 !important; }
+/* Z display row in temp demo should not grow */
+html.in-iframe #temp-demo-wrap > div[style*="margin-bottom"] { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -1896,7 +1956,7 @@ details.derivation .deriv-body p {
 // ===========================================================================
 // THEME TOGGLE
 // ===========================================================================
-let currentTheme = localStorage.getItem('ebm-theme') || 'dark';
+let currentTheme = new URLSearchParams(window.location.search).get('theme') || localStorage.getItem('ebm-theme') || 'dark';
 document.documentElement.setAttribute('data-theme', currentTheme);
 updateThemeIcon();
 
@@ -1918,8 +1978,9 @@ function toggleTheme() {
   // Rebuild charts with new colors if they exist
   if (tempDemoInited) rebuildTempDemo();
   if (twoPhaseInited) rebuildTwoPhase();
-  // Rebuild 3D scene colors if landscape exists
+  // Rebuild 3D scene colors if they exist
   if (landscapeInited) rebuildLandscapeTheme();
+  if (mcmcInited) rebuildMCMCTheme();
 }
 
 document.getElementById('theme-toggle').addEventListener('click', e => {
@@ -1938,6 +1999,8 @@ function getChartColors() {
 // ===========================================================================
 // SLIDE ENGINE
 // ===========================================================================
+const isIframe = window.self !== window.top;
+
 const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
 let current = 0;
@@ -1989,8 +2052,9 @@ document.addEventListener('click', function(e) {
   }
 }, true);
 
-// Keyboard nav
+// Keyboard nav (disabled when embedded in iframe)
 document.addEventListener('keydown', e => {
+  if (isIframe) return;
   if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); goTo(current + 1); }
   if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); goTo(current - 1); }
   if (e.key === 'Home') { e.preventDefault(); goTo(0); }
@@ -1998,8 +2062,9 @@ document.addEventListener('keydown', e => {
   if (e.key === 't' || e.key === 'T') { toggleTheme(); }
 });
 
-// Click nav (left 30% = back, right 70% = forward) — but not on interactive areas
+// Click nav (left 30% = back, right 70% = forward) — disabled when embedded in iframe
 document.addEventListener('click', e => {
+  if (isIframe) return;
   if (e.target.closest('.demo-container') || e.target.closest('button') || e.target.closest('input') || e.target.closest('#ref-popup')) return;
   // If clicking a summary inside a closed details, let it expand (don't navigate)
   const summary = e.target.closest('details.derivation > summary');
@@ -2018,10 +2083,11 @@ document.addEventListener('click', e => {
   else goTo(current + 1);
 });
 
-// Touch support
+// Touch support (disabled when embedded in iframe)
 let touchStartX = 0;
-document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchstart', e => { if (!isIframe) touchStartX = e.touches[0].clientX; });
 document.addEventListener('touchend', e => {
+  if (isIframe) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   if (Math.abs(dx) > 50) {
     if (dx < 0) goTo(current + 1);
@@ -2043,6 +2109,30 @@ slides[current].classList.add('active');
 document.getElementById('progress').style.width = ((current / (totalSlides - 1)) * 100) + '%';
 document.getElementById('counter').textContent = (current + 1) + ' / ' + totalSlides;
 updateRefToggle();
+
+// Hide navigation chrome and adjust layout when embedded in iframe
+if (isIframe) {
+  document.documentElement.classList.add('in-iframe');
+  ['progress','counter','nav-hint','site-logo','theme-toggle','ref-toggle','ref-popup'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Listen for theme changes from parent blog
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'theme-change') {
+      var newTheme = e.data.theme;
+      if (newTheme !== currentTheme) {
+        currentTheme = newTheme;
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        updateThemeIcon();
+        if (tempDemoInited) rebuildTempDemo();
+        if (twoPhaseInited) rebuildTwoPhase();
+        if (landscapeInited) rebuildLandscapeTheme();
+        if (mcmcInited) rebuildMCMCTheme();
+      }
+    }
+  });
+}
 
 // ===========================================================================
 // KATEX RENDERING
@@ -2596,6 +2686,16 @@ function rebuildLandscapeTheme() {
   }
 }
 
+// For the MCMC 3D scene: store refs to update colors on theme change
+let _mcR = null, _mcGrid = null, _mcAxMat = null;
+function rebuildMCMCTheme() {
+  if (!_mcR) return;
+  const isLt = currentTheme === 'light';
+  _mcR.setClearColor(isLt ? 0xffffff : 0x1a1a24, isLt ? 1 : 0);
+  if (_mcGrid) { _mcGrid.material.color.set(isLt ? 0xcccccc : 0x333333); _mcGrid.material.needsUpdate = true; }
+  if (_mcAxMat) { _mcAxMat.color.set(isLt ? 0x999999 : 0x555555); _mcAxMat.needsUpdate = true; }
+}
+
 // Init demos if starting on those slides
 if (current === 5) initLandscape();
 if (current === 11) initTempDemo();
@@ -2740,6 +2840,9 @@ function initMCMCDemo() {
   const mcAxMat=new THREE.LineBasicMaterial({color:isLt?0x999999:0x555555});
   const mcL=SR+0.5;
   [[new THREE.Vector3(-mcL,0,0),new THREE.Vector3(mcL,0,0)],[new THREE.Vector3(0,-4,0),new THREE.Vector3(0,3,0)],[new THREE.Vector3(0,0,-mcL),new THREE.Vector3(0,0,mcL)]].forEach(p=>{mcScene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),mcAxMat));});
+
+  // Store refs for theme rebuild
+  _mcR = mcR; _mcGrid = mcGrid; _mcAxMat = mcAxMat;
 
   // camera orbit
   let mcDrag=false,mcPX=0,mcPY=0,mcT=Math.PI/3.5,mcP=Math.PI/3.8,mcRad=10;
