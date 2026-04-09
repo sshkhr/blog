@@ -1,10 +1,14 @@
 ---
-title: "Stop using torch.cat for your PyTorch KV cache tutorials"
+title: "Stop using torch.cat for your KV cache implementations"
 date: '2026-01-25'
 tags: ['llm', 'kv-cache', 'pytorch', 'inference', 'optimization', 'transformers']
 draft: false
 summary: "tl;dr: `torch.cat` is not in-place, instead use pre-allocated buffers"
 ---
+
+> [!info] What's a KV cache, again?
+>
+> For a primer on the attention mechanism, transformer model, and KV cache optimizations, see my [MLA blog](/blog/flashmla/flashmla-1-mla) on DeepSeek's Multi-Head Latent Attention.
 
 KV caching is fundamental to efficient LLM inference. If you've implemented autoregressive decoding in PyTorch, you might have written something like this:
 
@@ -17,40 +21,53 @@ else:
     self.v_cache = torch.cat([self.v_cache, V], dim=2)
 ```
 
-This pattern makes logical sense. Search "KV cache PyTorch implementation" and you'll find it in [Sebastian Raschka's excellent tutorial on KV caching](https://magazine.sebastianraschka.com/p/coding-the-kv-cache-in-llms), [HuggingFace's KV caching blog post](https://huggingface.co/blog/not-lain/kv-caching), and countless GitHub repositories. It's pedagogically clear: at each decode step, concatenate the new key-value pair onto the existing cache.
+This pattern makes logical sense. At each decode step, concatenate the new key-value pair onto the existing cache.
 
-But this pattern has a hidden performance trap.
+But it goes against the spirit of caching.
 
-> [!info] Who is this for?
->
-> This post is for ML practitioners who implement or optimize LLM inference. If you've written a KV cache using `torch.cat` and are deploying to production, this is especially relevant. If you're learning about attention mechanisms, the tutorial implementations are fine—just be aware of this limitation when scaling up.
+# Everyone uses this pattern
 
-> [!tip] tl;dr
->
-> `torch.cat` copies the entire existing cache at every decode step, resulting in $O(N^2)$ total memory operations over $N$ steps. The fix is simple: pre-allocate a buffer and use slice assignment. Jump to [The Fix](#the-fix-pre-allocated-buffers-with-slice-assignment) if you just want the solution.
+Search "KV cache PyTorch implementation" and you'll find `torch.cat` everywhere. Two very popular tutorials on the topic: [Sebastian Raschka's tutorial](https://magazine.sebastianraschka.com/p/coding-the-kv-cache-in-llms) and [HuggingFace's KV caching blog post](https://huggingface.co/blog/not-lain/kv-caching) use this approach. 
 
-# The Hidden Quadratic Cost of torch.cat
+It's not just tutorials, either. I found this pattern in well-maintained, widely-used codebases with over 100K stars on Github.
 
-Let's trace through what actually happens when you call `torch.cat([self.k_cache, K], dim=2)` at decode step $t$:
+<CodeCarousel items={[
+  {
+    label: "OpenAI Whisper - whisper/model.py",
+    href: "https://github.com/openai/whisper/blob/main/whisper/model.py",
+    image: "/static/images/logs/whisper-kv-cache.png"
+  },
+  {
+    label: "HuggingFace Transformers - cache_utils.py",
+    href: "https://github.com/huggingface/transformers/blob/main/src/transformers/cache_utils.py",
+    image: "/static/images/logs/hf-transformers-kv-cache.png"
+  },
+  {
+    label: "Facebook TorchMultimodal - attention.py",
+    href: "https://github.com/facebookresearch/multimodal/blob/main/torchmultimodal/modules/layers/attention.py",
+    image: "/static/images/logs/torch-multimodal-kv-cache.png"
+  }
+]} />
 
-1. **Allocate** a new tensor of size $t + 1$ (the combined length)
-2. **Copy** all $t$ existing cache elements to the new tensor
-3. **Copy** the 1 new element to the end
-4. **Deallocate** the old tensor (eventually, via garbage collection)
+At this point, there are enough examples of this pattern on the internet where it's probably made it's way into the training data for LLMs and coding agents. It is logically correct. But it goes against the spirit of what KV caching is supposed to do.
 
-The critical observation: **every single decode step copies the entire existing cache**. At step $t$, we perform $O(t)$ memory copy operations.
+# torch.cat does the opposite of caching
 
-The cumulative cost over $N$ decode steps is:
+The whole point of a KV cache is to compute each token's key and value projections once, store them, and never touch them again. That's what "caching" means, we pay the storage cost once and reuse until we finish decoding.
 
-$$\text{Total memory operations} = \sum_{t=1}^{N} t = \frac{N(N+1)}{2} = O(N^2)$$
+But `torch.cat` re-copies every cached element at every single step. You're not caching, you're maintaining a copy log that gets rewritten from scratch each time. This isn't a new observation, either. There has been a bunch of posts on the PyTorch forums about this over the years, and the consensus has always been: `torch.cat` is not in-place, it allocates new memory and copies data. If you want to avoid that, one thing you could do is pre-allocate a buffer and write into it directly.
 
-This is **in addition to** the unavoidable $O(N^2)$ cost of the attention computation itself. We've introduced a second quadratic term, purely from memory allocation patterns.
+[Concatenate tensors without memory copying](https://discuss.pytorch.org/t/concatenate-tensors-without-memory-copying/34609/) from Sep 2019 asked about in-place concatenation, and a PyTorch dev's was essentially: you can't. But you can pre-allocate and write into it.
 
-> [!warning] The Hidden Cost
->
-> Every `torch.cat` doesn't just add one element—it copies the entire existing cache to a new memory location. At step 1000, you're copying 999 elements just to add 1.
+> [!Quote] [albanD](https://discuss.pytorch.org/t/concatenate-tensors-without-memory-copying/34609/5)
+> ... Another solution is to pre-allocate the full tensor and compute t1 and t2 directly into it doing inplace operations. That way you don’t need the cat operation at all.
 
-To make this concrete, here's what `torch.cat` is doing under the hood:
+A year later (Sep 2020),[Torch.cat() massive bottleneck?!](https://discuss.pytorch.org/t/torch-cat-massive-bottleneck) raised this again, and the legendary ptrblck responded:
+
+> [!Quote] [ptrblck](https://discuss.pytorch.org/t/torch-cat-massive-bottleneck/96850/2)
+> If you are using torch.cat in a loop, you should instead ... try to preallocate the output tensor and fill it.
+
+Here's some pseudocode demonstrating what `torch.cat` is actually doing:
 
 ```python
 def torch_cat_equivalent(existing_cache, new_tensor, dim):
@@ -68,28 +85,21 @@ def torch_cat_equivalent(existing_cache, new_tensor, dim):
     # Old cache becomes garbage — memory pressure until GC runs
 ```
 
-{/* TODO: Add diagram showing torch.cat copy pattern at steps 1, 2, 3, 4...
-     Visual: Gray = previously copied data, Green = new data, Red = wasted copies
-     File: /public/static/images/kvcache-torch-cat-copies.png */}
+We've eliminated redundant computation, but introduced redundant memory operations that scale the same way. Every step copies everything that came before. That's not caching, that's literally the opposite of caching. At step $t$, you copy $O(t)$ elements just to add 1 new one. The cumulative cost over $N$ decode steps:
 
-# Memory Access Patterns: Why This Hurts
+$$\text{Total memory operations} = \sum_{t=1}^{N} t = \frac{N(N+1)}{2} = O(N^2)$$
 
-GPU memory bandwidth is precious. Modern GPUs like the H100 have enormous compute throughput (around 2 petaFLOPS for FP16), but memory bandwidth is comparatively limited (~3 TB/s for HBM3). Moving data is often the bottleneck, not computing on it.
+This is in addition to the unavoidable $O(N^2)$ cost of the attention computation itself. We've introduced a second quadratic term, purely from memory allocation.
 
-> [!info] Memory-Bound Operations
+And it gets worse. `cudaMalloc` is not free — each allocation involves driver overhead and memory pool management. Repeatedly allocating slightly larger buffers fragments memory, potentially forcing expensive compaction. The cache moves to a new address each step, defeating hardware caching and memory prefetching. Every aspect of this pattern fights the GPU's memory subsystem.
+
+> [!warning] tl;dr
 >
-> An operation is "memory-bound" when its runtime is dominated by data movement rather than arithmetic. During autoregressive decoding, we process just one token at a time, meaning compute utilization is low and memory access patterns dominate latency.
+> Every `torch.cat` doesn't just add one element — it copies the entire existing cache to a new memory location. At step 1000, you're copying 999 elements just to add 1.
 
-The `torch.cat` pattern fails on multiple fronts:
+# A naive solution: Pre-allocated buffers
 
-- **Allocation overhead**: `cudaMalloc` is not free. Each allocation involves driver overhead and potentially memory pool management.
-- **Full cache copy every step**: Reading and writing $O(t)$ elements at step $t$ consumes bandwidth that could be used for actual computation.
-- **Memory fragmentation**: Repeatedly allocating slightly larger buffers fragments the memory pool, potentially forcing expensive compaction or causing allocation failures.
-- **Cache unfriendliness**: The cache moves to new memory addresses each step, defeating any benefits from hardware caching or memory prefetching.
-
-# The Fix: Pre-allocated Buffers with Slice Assignment
-
-The solution is straightforward: allocate the full buffer upfront and write to it in place.
+A simple solution (based on the PyTorch dev's comments): allocate the full buffer upfront and write to it in place. This lends itself well to transformer decoding, since the `max_seq_len` is typically set in advance.
 
 ```python
 # Instead of this (quadratic):
@@ -100,124 +110,11 @@ self.k_cache[:, :, self.position:self.position + seq_len] = K
 self.position += seq_len
 ```
 
-Each step now performs exactly $O(1)$ memory operations—just writing the new KV pair to the next slot. The cumulative cost over $N$ steps drops from $O(N^2)$ to $O(N)$.
+Each step performs exactly $O(1)$ memory operations — just writing the new KV pair to the next slot. The cumulative cost drops from $O(N^2)$ to $O(N)$.
 
-> [!tip] The Key Insight
->
-> Pre-allocate once, write to the next slot. No allocation, no copying of existing data. The only memory operation is writing the new KV pair.
+Trade-off: you must know `max_seq_len` upfront. In practice, this is rarely a problem — you typically have a known context limit (4K, 8K, 128K tokens), and over-allocating by a small margin is cheap compared to the quadratic penalty.
 
-Here's the full implementation comparison:
-
-<CodeTabs tabs={["torch.cat (Quadratic)", "Pre-allocated Buffer (Linear)"]}>
-```python
-class MultiHeadAttentionCatCache(nn.Module):
-    """KV Cache using torch.cat — allocates new memory every decode step."""
-
-    def __init__(self, d_model: int, n_heads: int):
-        super().__init__()
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.d_h = d_model // n_heads
-
-        self.W_q = nn.Linear(d_model, d_model, bias=False)
-        self.W_k = nn.Linear(d_model, d_model, bias=False)
-        self.W_v = nn.Linear(d_model, d_model, bias=False)
-        self.W_o = nn.Linear(d_model, d_model, bias=False)
-
-        self.k_cache: Optional[torch.Tensor] = None
-        self.v_cache: Optional[torch.Tensor] = None
-
-    def reset_cache(self):
-        self.k_cache = None
-        self.v_cache = None
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, seq_len, _ = x.shape
-
-        Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-        K = self.W_k(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-        V = self.W_v(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-
-        # INEFFICIENT: torch.cat creates new tensor and copies existing cache
-        if self.k_cache is None:
-            self.k_cache = K
-            self.v_cache = V
-        else:
-            self.k_cache = torch.cat([self.k_cache, K], dim=2)  # O(N) copy!
-            self.v_cache = torch.cat([self.v_cache, V], dim=2)  # O(N) copy!
-
-        K_full = self.k_cache
-        V_full = self.v_cache
-
-        scores = torch.matmul(Q, K_full.transpose(-2, -1)) / math.sqrt(self.d_h)
-        attn_weights = F.softmax(scores, dim=-1)
-        output = torch.matmul(attn_weights, V_full)
-
-        output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
-        return self.W_o(output)
-```
-```python
-class MultiHeadAttentionPreallocCache(nn.Module):
-    """KV Cache using pre-allocated buffers — no allocation during decode."""
-
-    def __init__(self, d_model: int, n_heads: int, max_seq_len: int):
-        super().__init__()
-        self.d_model = d_model
-        self.n_heads = n_heads
-        self.d_h = d_model // n_heads
-        self.max_seq_len = max_seq_len
-
-        self.W_q = nn.Linear(d_model, d_model, bias=False)
-        self.W_k = nn.Linear(d_model, d_model, bias=False)
-        self.W_v = nn.Linear(d_model, d_model, bias=False)
-        self.W_o = nn.Linear(d_model, d_model, bias=False)
-
-        # Pre-allocated cache buffers — no allocation during decode
-        self.register_buffer('k_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
-        self.register_buffer('v_cache', torch.zeros(1, n_heads, max_seq_len, self.d_h))
-        self.cache_position = 0
-
-    def reset_cache(self):
-        self.k_cache.zero_()
-        self.v_cache.zero_()
-        self.cache_position = 0
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        B, seq_len, _ = x.shape
-
-        Q = self.W_q(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-        K = self.W_k(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-        V = self.W_v(x).view(B, seq_len, self.n_heads, self.d_h).transpose(1, 2)
-
-        # EFFICIENT: write directly to pre-allocated buffer (no allocation)
-        start = self.cache_position
-        end = self.cache_position + seq_len
-        self.k_cache[:, :, start:end, :] = K  # O(1) write!
-        self.v_cache[:, :, start:end, :] = V  # O(1) write!
-        self.cache_position = end
-
-        K_full = self.k_cache[:, :, :end, :]
-        V_full = self.v_cache[:, :, :end, :]
-
-        scores = torch.matmul(Q, K_full.transpose(-2, -1)) / math.sqrt(self.d_h)
-        attn_weights = F.softmax(scores, dim=-1)
-        output = torch.matmul(attn_weights, V_full)
-
-        output = output.transpose(1, 2).contiguous().view(B, seq_len, self.d_model)
-        return self.W_o(output)
-```
-</CodeTabs>
-
-The key differences:
-1. **Initialization**: Pre-allocated version takes `max_seq_len` and creates buffers upfront
-2. **Cache update**: Slice assignment (`cache[:, :, start:end] = K`) vs. concatenation
-3. **Position tracking**: Explicit `cache_position` counter
-
-**Trade-off**: You must know `max_seq_len` upfront. In practice, this is rarely a problem—you typically have a known context limit (4K, 8K, 128K tokens), and over-allocating by a small margin is cheap compared to the quadratic penalty.
-
-# Benchmark Results
-
-I benchmarked both implementations on a single attention layer with `d_model=1024`, `n_heads=16`, across a range of context lengths. Full benchmark code is available as a [Google Colab notebook](https://colab.research.google.com/drive/1XlbcDkf9JZ8YUJeFbKkdLKXbG6l4oxjW).
+I benchmarked both implementations on a single attention layer with `d_model=1024`, `n_heads=16`, across a range of context lengths. Full benchmark code is available as a [Google Colab notebook](https://colab.research.google.com/drive/1jSxXKqDmFXSJUqFje60RnAgVwTCxEQHT?usp=sharing).
 
 | Context Length | torch.cat (ms) | Pre-allocated (ms) | Speedup |
 |:--------------:|:--------------:|:------------------:|:-------:|
@@ -234,61 +131,24 @@ I benchmarked both implementations on a single attention layer with `d_model=102
 
 <small>Benchmark on Google Colab T4 GPU, batch size 1, single attention layer, averaged over 3 runs.</small>
 
-{/* TODO: Add benchmark chart showing speedup vs context length
-     File: /public/static/images/kvcache-benchmark.png */}
+![KV cache benchmark](/static/images/logs/kv-cache-benchmark.png)
 
-Key observations:
+Below ~1K tokens, the difference is in the noise. Between 1K and 8K, the gap becomes real — a 2-3x speedup translates to meaningful latency reduction. Above 8K tokens, the quadratic term dominates. At 64K context, we see over 3x speedup, and that's just one layer. A 32-layer model would see this penalty compounded.
 
-- **Below ~1K tokens**: The difference is in the noise. Either implementation is fine for short sequences.
-- **1K-8K tokens**: The gap becomes noticeable. A 2-3x speedup translates to meaningful latency reduction.
-- **Above 8K tokens**: The quadratic term dominates. At 64K context, we see over **3x speedup**—and this is just one layer. A 32-layer model would see this penalty compounded.
+Generation length matters — many completions are short enough that the quadratic cost stays in the noise. But long-context use cases (document summarization, RAG, agentic workflows) accumulate substantial context, and that's where allocation patterns matter.
 
-The speedup continues to grow with sequence length because the pre-allocated version maintains $O(N)$ scaling while `torch.cat` follows $O(N^2)$.
+# Where to learn proper KV cache management
 
-{/* TODO: Add log-log plot showing scaling exponent
-     File: /public/static/images/kvcache-scaling.png */}
-
-# Caveats and Real-World Context
-
-> [!hint] Author's Note
+> [!hint] Author's note
 >
-> Before you rush to refactor every KV cache implementation you see: context matters. The tutorials using `torch.cat` are optimizing for clarity, not production performance. That's the right trade-off for educational content.
+> The tutorials using `torch.cat` are optimizing for clarity, not production performance. That's the right trade-off for educational content. But if you're building production inference systems, you need better references.
 
-A few important caveats:
+For production-grade KV cache management, you can try reading the following resources:
 
-**Generation length matters.** Many LLM completions are short—the model hits an EOS token or the user's requested `max_tokens` before the quadratic cost becomes significant. If your typical generation is under 1K tokens, this optimization has minimal impact.
-
-**Long-context use cases do hit this.** Summarizing long documents, RAG pipelines with extensive retrieved context, and agentic workflows with long conversation histories all accumulate substantial context. These are exactly the scenarios where the optimization pays off.
-
-**Production systems already know this.** If you're using a well-maintained inference framework, this is likely already handled:
-
-- **[vLLM](https://arxiv.org/abs/2309.06180)** uses PagedAttention, which manages KV cache in fixed-size blocks—a more sophisticated form of pre-allocation that also enables memory sharing across requests.
-- **[TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM)** uses pre-allocated contiguous buffers with explicit length tracking.
-- **[HuggingFace Transformers](https://huggingface.co/docs/transformers/kv_cache)** introduced `DynamicCache` (post-v4.36) which handles this more efficiently than naive concatenation.
-
-The tutorials lag behind production practice because their goal is different: teaching the concepts, not maximizing throughput.
-
-**What we didn't cover**: This post focused narrowly on allocation patterns. There are many other KV cache optimizations that stack with this one:
-
-- **FlashAttention**: Fuses attention computation to reduce memory bandwidth (orthogonal to cache allocation)
-- **Continuous batching**: Serves multiple requests by interleaving their decode steps
-- **Quantized KV cache**: Stores keys/values in INT8 or FP8 to reduce memory footprint
-- **Sliding window attention**: Limits attention to recent tokens, capping cache size
-
-# Conclusion
-
-A small implementation detail—`torch.cat` versus slice assignment—leads to a significant performance difference at scale. The fix is simple:
-
-1. Pre-allocate your KV cache buffers to `max_seq_len`
-2. Track the current position with an index
-3. Write new KV pairs using slice assignment: `cache[:, :, pos:pos+1] = new_kv`
-
-The broader lesson: **memory allocation patterns matter as much as algorithmic complexity**. Both `torch.cat` and slice assignment implement the same logical operation (appending to a cache), but their performance characteristics diverge dramatically as sequence length grows.
-
-If you maintain a KV cache tutorial or implementation, consider updating it—or at least adding a note about this trade-off. And if you're deploying LLMs with long context windows, double-check that your inference stack isn't paying this hidden quadratic tax.
+- The [PagedAttention paper](https://arxiv.org/abs/2309.06180) and [vLLM's cache management docs](https://docs.vllm.ai/en/latest/design/hybrid_kv_cache_manager/) show how to manage KV cache in fixed-size blocks with memory sharing across requests.
+- Meta's [torchtune KV cache](https://github.com/pytorch/torchtune/blob/main/torchtune/modules/kv_cache.py) is a clean example of pre-allocated buffers done right.
+- HuggingFace Transformers' `StaticCache` (post-v4.36) is the pre-allocated alternative to their `DynamicCache`.
 
 ---
 
-**Benchmark code**: [Google Colab Notebook](https://colab.research.google.com/drive/1XlbcDkf9JZ8YUJeFbKkdLKXbG6l4oxjW)
-
-**Related reading**: For more on KV cache optimizations and attention mechanisms, see my [FlashMLA series](/blog/flashmla/flashmla-1-mla) on DeepSeek's Multi-Head Latent Attention.
+**Benchmark code**: [Google Colab Notebook](https://colab.research.google.com/drive/1jSxXKqDmFXSJUqFje60RnAgVwTCxEQHT?usp=sharing)
