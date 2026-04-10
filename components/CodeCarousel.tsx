@@ -82,25 +82,25 @@ export default function CodeCarousel({ items, autoPlayInterval = 3000 }: CodeCar
           </span>
         </div>
 
-        {/* Content */}
+        {/* Content — fixed height container to prevent flicker between slides */}
         <div
-          className="transition-opacity duration-300 ease-in-out"
+          className="relative h-72 transition-opacity duration-300 ease-in-out"
           style={{ opacity: isAnimating ? 0.5 : 1 }}
         >
           {item.image && (
-            <div className="relative flex justify-center bg-white p-2 dark:bg-gray-900">
+            <div className="absolute inset-0 flex items-center justify-center bg-white p-2 dark:bg-gray-900">
               <Image
                 src={item.image}
                 alt={item.label}
-                width={600}
-                height={256}
-                className="max-h-64 rounded object-contain"
+                width={800}
+                height={288}
+                className="max-h-full max-w-full rounded object-contain"
               />
             </div>
           )}
-          {item.code && (
-            <div className="overflow-x-auto">
-              <pre className="m-0 rounded-none border-0 bg-gray-900 p-4 text-sm leading-relaxed text-gray-100">
+          {item.code && !item.image && (
+            <div className="absolute inset-0 overflow-auto">
+              <pre className="m-0 h-full rounded-none border-0 bg-gray-900 p-4 text-sm leading-relaxed text-gray-100">
                 <code>{item.code}</code>
               </pre>
             </div>
