@@ -86,6 +86,7 @@ export default function Talks() {
                     youtubeURL={talk.youtubeURL}
                     slidesURL={talk.slidesURL}
                     githubURL={talk.githubURL}
+                    websiteURL={talk.websiteURL}
                   />
                 </div>
               ))}

@@ -1,5 +1,5 @@
 import Image from './Image'
-import { FaYoutube, FaSlideshare, FaGithub } from 'react-icons/fa'
+import { FaYoutube, FaSlideshare, FaGithub, FaGlobeAmericas } from 'react-icons/fa'
 
 const getYouTubeId = (url) => {
   if (!url) {
@@ -11,7 +11,7 @@ const getYouTubeId = (url) => {
   return match && match[2].length === 11 ? match[2] : null
 }
 
-const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, githubURL }) => {
+const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, githubURL, websiteURL }) => {
   const youtubeId = getYouTubeId(youtubeURL)
 
   return (
@@ -30,15 +30,18 @@ const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, 
         </div>
       ) : (
         imgSrc && (
-          <div className="flex w-full items-center justify-center p-4 lg:w-2/5">
-            <Image
-              alt={`Cover image for ${title}`}
-              src={imgSrc}
-              className="h-full w-auto object-contain object-center"
-              width={300}
-              height={200}
-              style={{ maxHeight: '150px' }}
-            />
+          <div className="flex w-full items-center justify-evenly p-4 lg:w-2/5">
+            {(Array.isArray(imgSrc) ? imgSrc : [imgSrc]).map((src, i) => (
+              <Image
+                key={i}
+                alt={`Cover image ${i + 1} for ${title}`}
+                src={src}
+                className="h-full w-auto rounded-md object-contain object-center"
+                width={300}
+                height={200}
+                style={{ maxHeight: '150px' }}
+              />
+            ))}
           </div>
         )
       )}
@@ -80,6 +83,16 @@ const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, 
             >
               GitHub
               <FaGithub />
+            </a>
+          )}
+          {websiteURL && (
+            <a
+              href={websiteURL}
+              aria-label="Website"
+              className="text-md flex items-center justify-center gap-2 rounded-md border bg-gray-500 p-1 px-2 font-bold text-white hover:bg-gray-600"
+            >
+              Website
+              <FaGlobeAmericas />
             </a>
           )}
         </div>

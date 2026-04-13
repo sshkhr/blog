@@ -2,16 +2,27 @@ interface Talk {
   title: string
   venue: string
   year: number
-  imgSrc?: string
+  imgSrc?: string | string[]
   youtubeURL?: string
   slidesURL?: string
   githubURL?: string
+  websiteURL?: string
   summary: string
 }
 
 const talksData: Talk[] = [
   {
-    title: 'Case Study: How Does DeepSeek’s FlashMLA Speed up Inference',
+    title: 'Energy-Based Models: From Basics to LLMs',
+    venue: 'Toronto LLM Meetup',
+    year: 2026,
+    imgSrc: ['/static/talks/toronto-llm-meetup.avif', '/static/talks/classifier-ebm.png'],
+    slidesURL: '/static/talks/ebm.html',
+    websiteURL: '/blog/ebm-talk',
+    summary:
+      'A whirlwind tour of energy-based models (EBMs) paradigms, from basics to modern LLM applications.',
+  },
+  {
+    title: "Case Study: How Does DeepSeek's FlashMLA Speed up Inference",
     venue: 'Toronto Machine Learning Summit',
     year: 2025,
     imgSrc: '/static/images/talks/tmls-logo.png',
