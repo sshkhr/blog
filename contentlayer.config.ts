@@ -145,6 +145,7 @@ export const Log = defineDocumentType(() => ({
     lastmod: { type: 'date' },
     draft: { type: 'boolean' },
     summary: { type: 'string' },
+    images: { type: 'json' },
   },
   computedFields: {
     ...computedFields,
@@ -157,7 +158,7 @@ export const Log = defineDocumentType(() => ({
         datePublished: doc.date,
         dateModified: doc.lastmod || doc.date,
         description: doc.summary,
-        image: siteMetadata.socialBanner,
+        image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
         url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
       }),
     },
