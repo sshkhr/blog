@@ -34,7 +34,7 @@ export default function Home({ posts, logs }) {
             <div id="div2" className="mb-4 flex items-center justify-center">
               <div className="min-w-48">
                 <Image
-                  src={'/static/images/shashank.jpg'}
+                  src={'/static/images/avatar-sketch.png'}
                   alt="avatar"
                   width={192}
                   height={192}
