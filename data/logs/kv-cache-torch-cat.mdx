@@ -2,6 +2,7 @@
 title: "Stop using torch.cat for your KV cache implementations"
 date: '2026-03-25'
 tags: ['llm', 'kv-cache', 'pytorch', 'inference', 'optimization', 'transformers']
+images: ['/static/images/logs/whisper-kv-cache.png']
 draft: false
 summary: "tl;dr: `torch.cat` is not in-place, instead use pre-allocated buffers"
 ---
