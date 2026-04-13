@@ -71,6 +71,7 @@ export default function Home({ posts, logs }) {
               >
                 /blog
               </Link>
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">long-form</span>
             </h3>
           </div>
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -138,6 +139,7 @@ export default function Home({ posts, logs }) {
               >
                 /logs
               </Link>
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">byte-sized</span>
             </h3>
           </div>
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
