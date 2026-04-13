@@ -11,7 +11,17 @@ const getYouTubeId = (url) => {
   return match && match[2].length === 11 ? match[2] : null
 }
 
-const TalkCard = ({ title, venue, year, summary, imgSrc, youtubeURL, slidesURL, githubURL, websiteURL }) => {
+const TalkCard = ({
+  title,
+  venue,
+  year,
+  summary,
+  imgSrc,
+  youtubeURL,
+  slidesURL,
+  githubURL,
+  websiteURL,
+}) => {
   const youtubeId = getYouTubeId(youtubeURL)
 
   return (
