@@ -1,6 +1,6 @@
 ---
 title: "Stop using torch.cat for your KV cache implementations"
-date: '2026-01-25'
+date: '2026-03-25'
 tags: ['llm', 'kv-cache', 'pytorch', 'inference', 'optimization', 'transformers']
 draft: false
 summary: "tl;dr: `torch.cat` is not in-place, instead use pre-allocated buffers"
@@ -27,7 +27,7 @@ But it goes against the spirit of caching.
 
 # Everyone uses this pattern
 
-Search "KV cache PyTorch implementation" and you'll find `torch.cat` everywhere. [Sebastian Raschka's tutorial](https://magazine.sebastianraschka.com/p/coding-the-kv-cache-in-llms) and [HuggingFace's KV caching blog post](https://huggingface.co/blog/not-lain/kv-caching) both use it, and they're far from alone — I found the same pattern in production codebases with over 100K stars on GitHub.
+Search "KV cache PyTorch implementation" and you'll find `torch.cat` everywhere. [Sebastian Raschka's tutorial](https://magazine.sebastianraschka.com/p/coding-the-kv-cache-in-llms) and [HuggingFace's KV caching blog post](https://huggingface.co/blog/not-lain/kv-caching) both use it, and they're far from alone. I found the same pattern in production codebases with over 100K stars on GitHub.
 
 <CodeCarousel items={[
   {
@@ -80,7 +80,7 @@ def torch_cat_equivalent(existing_cache, new_tensor, dim):
     new_cache[..., existing_cache.size(dim):] = new_tensor  # O(1) copy
 
     return new_cache
-    # Old cache becomes garbage — memory pressure until GC runs
+    # Old cache becomes garbage, memory pressure until GC runs
 ```
 
 We've eliminated redundant computation but introduced redundant memory operations that scale the same way. Every step copies everything that came before. That's the opposite of caching. At step $t$, you copy $O(t)$ elements just to add 1 new one. The cumulative cost over $N$ decode steps:
@@ -89,11 +89,11 @@ $$\text{Total memory operations} = \sum_{t=1}^{N} t = \frac{N(N+1)}{2} = O(N^2)$
 
 This is in addition to the unavoidable $O(N^2)$ cost of the attention computation itself. We've introduced a second quadratic term, purely from memory allocation.
 
-And it gets worse. `cudaMalloc` is not free — each allocation involves driver overhead and memory pool management. Repeatedly allocating slightly larger buffers fragments memory, potentially forcing expensive compaction. The cache moves to a new address each step, defeating hardware caching and memory prefetching. Every aspect of this pattern fights the GPU's memory subsystem.
+And it gets worse. `cudaMalloc` is not free, each allocation involves driver overhead and memory pool management. Repeatedly allocating slightly larger buffers fragments memory, potentially forcing expensive compaction. The cache moves to a new address each step, defeating hardware caching and memory prefetching. Every aspect of this pattern fights the GPU's memory subsystem.
 
 > [!warning] tl;dr
 >
-> Every `torch.cat` doesn't just add one element — it copies the entire existing cache to a new memory location. At step 1000, you're copying 999 elements just to add 1.
+> Every `torch.cat` doesn't just add one element to your cache tensor. It copies the entire existing cache to a new memory location. At decode step 1000, you're copying 999 elements just to add 1.
 
 # A naive solution: pre-allocated buffers
 
@@ -108,9 +108,9 @@ self.k_cache[:, :, self.position:self.position + seq_len] = K
 self.position += seq_len
 ```
 
-Each step performs exactly $O(1)$ memory operations — just writing the new KV pair to the next slot. The cumulative cost drops from $O(N^2)$ to $O(N)$.
+By just writing the new KV pair to the next slot, each step performs exactly $O(1)$ memory operations. The cumulative cost drops from $O(N^2)$ to $O(N)$.
 
-Trade-off: you must know `max_seq_len` upfront. In practice, this is rarely a problem — you typically have a known context limit (4K, 8K, 128K tokens), and over-allocating by a small margin is cheap compared to the quadratic penalty.
+Trade-off: you must know `max_seq_len` upfront. In practice, this is rarely a problem as we typically have a known context limit (4K, 8K, 128K tokens), and over-allocating by a small margin is cheap* (see [notes](#where-to-learn-proper-kv-cache-management)) compared to the quadratic penalty.
 
 I benchmarked both implementations on a single attention layer with `d_model=1024`, `n_heads=16`, across a range of context lengths. Full benchmark code is available as a [Google Colab notebook](https://colab.research.google.com/drive/1jSxXKqDmFXSJUqFje60RnAgVwTCxEQHT?usp=sharing).
 
@@ -131,9 +131,9 @@ I benchmarked both implementations on a single attention layer with `d_model=102
 
 ![KV cache benchmark](/static/images/logs/kv-cache-benchmark.png)
 
-Below ~1K tokens, the difference is in the noise. Between 1K and 8K, the gap becomes real — a 2-3x speedup translates to meaningful latency reduction. Above 8K tokens, the quadratic term dominates. At 64K context, we see over 3x speedup, and that's just one layer. A 32-layer model would see this penalty compounded.
+Below ~1K tokens, the difference is in the noise. Between 1K and 8K, the gap starts to become becomes real as a 2-3x speedup translates to meaningful latency reduction. Above 8K tokens, the quadratic term dominates. At 64K context, we see over 3x speedup, and that's just one layer. A 32-layer model would see this penalty compounded.
 
-Generation length matters — many completions are short enough that the quadratic cost stays in the noise. But long-context use cases (document summarization, RAG, agentic workflows) accumulate substantial context, and that's where allocation patterns matter.
+Many completions are short enough that the quadratic cost stays in the noise. But long-context use cases (document summarization, RAG, agentic workflows) accumulate substantial context, and that's where allocation patterns matter.
 
 # Where to learn proper KV cache management
 
