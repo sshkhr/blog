@@ -14,6 +14,9 @@ const CodeTabs = dynamic(() => import('@/components/CodeTabs'), {
 const EmbeddedSlide = dynamic(() => import('@/components/EmbeddedSlide'), {
   ssr: false,
 })
+const CodeCarousel = dynamic(() => import('@/components/CodeCarousel'), {
+  ssr: false,
+})
 
 export const components: MDXComponents = {
   Image,
@@ -24,4 +27,5 @@ export const components: MDXComponents = {
   BlogNewsletterForm,
   CodeTabs,
   EmbeddedSlide,
+  CodeCarousel,
 }

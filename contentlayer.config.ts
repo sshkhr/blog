@@ -60,9 +60,10 @@ const computedFields: ComputedFields = {
 /**
  * Count the occurrences of all tags across blog posts and write to json file
  */
-function createTagCount(allBlogs) {
+function createTagCount(allBlogs, allLogs) {
   const tagCount: Record<string, number> = {}
-  allBlogs.forEach((file) => {
+  const allContent = [...allBlogs, ...allLogs]
+  allContent.forEach((file) => {
     if (file.tags && (!isProduction || file.draft !== true)) {
       file.tags.forEach((tag) => {
         const formattedTag = slug(tag)
@@ -77,7 +78,7 @@ function createTagCount(allBlogs) {
   writeFileSync('./app/tag-data.json', JSON.stringify(tagCount))
 }
 
-function createSearchIndex(allBlogs, allProjects) {
+function createSearchIndex(allBlogs, allProjects, allLogs) {
   if (
     siteMetadata?.search?.provider === 'kbar' &&
     siteMetadata.search.kbarConfig.searchDocumentsPath
@@ -88,7 +89,7 @@ function createSearchIndex(allBlogs, allProjects) {
     )
 
     // Combine blog posts and projects
-    const searchableContent = [...sortPosts(allBlogs), ...projectActions]
+    const searchableContent = [...sortPosts(allBlogs), ...sortPosts(allLogs), ...projectActions]
 
     writeFileSync(
       `public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
@@ -127,6 +128,36 @@ export const Blog = defineDocumentType(() => ({
         dateModified: doc.lastmod || doc.date,
         description: doc.summary,
         image: doc.images ? doc.images[0] : siteMetadata.socialBanner,
+        url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
+      }),
+    },
+  },
+}))
+
+export const Log = defineDocumentType(() => ({
+  name: 'Log',
+  filePathPattern: 'logs/**/*.mdx',
+  contentType: 'mdx',
+  fields: {
+    title: { type: 'string', required: true },
+    date: { type: 'date', required: true },
+    tags: { type: 'list', of: { type: 'string' }, default: [] },
+    lastmod: { type: 'date' },
+    draft: { type: 'boolean' },
+    summary: { type: 'string' },
+  },
+  computedFields: {
+    ...computedFields,
+    structuredData: {
+      type: 'json',
+      resolve: (doc) => ({
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: doc.title,
+        datePublished: doc.date,
+        dateModified: doc.lastmod || doc.date,
+        description: doc.summary,
+        image: siteMetadata.socialBanner,
         url: `${siteMetadata.siteUrl}/${doc._raw.flattenedPath}`,
       }),
     },
@@ -195,7 +226,7 @@ export const Projects = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: 'data',
-  documentTypes: [Blog, Authors, Projects],
+  documentTypes: [Blog, Log, Authors, Projects],
   mdx: {
     cwd: process.cwd(),
     remarkPlugins: [
@@ -225,8 +256,8 @@ export default makeSource({
     ],
   },
   onSuccess: async (importData) => {
-    const { allBlogs, allProjects } = await importData()
-    createTagCount(allBlogs)
-    createSearchIndex(allBlogs, allProjects)
+    const { allBlogs, allLogs, allProjects } = await importData()
+    createTagCount(allBlogs, allLogs)
+    createSearchIndex(allBlogs, allProjects, allLogs)
   },
 })

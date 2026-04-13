@@ -5,9 +5,10 @@ import { formatDate } from 'pliny/utils/formatDate'
 import NewsletterForm from 'pliny/ui/NewsletterForm'
 import Image from 'next/image'
 
-const MAX_DISPLAY = 5
+const MAX_BLOG_DISPLAY = 3
+const MAX_LOG_DISPLAY = 5
 
-export default function Home({ posts }) {
+export default function Home({ posts, logs }) {
   return (
     <>
       <div className="mt-7 justify-between space-y-4">
@@ -44,76 +45,158 @@ export default function Home({ posts }) {
             <div id="div3" className="text-center">
               {siteMetadata.newsletter?.provider && (
                 <div className="flex items-center justify-center pt-4">
-                  <NewsletterForm title="Get new posts straight to your inbox" />
+                  <NewsletterForm title="Subscribe to get blog posts and a weekly log digest" />
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-      <div className="divide-y divide-gray-200 pt-2 dark:divide-gray-700">
-        <div className="mt-4 space-y-2 pb-2 pt-6 md:mt-0 md:space-y-4">
-          <h2 className="font-display text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-none md:text-3xl md:leading-none">
-            Latest Posts
-          </h2>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
-            My blog on human (mostly mine) and machine learning.
-          </p>
-        </div>
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {!posts.length && 'No posts found.'}
-          {posts.slice(0, MAX_DISPLAY).map((post) => {
-            const { slug, date, title, summary, tags } = post
-            return (
-              <li key={slug} className="py-4">
-                <article>
-                  <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
+      <div className="mt-4 space-y-2 border-b border-gray-200 pb-4 pt-6 dark:border-gray-700 md:mt-0 md:space-y-4">
+        <h2 className="font-display text-xl font-bold leading-none tracking-tight text-gray-900 dark:text-gray-100 sm:text-2xl sm:leading-none md:text-3xl md:leading-none">
+          Latest
+        </h2>
+        <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
+          On human (mostly mine) and machine learning.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-8 pt-2 md:grid-cols-2">
+        {/* Blogs Column */}
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="pb-2 pt-4">
+            <h3 className="font-display text-lg font-semibold tracking-tight">
+              <Link
+                href="/blog"
+                className="text-gray-900 hover:text-primary-500 dark:text-gray-100 dark:hover:text-primary-400"
+              >
+                /blog
+              </Link>
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">long-form</span>
+            </h3>
+          </div>
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            {!posts.length && 'No posts found.'}
+            {posts.slice(0, MAX_BLOG_DISPLAY).map((post) => {
+              const { slug, date, title, summary, tags, readingTime } = post
+              return (
+                <li key={slug} className="py-4">
+                  <article>
                     <dl>
                       <dt className="sr-only">Published on</dt>
                       <dd className="text-sm font-normal leading-6 text-gray-400 dark:text-gray-500">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                        {readingTime && (
+                          <>
+                            <span className="mx-2">·</span>
+                            <span>{readingTime.text}</span>
+                          </>
+                        )}
                       </dd>
                     </dl>
-                    <div className="space-y-5 rounded-lg hover:lg:bg-gray-100 hover:lg:dark:bg-zinc-800/90 xl:col-span-3 xl:-ml-6 xl:p-4">
-                      <div className="space-y-6">
-                        <div>
-                          <h2 className="text-xl font-bold leading-8  tracking-tight md:text-2xl">
-                            <Link
-                              href={`/blog/${slug}`}
-                              className="text-gray-800 underline-offset-4 hover:underline dark:text-gray-100 hover:dark:text-green-400"
-                            >
-                              <div>{title}</div>
-                            </Link>
-                          </h2>
-                          <div className="flex flex-wrap">
-                            {tags.map((tag) => (
-                              <Tag key={tag} text={tag} />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="prose max-w-none text-gray-500 dark:text-gray-400">
-                          {summary}
-                        </div>
+                    <div className="mt-1 space-y-2">
+                      <h3 className="text-lg font-bold leading-7 tracking-tight">
+                        <Link
+                          href={`/blog/${slug}`}
+                          className="text-gray-800 underline-offset-4 hover:underline dark:text-gray-100"
+                        >
+                          {title}
+                        </Link>
+                      </h3>
+                      <div className="flex flex-wrap">
+                        {tags.map((tag) => (
+                          <Tag key={tag} text={tag} />
+                        ))}
+                      </div>
+                      <div className="prose max-w-none text-sm text-gray-500 dark:text-gray-400">
+                        {summary}
                       </div>
                     </div>
-                  </div>
-                </article>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-      {posts.length > MAX_DISPLAY && (
-        <div className="flex justify-end text-base font-medium leading-6">
-          <Link
-            href="/blog"
-            className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
-            aria-label="All posts"
-          >
-            All Posts &rarr;
-          </Link>
+                  </article>
+                </li>
+              )
+            })}
+          </ul>
+          {posts.length > MAX_BLOG_DISPLAY && (
+            <div className="flex justify-end pt-4 text-base font-medium leading-6">
+              <Link
+                href="/blog"
+                className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+                aria-label="All blog posts"
+              >
+                All Blogs &rarr;
+              </Link>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Logs Column */}
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="pb-2 pt-4">
+            <h3 className="font-display text-lg font-semibold tracking-tight">
+              <Link
+                href="/logs"
+                className="text-gray-900 hover:text-primary-500 dark:text-gray-100 dark:hover:text-primary-400"
+              >
+                /logs
+              </Link>
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">byte-sized</span>
+            </h3>
+          </div>
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            {!logs.length && 'No logs found.'}
+            {logs.slice(0, MAX_LOG_DISPLAY).map((log) => {
+              const { slug, date, title, summary, tags, readingTime } = log
+              return (
+                <li key={slug} className="py-4">
+                  <article>
+                    <dl>
+                      <dt className="sr-only">Published on</dt>
+                      <dd className="text-sm font-normal leading-6 text-gray-400 dark:text-gray-500">
+                        <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
+                        {readingTime && (
+                          <>
+                            <span className="mx-2">·</span>
+                            <span>{readingTime.text}</span>
+                          </>
+                        )}
+                      </dd>
+                    </dl>
+                    <div className="mt-1 space-y-2">
+                      <h3 className="text-lg font-bold leading-7 tracking-tight">
+                        <Link
+                          href={`/logs/${slug}`}
+                          className="text-gray-800 underline-offset-4 hover:underline dark:text-gray-100"
+                        >
+                          {title}
+                        </Link>
+                      </h3>
+                      <div className="flex flex-wrap">
+                        {tags.map((tag) => (
+                          <Tag key={tag} text={tag} />
+                        ))}
+                      </div>
+                      {summary && (
+                        <div className="prose max-w-none text-sm text-gray-500 dark:text-gray-400">
+                          {summary}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </li>
+              )
+            })}
+          </ul>
+          <div className="flex justify-end pt-4 text-base font-medium leading-6">
+            <Link
+              href="/logs"
+              className="text-primary-500 hover:text-primary-600 dark:hover:text-primary-400"
+              aria-label="All dev logs"
+            >
+              All dev logs &rarr;
+            </Link>
+          </div>
+        </div>
+      </div>
     </>
   )
 }
