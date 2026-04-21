@@ -1,0 +1,49 @@
+---
+title: "On agentic coding, friction, and learning"
+date: '2026-04-20'
+tags: ['agents', 'workflow', 'expertise', 'learning']
+images: ['/static/images/logs/whisper-kv-cache.png']
+draft: false
+summary: "How to learn when code generation is free, but verification is not"
+---
+
+I've been actively thinking about how to use agentic coding workflows with *\<insert tool of choice from Claude Code, OpenAI Codex, Google Antigravity, OpenCode, PiCode, ... \>* in a way that enables two conflicting goals for me:
+
+- Delivering features, outcomes and projects/products as fast as possible
+- Learning new, usually technically involved concepts, like distributed training, inference, GPU kernels, post-training algorithms etc.
+
+The former requires me to fully embrace giving up autonomy, reducing interactions where I verify plans or outputs and have to click through "Yes/Allow". After all, I can hardly produce 60 tokens/sec, let alone review them them. 
+
+But the latter involves me to carefully impelment and evaluate algorithms, benchmarks, observe training dynamics etc. And I have found that while I am able to better leverage agents with all the bells and whistles now available at my disposal, they can't do as good of a job at this as me (occassionally) or my best collaborators (more often).
+
+## Weak-to-Strong Generalization
+
+The biggest issue I have with agents is that I am not able to achieve [Weak-to-Strong generalization](https://arxiv.org/abs/2312.09390) at research engineering capabilities by using agents. Or anyone can. This tweet captures my thoughts on this more viscerally:
+
+<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Obviously as a fan of the concept of lobotomized minions performing work all night for me, I want to get in on this “my Claude agent ran all night!” action <br></br>Problem is I have no clue what the hell you guys are building for 8 hrs that doesn’t need manual intervention at any point</p>&mdash; annie (@soychotic) <a href="https://twitter.com/soychotic/status/2044774137688653924?ref_src=twsrc%5Etfw">April 16, 2026</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+I am quite happy using agents on tasks I have limited expertise in e.g. web-dev, or a lot of scaffolding etc. I know for a fact that they will do it better and faster than me. But the kind of tasks I do on a day-to-day are often more involved, and I find that agents are not really that helpful outside of discovery and scaffolding. And to make them really helpful, a lot of work goes into designing the proper guardrails with skills, spec-driven-development, test-driven-development. And while I am building out the agent harness doing this, I am missing out on building this harness for myself by internalizing these concepts. 
+
+## Two Types of Friction
+
+I've settled on a similar philosophy as [Mario Zechner](https://mariozechner.at), the creator of the modular [Pi Agent](https://github.com/badlogic/pi-mono), which powers the viral slop machine [OpenClaw](https://openclaw.ai/). I'd encourage you to watch his full [Building pi in a World of Slop](https://www.youtube.com/watch?v=RjfbvDXpFls) talk at the AI Engineer Europe conference. But I will tell you about my key takeaway from it regarding my conundrum.
+
+I have realized that friction during development falls into two buckets for me:
+
+1. **Operational friction**, the type that involves mundane but time-consuming parts. This falls under the umbrella of points 3 and 4 in Mario's slides.
+
+![Agents without friction](/static/images/logs/agents-wo-friction.png)
+
+I partially agree with the note on **well-scoped and verifiable** tasks for agents. I am more selective on passing these to the agents, because sometimes the scoping was done with an agent's input and I may or may not understand the legitimacy of the scoping requirements. And then implementing a well-validate task uncovers holes in my own understanding.
+
+2. I was trying to come up with a short phrase for the other type of friction, but the best I came up with is "**Friction from operating at the boundary of your cognitive abilities**". These could be knowledge, understanding, ability to synthesize new information, or some combination of those. 
+
+Being a knowledge worker (research scientist in the past, research engineer now) I really enjoy this time of friction - it helps me expand my capabilities, and I also think this is sort of learning is the long-tail of model and agent abilities which I'm not convinced our current training paradigms can solve for.
+
+In Mario's words (this type of) "friction builds understanding and taste".
+
+![Agents with friction](/static/images/logs/agents-w-friction.png)
+
+I agree.
+
+
