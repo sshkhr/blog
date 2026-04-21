@@ -28,6 +28,14 @@ export async function generateMetadata({
   const publishedAt = new Date(post.date).toISOString()
   const modifiedAt = new Date(post.lastmod || post.date).toISOString()
 
+  let imageList = [siteMetadata.socialBanner]
+  if (post.images) {
+    imageList = typeof post.images === 'string' ? [post.images] : post.images
+  }
+  const ogImages = imageList.map((img) => ({
+    url: img.includes('http') ? img : siteMetadata.siteUrl + img,
+  }))
+
   return {
     title: post.title,
     description: post.summary,
@@ -40,14 +48,14 @@ export async function generateMetadata({
       publishedTime: publishedAt,
       modifiedTime: modifiedAt,
       url: './',
-      images: [siteMetadata.socialBanner],
+      images: ogImages,
       authors: [siteMetadata.author],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.summary,
-      images: [siteMetadata.socialBanner],
+      images: imageList,
     },
   }
 }
