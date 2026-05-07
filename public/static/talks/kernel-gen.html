@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The State of Automatic Kernel Generation — Toronto MLSys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script>
+  // Set theme early to avoid flash
+  (function(){
+    var params = new URLSearchParams(window.location.search);
+    var t = params.get('theme') || localStorage.getItem('kg-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+/* =====================================================================
+   PROFILER TRACE — visual identity
+   - Single font family: JetBrains Mono (200..800), italic 400/500
+   - Square corners, 1px borders, dot-grid background
+   - Phosphor green primary, amber accent, soft blue, hot magenta
+===================================================================== */
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+[data-theme="dark"] {
+  --bg:           #0a0c0e;
+  --bg-card:      #11151a;
+  --bg-card-alt:  #14181c;
+  --bg-deep:      #07090b;
+  --text:         #d8dde2;
+  --text-dim:     #8a939d;
+  --text-muted:   #5a6168;
+  --green:        #00d97e;
+  --green-soft:   rgba(0,217,126,0.12);
+  --green-glow:   rgba(0,217,126,0.06);
+  --amber:        #ff9d2e;
+  --amber-soft:   rgba(255,157,46,0.12);
+  --blue:         #4a9fff;
+  --blue-soft:    rgba(74,159,255,0.12);
+  --magenta:      #ff4d8b;
+  --red:          #ff6464;
+  --purple:       #c79bff;
+  --border:       #1f2428;
+  --border-bright:#2a3038;
+  --grid:         #131820;
+  --rule:         #20262c;
+  --katex-color:  #d8dde2;
+}
+
+[data-theme="light"] {
+  --bg:           #f4f0e8;
+  --bg-card:      #ebe5d8;
+  --bg-card-alt:  #ddd6c5;
+  --bg-deep:      #e8e2d2;
+  --text:         #14171b;
+  --text-dim:     #4a4d54;
+  --text-muted:   #6c6760;
+  --green:        #007a4d;
+  --green-soft:   rgba(0,122,77,0.10);
+  --green-glow:   rgba(0,122,77,0.05);
+  --amber:        #b16800;
+  --amber-soft:   rgba(177,104,0,0.10);
+  --blue:         #2a5fb8;
+  --blue-soft:    rgba(42,95,184,0.08);
+  --magenta:      #b8246a;
+  --red:          #c93030;
+  --purple:       #6a3eb8;
+  --border:       #cfc7b3;
+  --border-bright:#a89c80;
+  --grid:         #e3ddd0;
+  --rule:         #c5bba2;
+  --katex-color:  #14171b;
+}
+
+html { transition: background 0.3s ease; }
+body, .slide, .card, .node, blockquote, .pill, .stat, .hw-item, .timeline-item {
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .katex,
+[data-theme="light"] .katex { color: var(--katex-color); }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-feature-settings: "ss01" 1, "ss02" 1, "ss03" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* =====================================================================
+   SLIDE ENGINE
+===================================================================== */
+.deck {
+  width: 100vw; height: 100vh;
+  position: relative;
+}
+@supports (height: 100dvh) {
+  .deck { height: 100dvh; }
+}
+
+.slide {
+  position: absolute; inset: 0;
+  padding: 64px 6vw 56px;
+  background: var(--bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 0);
+  background-size: 28px 28px;
+  display: flex; flex-direction: column; justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(28px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  overflow: hidden;
+}
+.slide.active {
+  opacity: 1; pointer-events: auto;
+  transform: translateX(0);
+}
+.slide.exiting {
+  opacity: 0;
+  transform: translateX(-28px);
+}
+
+/* Corner brackets — terminal frame */
+.slide::before {
+  content: '';
+  position: absolute; top: 18px; left: 18px;
+  width: 14px; height: 14px;
+  border-top: 1.5px solid var(--green);
+  border-left: 1.5px solid var(--green);
+  pointer-events: none;
+}
+.slide::after {
+  content: '';
+  position: absolute; bottom: 18px; right: 18px;
+  width: 14px; height: 14px;
+  border-bottom: 1.5px solid var(--green);
+  border-right: 1.5px solid var(--green);
+  pointer-events: none;
+}
+
+/* =====================================================================
+   FIXED CHROME — top status bar, progress, counter, theme toggle
+===================================================================== */
+#topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 32px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 18px 0 64px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  z-index: 100;
+}
+#topbar .session {
+  color: var(--green);
+}
+#topbar .session::before {
+  content: '●';
+  color: var(--green);
+  margin-right: 8px;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+#topbar .sep { color: var(--rule); margin: 0 14px; }
+#topbar .section-marker { color: var(--text-dim); }
+#topbar .section-marker .num { color: var(--amber); }
+#topbar .right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+#topbar .counter { color: var(--text-dim); }
+#topbar .counter .cur { color: var(--text); }
+
+#progress {
+  position: fixed; top: 31px; left: 0; height: 1.5px;
+  background: linear-gradient(90deg, var(--green) 0%, var(--blue) 80%, var(--magenta) 100%);
+  z-index: 101;
+  transition: width 0.35s ease;
+  box-shadow: 0 0 6px var(--green-soft);
+}
+
+#nav-hint {
+  position: fixed; bottom: 12px; left: 18px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-muted); z-index: 100;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#nav-hint kbd {
+  font-family: inherit;
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  margin: 0 2px;
+  color: var(--text-dim);
+  background: var(--bg-card);
+}
+
+#theme-toggle {
+  position: fixed; top: 4px; right: 16px; z-index: 200;
+  width: 24px; height: 24px;
+  background: transparent; border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  transition: border-color 0.2s, color 0.2s;
+  letter-spacing: 0;
+}
+#theme-toggle:hover { border-color: var(--green); color: var(--green); }
+
+#site-logo {
+  position: fixed; top: 4px; left: 18px; z-index: 200;
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none;
+  color: var(--text-muted);
+  opacity: 0.85;
+  transition: opacity 0.3s, color 0.2s;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+#site-logo:hover { opacity: 1; color: var(--green); }
+#site-logo svg { width: 22px; height: 22px; }
+
+/* =====================================================================
+   TYPOGRAPHY
+===================================================================== */
+h1, h2, h3 { font-family: var(--font-mono); }
+
+h1 {
+  font-weight: 800;
+  font-size: clamp(38px, 5.4vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+h1 .accent { color: var(--green); }
+h1 .amber  { color: var(--amber); }
+h1 .blue   { color: var(--blue); }
+h1 .magenta { color: var(--magenta); }
+h1 .stroke {
+  -webkit-text-stroke: 1.5px currentColor;
+  color: transparent;
+}
+h1 .cursor {
+  color: var(--amber);
+  animation: blink 1.1s steps(2) infinite;
+  font-weight: 700;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+h2 {
+  font-weight: 700;
+  font-size: clamp(26px, 3.6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 14px;
+  color: var(--text);
+}
+h2 .accent { color: var(--green); }
+h2 .amber  { color: var(--amber); }
+h2 .blue   { color: var(--blue); }
+h2 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--amber);
+}
+
+h3 {
+  font-weight: 600;
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+h3.accent { color: var(--green); }
+h3.amber  { color: var(--amber); }
+h3.blue   { color: var(--blue); }
+h3.purple { color: var(--purple); }
+h3.magenta{ color: var(--magenta); }
+
+p, li {
+  font-size: clamp(13px, 1.35vw, 18px);
+  line-height: 1.55;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--text);
+}
+strong { color: var(--text); font-weight: 600; }
+
+ul { list-style: none; padding: 0; }
+ul li {
+  position: relative;
+  padding-left: 1.6em;
+  margin-bottom: 0.55em;
+}
+ul li::before {
+  content: '›';
+  position: absolute; left: 0; top: 0;
+  color: var(--green);
+  font-weight: 700;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  font-weight: 500;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  color: var(--text);
+}
+
+a { color: var(--green); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.lead {
+  font-size: clamp(15px, 1.5vw, 22px);
+  color: var(--text-dim);
+  font-weight: 300;
+  max-width: 820px;
+  line-height: 1.5;
+}
+.lead em { color: var(--amber); font-style: normal; font-weight: 500; }
+
+.subtitle {
+  font-size: clamp(13px, 1.3vw, 18px);
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.highlight        { color: var(--green);   font-weight: 600; }
+.highlight-amber  { color: var(--amber);   font-weight: 600; }
+.highlight-blue   { color: var(--blue);    font-weight: 600; }
+.highlight-magenta{ color: var(--magenta); font-weight: 600; }
+.highlight-red    { color: var(--red);     font-weight: 600; }
+.highlight-purple { color: var(--purple);  font-weight: 600; }
+
+/* =====================================================================
+   SHARED COMPONENTS
+===================================================================== */
+.preamble {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+  display: flex; gap: 12px; align-items: center;
+  flex-wrap: wrap;
+}
+.preamble .tag {
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 2px 9px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  background: var(--green-glow);
+}
+.preamble .tag.amber {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+.section-marker-inline {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.section-marker-inline::before {
+  content: '// ';
+  color: var(--amber);
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  background: var(--green-glow);
+  color: var(--green);
+  border: 1px solid var(--green);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.pill.amber  { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
+.pill.blue   { background: var(--blue-soft);  color: var(--blue);  border-color: var(--blue);  }
+.pill.purple { background: rgba(199,155,255,0.12); color: var(--purple); border-color: var(--purple); }
+.pill.magenta{ background: rgba(255,77,139,0.12);  color: var(--magenta); border-color: var(--magenta); }
+.pill.red    { background: rgba(255,100,100,0.12); color: var(--red);    border-color: var(--red);    }
+.pill.ghost  { background: transparent; color: var(--text-muted); border-color: var(--border); }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  position: relative;
+}
+.card.tagged::before {
+  /* small green ribbon mark in top-left */
+  content: '';
+  position: absolute; top: -1px; left: -1px;
+  width: 4px; height: 18px;
+  background: var(--green);
+}
+.card.tagged.amber::before { background: var(--amber); }
+.card.tagged.blue::before  { background: var(--blue); }
+.card.tagged.purple::before{ background: var(--purple); }
+.card.tagged.red::before   { background: var(--red); }
+.card.tagged.magenta::before{background: var(--magenta); }
+
+.card-grid {
+  display: grid;
+  gap: 12px;
+}
+.card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.split {
+  display: grid;
+  gap: 3vw;
+  align-items: center;
+}
+.split.left-text  { grid-template-columns: 1fr 1.2fr; }
+.split.right-text { grid-template-columns: 1.2fr 1fr; }
+.split.equal      { grid-template-columns: 1fr 1fr; }
+
+blockquote {
+  border-left: 2px solid var(--amber);
+  padding: 10px 0 10px 16px;
+  margin: 12px 0;
+  background: linear-gradient(90deg, var(--amber-soft), transparent 60%);
+  color: var(--text-dim);
+  font-style: italic;
+  font-weight: 500;
+  position: relative;
+}
+blockquote::before {
+  content: '> ';
+  position: absolute;
+  left: -2px; top: 10px;
+  color: var(--amber);
+  font-style: normal;
+  font-weight: 700;
+}
+blockquote cite {
+  display: block;
+  margin-top: 6px;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.math-block {
+  margin: 14px 0;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--amber);
+  text-align: center;
+}
+.math-block .katex { font-size: 1.2em; }
+
+/* =====================================================================
+   TITLE SLIDE
+===================================================================== */
+.title-slide {
+  align-items: flex-start;
+  background:
+    radial-gradient(ellipse 60vw 80vh at 30% 50%, var(--green-glow) 0%, transparent 70%),
+    radial-gradient(ellipse 50vw 70vh at 70% 50%, rgba(255,157,46,0.04) 0%, transparent 60%),
+    var(--bg);
+  background-image:
+    radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 0),
+    radial-gradient(ellipse 60vw 80vh at 30% 50%, var(--green-glow) 0%, transparent 70%);
+  background-size: 28px 28px, 100% 100%;
+}
+.title-slide h1 {
+  font-size: clamp(42px, 6.4vw, 100px);
+  margin-bottom: 22px;
+}
+.title-slide .meta {
+  display: flex; gap: 22px;
+  font-size: clamp(12px, 1.1vw, 14px);
+  color: var(--text-dim);
+  margin-top: 32px;
+  border-top: 1px solid var(--rule);
+  padding-top: 14px;
+  flex-wrap: wrap;
+}
+.title-slide .meta b { color: var(--text); font-weight: 600; }
+.title-slide .meta .arrow { color: var(--green); }
+
+/* =====================================================================
+   SECTION HEADER + DOMAIN MAP
+===================================================================== */
+.section-header {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding-top: 80px;
+}
+.section-header .section-tag {
+  font-size: 11px;
+  color: var(--amber);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.section-header .section-tag::before {
+  content: '// ';
+  color: var(--amber);
+}
+.section-header h2 {
+  font-size: clamp(28px, 4.2vw, 64px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.0;
+  margin-bottom: 6px;
+}
+.section-header .section-sub {
+  font-size: clamp(13px, 1.4vw, 18px);
+  color: var(--text-dim);
+  font-weight: 300;
+  margin-bottom: 22px;
+  max-width: 820px;
+}
+.section-header .section-sub em { color: var(--amber); font-style: normal; font-weight: 500; }
+
+.domain-map {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  margin-top: 4px;
+}
+.domain-svg {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 60vh;
+  display: block;
+  overflow: visible;
+}
+
+/* Decorative dashed outer ring */
+.domain-svg .dash-ring {
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 0.6;
+  stroke-dasharray: 1 4;
+  opacity: 0.5;
+}
+
+/* Arc segments */
+.domain-svg .arc {
+  fill: var(--bg-card);
+  stroke: var(--border);
+  stroke-width: 1;
+  transition: fill 0.4s ease, stroke 0.4s ease, filter 0.4s ease;
+}
+.domain-svg .arc.active {
+  fill: var(--green-soft);
+  stroke: var(--green);
+  stroke-width: 1.8;
+  filter: drop-shadow(0 0 14px rgba(0, 217, 126, 0.32));
+}
+
+/* Spoke from hub to active arc */
+.domain-svg .spoke {
+  stroke: var(--green);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  opacity: 0.9;
+  animation: spokeFlow 2.4s linear infinite;
+}
+@keyframes spokeFlow {
+  to { stroke-dashoffset: -12; }
+}
+
+/* Section number inside arc */
+.domain-svg .arc-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+.domain-svg .arc-num.active {
+  fill: var(--green);
+  font-weight: 800;
+}
+
+/* Outer label — system name (e.g. Bench4Kernel) */
+.domain-svg .arc-name {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  font-weight: 700;
+  fill: var(--text);
+  letter-spacing: -0.01em;
+}
+.domain-svg .arc-name.active { fill: var(--green); }
+
+/* Outer label — category in small caps (e.g. BENCHMARKS) */
+.domain-svg .arc-meta {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  fill: var(--text-muted);
+  letter-spacing: 0.18em;
+  font-weight: 500;
+}
+.domain-svg .arc-meta.active { fill: var(--green); opacity: 0.85; }
+
+/* Hub */
+.domain-svg .hub {
+  fill: var(--bg-card-alt);
+  stroke: var(--text-dim);
+  stroke-width: 1;
+}
+.domain-svg .hub-inner-ring {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 0.6;
+  stroke-dasharray: 1 3;
+  opacity: 0.55;
+}
+.domain-svg .hub-text {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  fill: var(--text);
+  letter-spacing: -0.02em;
+}
+.domain-svg .hub-text.large { font-size: 18px; }
+.domain-svg .hub-text.small {
+  font-size: 9px;
+  font-weight: 500;
+  fill: var(--text-muted);
+  letter-spacing: 0.2em;
+}
+
+/* Active "NOW" marker — small bracket pointing at active arc */
+.domain-svg .active-marker {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  font-weight: 700;
+  fill: var(--green);
+  letter-spacing: 0.18em;
+}
+
+.section-header .map-foot {
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  display: flex; justify-content: space-between;
+  text-transform: uppercase;
+}
+.section-header .map-foot .ok { color: var(--green); }
+
+/* =====================================================================
+   FIGURES
+===================================================================== */
+.fig {
+  display: block;
+  max-width: 100%;
+  max-height: min(54vh, 440px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin: 0 auto;
+  padding: 10px;
+}
+[data-theme="light"] .fig.invert-on-light { background: #fff; }
+.fig-caption {
+  font-size: clamp(10px, 0.95vw, 12px);
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+}
+
+/* =====================================================================
+   ZOO — agent / system cards
+===================================================================== */
+.zoo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.zoo .ref-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  position: relative;
+  display: flex; flex-direction: column;
+  gap: 3px;
+}
+.zoo .ref-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 2px;
+  background: var(--green);
+  opacity: 0.5;
+}
+.zoo .ref-card.amber::before  { background: var(--amber); }
+.zoo .ref-card.blue::before   { background: var(--blue); }
+.zoo .ref-card.purple::before { background: var(--purple); }
+.zoo .ref-card.magenta::before{ background: var(--magenta); }
+.zoo .ref-card .name {
+  font-size: clamp(14px, 1.3vw, 19px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.zoo .ref-card .who {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.zoo .ref-card .blurb {
+  font-size: clamp(11px, 1.05vw, 13px);
+  color: var(--text-dim);
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+/* =====================================================================
+   STAT STRIP
+===================================================================== */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  text-align: left;
+  position: relative;
+}
+.stat::after {
+  content: '';
+  position: absolute; top: 8px; right: 12px;
+  width: 6px; height: 6px;
+  background: var(--green);
+}
+.stat.amber::after { background: var(--amber); }
+.stat.red::after   { background: var(--red); }
+.stat.blue::after  { background: var(--blue); }
+.stat .num {
+  font-size: clamp(28px, 3.6vw, 56px);
+  color: var(--green);
+  font-weight: 800;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+}
+.stat.amber .num { color: var(--amber); }
+.stat.red .num   { color: var(--red); }
+.stat.blue .num  { color: var(--blue); }
+.stat .lab {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* =====================================================================
+   HARDWARE GRID
+===================================================================== */
+.hw-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.hw-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  position: relative;
+}
+.hw-item .vendor {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.hw-item .platform {
+  font-size: clamp(13px, 1.2vw, 17px);
+  color: var(--green);
+  margin-top: 2px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.hw-item .systems {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* =====================================================================
+   BAR CHART (L3 progression)
+===================================================================== */
+.barchart {
+  display: flex; flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+.barchart .bar-row {
+  display: grid;
+  grid-template-columns: 240px 1fr 70px;
+  gap: 14px;
+  align-items: center;
+}
+.barchart .bar-label {
+  font-size: clamp(11px, 1.05vw, 14px);
+  color: var(--text-dim);
+  text-align: right;
+  line-height: 1.3;
+}
+.barchart .bar-label .when {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+.barchart .bar-track {
+  height: 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.barchart .bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--green);
+  transition: width 1.1s cubic-bezier(.16,.84,.36,1) 0.25s;
+  position: relative;
+}
+.barchart .bar-fill::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; right: 0;
+  width: 1px;
+  background: var(--text);
+  opacity: 0.6;
+}
+.barchart .bar-fill.amber  { background: var(--amber); }
+.barchart .bar-fill.red    { background: var(--red); }
+.barchart .bar-fill.gradient {
+  background: linear-gradient(90deg, var(--red), var(--amber) 40%, var(--green));
+}
+.slide.active .barchart .bar-fill { width: var(--w); }
+.barchart .bar-val {
+  font-size: clamp(12px, 1.1vw, 15px);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* =====================================================================
+   TIMELINE (used in full reveal)
+===================================================================== */
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+.timeline-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  position: relative;
+}
+.timeline-item .when {
+  font-size: 9px;
+  color: var(--amber);
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+.timeline-item .what {
+  font-size: clamp(11px, 1vw, 13px);
+  color: var(--text);
+  margin-top: 2px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* =====================================================================
+   PROCESS DIAGRAM (used on agent loop slide)
+===================================================================== */
+.flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+  gap: 10px;
+  align-items: stretch;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin: 12px 0;
+}
+.flow .step {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  padding: 12px 10px;
+  text-align: center;
+}
+.flow .step .role {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.05em;
+  border: 1px solid var(--green);
+  padding: 2px 8px;
+  background: var(--green-glow);
+  margin-bottom: 6px;
+}
+.flow .step.amber .role  { color: var(--amber);  border-color: var(--amber);  background: var(--amber-soft); }
+.flow .step.blue .role   { color: var(--blue);   border-color: var(--blue);   background: var(--blue-soft); }
+.flow .step.purple .role { color: var(--purple); border-color: var(--purple); background: rgba(199,155,255,0.12); }
+.flow .step .what {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+.flow .arrow {
+  align-self: center;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+/* =====================================================================
+   SLIDE-LOCAL REFERENCE
+===================================================================== */
+.slide-ref {
+  position: absolute; bottom: 14px;
+  left: 50%; transform: translateX(-50%);
+  max-width: min(820px, calc(100% - 240px));
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-align: center;
+  line-height: 1.5;
+  font-weight: 400;
+}
+.slide-ref::before {
+  content: 'ref: ';
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+.slide-ref a { color: var(--green); }
+
+/* =====================================================================
+   ANIMATIONS
+===================================================================== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide.active .anim {
+  animation: fadeInUp 0.45s ease both;
+}
+.slide.active .anim-d1 { animation-delay: 0.10s; }
+.slide.active .anim-d2 { animation-delay: 0.22s; }
+.slide.active .anim-d3 { animation-delay: 0.34s; }
+.slide.active .anim-d4 { animation-delay: 0.46s; }
+.slide.active .anim-d5 { animation-delay: 0.58s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide, .slide.active .anim, .barchart .bar-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+  #topbar .session::before { animation: none; }
+  h1 .cursor { animation: none; }
+}
+
+/* =====================================================================
+   RESPONSIVE
+===================================================================== */
+@media (max-width: 1100px) {
+  .hw-grid { grid-template-columns: repeat(2, 1fr); }
+  .zoo { grid-template-columns: 1fr 1fr; }
+  .timeline { grid-template-columns: repeat(3, 1fr); }
+  .flow { grid-template-columns: 1fr; }
+  .flow .arrow { transform: rotate(90deg); }
+}
+@media (max-width: 700px) {
+  .slide { padding: 56px 5vw 50px; }
+  .split { grid-template-columns: 1fr !important; gap: 16px; }
+  .card-grid.cols-2, .card-grid.cols-3 { grid-template-columns: 1fr; }
+  .hw-grid, .zoo { grid-template-columns: 1fr; }
+  .timeline { grid-template-columns: 1fr 1fr; }
+  .stat-strip { grid-template-columns: 1fr; }
+  .barchart .bar-row { grid-template-columns: 130px 1fr 50px; }
+  .slide-ref { left: 12px; right: 12px; transform: none; max-width: none; }
+  #topbar { padding-left: 50px; font-size: 10px; }
+  #topbar .sep { margin: 0 8px; }
+  .title-slide h1 { font-size: clamp(32px, 8vw, 56px); }
+  .domain-svg { max-height: 56vh; }
+}
+
+/* =====================================================================
+   IFRAME EMBED MODE
+===================================================================== */
+html.in-iframe, html.in-iframe body { height: 100%; overflow: hidden; }
+html.in-iframe .slide { display: none !important; }
+html.in-iframe .slide.active {
+  display: flex !important;
+  position: absolute; inset: 0;
+  padding: 12px !important;
+  transform: none; transition: none;
+}
+</style>
+</head>
+<body>
+
+<!-- Fixed chrome -->
+<div id="topbar">
+  <span class="session">tmlsg.kernel-gen.live</span>
+  <span class="sep">·</span>
+  <span class="section-marker"><span class="num">─</span> setup</span>
+  <span class="right">
+    <span class="counter"><span class="cur">01</span> / 33</span>
+  </span>
+</div>
+<div id="progress"></div>
+<div id="nav-hint"><kbd>←</kbd><kbd>→</kbd> navigate · <kbd>T</kbd> theme</div>
+<button id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">[ T ]</button>
+<a id="site-logo" href="https://shashankshekhar.com" target="_blank" title="shashankshekhar.com">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+    <path fill="#FF69B4" fill-rule="evenodd" d="M8.046 10.872a1 1 0 0 0-.98-1.743l-3.556 2a1 1 0 0 0 .043 1.766l2.08 1.04-2.123 1.194a1 1 0 0 0 .043 1.766l8 4a1 1 0 0 0 .894 0l8-4a1 1 0 0 0 .043-1.766l-2.123-1.194 2.08-1.04a1 1 0 0 0 .043-1.766l-3.555-2a1 1 0 1 0-.98 1.743l1.913 1.076L12 14.882l-5.868-2.934zm8.162 4.142-3.76 1.88a1 1 0 0 1-.895 0l-3.76-1.88-1.66.934L12 18.882l5.868-2.934z" clip-rule="evenodd"/>
+    <path fill="#C71585" fill-rule="evenodd" d="M11.553 3.106a1 1 0 0 1 .894 0l8 4a1 1 0 0 1 0 1.788l-8 4a1 1 0 0 1-.894 0l-8-4a1 1 0 0 1 0-1.788zM6.236 8 12 10.882 17.764 8 12 5.118z" clip-rule="evenodd"/>
+  </svg>
+  <span>sshkhr</span>
+</a>
+
+<div class="deck" id="deck">
+
+<!-- ============================================================
+     01 · Title
+============================================================ -->
+<div class="slide title-slide" data-slide="0" data-section="setup">
+  <div>
+    <div class="preamble anim">
+      <span class="tag">TMLSG · Inaugural meeting</span>
+      <span>$ ./run-presentation</span>
+    </div>
+    <h1 class="anim anim-d1">The State of<br>Automatic <span class="accent">Kernel</span><br>Generation<span class="cursor">_</span></h1>
+    <p class="lead anim anim-d2">KernelBench, and what changed in <em>seventeen months</em>.<br>A field survey for ML systems people who don't write CUDA daily.</p>
+    <div class="meta anim anim-d3">
+      <span><b>Shashank Shekhar</b></span>
+      <span class="arrow">→</span>
+      <span>Toronto ML Systems Group</span>
+      <span class="arrow">→</span>
+      <span>May 2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     02 · Hook — central question
+============================================================ -->
+<div class="slide" data-slide="1" data-section="setup">
+  <div class="anim" style="text-align: center; max-width: 940px; margin: 0 auto;">
+    <div class="section-marker-inline anim">the question</div>
+    <h1 class="anim anim-d1" style="font-size: clamp(36px, 6vw, 88px);">Can <span class="amber">LLMs</span><br>write kernels?</h1>
+    <p class="lead anim anim-d2" style="margin: 24px auto 0;">Two years ago: clearly not. Today: a 33-slide answer.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     03 · What's a kernel?
+============================================================ -->
+<div class="slide" data-slide="2" data-section="setup">
+  <div class="section-marker-inline anim">primer</div>
+  <h2 class="anim">What's a <span class="accent">GPU kernel</span>?</h2>
+  <div class="split equal" style="margin-top: 12px;">
+    <div>
+      <ul>
+        <li class="anim anim-d1">A small program that runs on the GPU — one piece of work, many threads.</li>
+        <li class="anim anim-d2">Every PyTorch op — <code>x @ y</code>, <code>softmax(x)</code>, <code>F.scaled_dot_product_attention</code> — eventually dispatches to a kernel.</li>
+        <li class="anim anim-d3">The kernel is where the <span class="highlight">performance</span> lives. The Python layer just decides <em>which</em> kernel to call.</li>
+        <li class="anim anim-d4">Writing one well means thinking about memory, occupancy, tile sizes, register pressure, instruction-level parallelism.</li>
+      </ul>
+    </div>
+    <div class="anim anim-d2">
+      <div class="card tagged amber" style="background: var(--bg-card); padding: 18px 20px;">
+        <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px;">// dispatch chain</div>
+        <pre style="font-family: var(--font-mono); font-size: clamp(11px, 1.1vw, 14px); line-height: 1.65; color: var(--text-dim); white-space: pre-wrap;"><span style="color: var(--text-muted);"># PyTorch — one line</span>
+y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="color: var(--amber);">1</span>)
+
+<span style="color: var(--text-muted);"># Underneath: a CUDA / Triton kernel</span>
+<span style="color: var(--purple);">__global__ void</span> <span style="color: var(--green);">softmax_fwd</span>(
+    <span style="color: var(--blue);">float</span>* x, <span style="color: var(--blue);">float</span>* y,
+    <span style="color: var(--blue);">int</span> n, <span style="color: var(--blue);">int</span> d
+) {
+  <span style="color: var(--text-muted);">// load tile, max-shift, exp, sum,</span>
+  <span style="color: var(--text-muted);">// normalize — usually written</span>
+  <span style="color: var(--text-muted);">// painfully, by hand.</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     04 · Why kernels matter + why automation tractable
+============================================================ -->
+<div class="slide" data-slide="3" data-section="setup">
+  <div class="section-marker-inline anim">motivation</div>
+  <h2 class="anim">Why this is worth automating</h2>
+  <div class="split right-text" style="margin-top: 8px;">
+    <div class="anim anim-d1">
+      <img class="fig" src="kg-three-weeks.png" alt="Meme: three weeks to write one kernel" style="max-height: 36vh;">
+      <p class="fig-caption">— from the KernelBench blog, Stanford SAIL</p>
+    </div>
+    <div>
+      <ul>
+        <li class="anim anim-d1"><span class="highlight">FlashAttention</span> is the obvious example. One well-tuned kernel, used in basically every transformer trained today.</li>
+        <li class="anim anim-d2">Expert kernel engineers are <span class="highlight-red">scarce</span>. Hand-tuning one kernel: weeks.</li>
+        <li class="anim anim-d3">Hardware moves faster than humans can re-tune. Every new chip resets the clock.</li>
+      </ul>
+      <div class="card tagged" style="margin-top: 14px; border-color: var(--green); background: var(--green-glow);">
+        <div style="font-size: 10px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px;">// why automation looks tractable</div>
+        <p style="font-size: clamp(12px, 1.15vw, 15px); color: var(--text-dim); margin: 0; line-height: 1.55;">
+          Programs are short, usually 50–500 lines. Evaluation is mechanical: did it match, was it faster. Compile errors, unit tests, and the profiler all give signal. On paper, a near-perfect target for code-gen and RL.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     05 · KernelBench section header (no map yet — KB is the catalyst)
+============================================================ -->
+<div class="slide" data-slide="4" data-section="kb" style="justify-content: center;">
+  <div style="max-width: 940px; margin: 0 auto; text-align: center;">
+    <div class="preamble anim" style="justify-content: center;">
+      <span class="tag amber">PART II · Where this started</span>
+    </div>
+    <h1 class="anim anim-d1" style="font-size: clamp(48px, 8vw, 124px); line-height: 1; margin-bottom: 18px;">
+      <span class="stroke">Kernel</span><span class="accent">Bench</span>
+    </h1>
+    <p class="lead anim anim-d2" style="margin: 0 auto;">The first benchmark for <em>"can a model write a faster kernel than PyTorch?"</em></p>
+    <div class="anim anim-d3" style="margin-top: 24px; display: inline-flex; gap: 24px; padding: 12px 22px; border: 1px solid var(--border); background: var(--bg-card); font-size: 12px; letter-spacing: 0.05em; color: var(--text-dim);">
+      <span><span style="color: var(--amber);">●</span> Stanford SAIL</span>
+      <span style="color: var(--rule);">·</span>
+      <span>Dec 2024</span>
+      <span style="color: var(--rule);">·</span>
+      <span>250 tasks · 3 levels</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     06 · KernelBench task structure
+============================================================ -->
+<div class="slide" data-slide="5" data-section="kb">
+  <div class="section-marker-inline anim">II.1 — task structure</div>
+  <h2 class="anim">Three levels of difficulty</h2>
+  <div class="split right-text" style="margin-top: 12px;">
+    <div class="anim anim-d1" style="display: flex; align-items: center; justify-content: center;">
+      <img class="fig invert-on-light" src="kg-design.png" alt="KernelBench task design" style="max-height: 50vh;">
+    </div>
+    <div>
+      <p class="anim anim-d1" style="margin-bottom: 12px; font-size: clamp(13px, 1.2vw, 17px);">Each task: a PyTorch <code>nn.Module</code>. Goal: write a faster CUDA kernel that produces matching outputs.</p>
+      <div class="card tagged anim anim-d2" style="margin-bottom: 8px;">
+        <span class="pill" style="margin: 0;">Level 1 · 100 tasks</span>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Single ops — matmuls, convs, layernorm.</p>
+      </div>
+      <div class="card tagged amber anim anim-d3" style="margin-bottom: 8px;">
+        <span class="pill amber" style="margin: 0;">Level 2 · 100 tasks</span>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Fusion patterns — conv + bias + ReLU. One kernel beats three.</p>
+      </div>
+      <div class="card tagged purple anim anim-d4">
+        <span class="pill purple" style="margin: 0;">Level 3 · 50 tasks</span>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Full architectures — MobileNet, VGG, MiniGPT. Optimize the whole network.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-ref">Ouyang et al. <em>KernelBench: Can LLMs Write GPU Kernels?</em> Stanford SAIL, Dec 2024 · <a href="https://arxiv.org/abs/2502.10517" target="_blank">arXiv:2502.10517</a></div>
+</div>
+
+<!-- ============================================================
+     07 · fast_p metric
+============================================================ -->
+<div class="slide" data-slide="6" data-section="kb">
+  <div class="section-marker-inline anim">II.2 — the metric</div>
+  <h2 class="anim">Correct <span class="accent">AND</span> fast — <code>fast<sub>p</sub></code></h2>
+  <p class="anim anim-d1" style="margin-bottom: 4px;">Fraction of tasks where the generated kernel is <em>both</em> correct <em>and</em> at least <em>p</em>× faster than the PyTorch reference.</p>
+  <div class="math-block anim anim-d2" id="math-fastp"></div>
+  <div class="card-grid cols-3" style="margin-top: 8px;">
+    <div class="card tagged anim anim-d3">
+      <h3 class="accent" style="font-size: clamp(13px, 1.25vw, 17px);">[01] Correct</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim);">Matches reference outputs within tolerance over multiple input shapes.</p>
+    </div>
+    <div class="card tagged blue anim anim-d4">
+      <h3 class="blue" style="font-size: clamp(13px, 1.25vw, 17px);">[02] Fast</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim);">Wall-clock speedup over PyTorch (eager or compiled), measured on the target GPU.</p>
+    </div>
+    <div class="card tagged purple anim anim-d5">
+      <h3 class="purple" style="font-size: clamp(13px, 1.25vw, 17px);">[03] Why <em>p</em>?</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim);"><code>fast<sub>1</sub></code> = strictly faster. <code>fast<sub>2</sub></code> = at least 2×. Asks "how good?", not just "good?"</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     08 · Initial findings (Dec 2024)
+============================================================ -->
+<div class="slide" data-slide="7" data-section="kb">
+  <div class="section-marker-inline anim">II.3 — Dec 2024 baseline</div>
+  <h2 class="anim">The gap KernelBench made <span class="amber">obvious</span></h2>
+  <div class="split equal" style="margin-top: 8px;">
+    <div class="anim anim-d1">
+      <img class="fig invert-on-light" src="kg-init-correct.png" alt="Initial KernelBench correctness" style="max-height: 38vh;">
+      <p class="fig-caption">Correctness across frontier models</p>
+    </div>
+    <div class="anim anim-d2">
+      <img class="fig invert-on-light" src="kg-init-speedup.png" alt="Initial KernelBench speedup distribution" style="max-height: 38vh;">
+      <p class="fig-caption">Speedup distribution — torch.compile wins most of the time</p>
+    </div>
+  </div>
+  <ul style="margin-top: 12px;">
+    <li class="anim anim-d3">Frontier models could <em>compile</em> kernels. They rarely <span class="highlight">beat <code>torch.compile</code></span>.</li>
+    <li class="anim anim-d4">Level 3 was brutal: ~<span class="highlight-red">20%</span> success on full architectures.</li>
+    <li class="anim anim-d5">Once the gap was easy to talk about, the field started moving.</li>
+  </ul>
+  <div class="slide-ref">Eval: Claude 3.5 Sonnet, GPT-4o, DeepSeek-Coder, Llama 3.1, others. Figures from Ouyang et al., 2024.</div>
+</div>
+
+<!-- ============================================================
+     09 · FULL DOMAIN MAP REVEAL
+============================================================ -->
+<div class="slide section-header" data-slide="8" data-section="reveal">
+  <div class="section-tag anim">PART III · Seventeen months later</div>
+  <h2 class="anim anim-d1">The field grew in <span class="accent">six directions</span>.</h2>
+  <p class="section-sub anim anim-d2">Since October 2025 alone: I count <em>33 new systems and 9 new benchmarks.</em> The pace is faster than the pace of writing this slide deck.</p>
+  <div class="domain-map anim anim-d3" data-active="0"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> map: 6 / 6 areas</span>
+    <span>we'll visit each in order →</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     10 · Section I header — Bench4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="9" data-section="bench">
+  <div class="section-tag anim">SECTION 01 / 06 · Bench4Kernel</div>
+  <h2 class="anim anim-d1">Benchmarks went <span class="accent">horizontal</span>.</h2>
+  <p class="section-sub anim anim-d2">The original benchmark was CUDA-on-NVIDIA. The new ones cover <em>everywhere a kernel runs.</em></p>
+  <div class="domain-map anim anim-d3" data-active="1"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 01 / 06 — Bench4Kernel</span>
+    <span>9 → ~30 benchmarks</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     11 · Benchmarks went horizontal
+============================================================ -->
+<div class="slide" data-slide="10" data-section="bench">
+  <div class="section-marker-inline anim">01.1 — beyond CUDA-on-NVIDIA</div>
+  <h2 class="anim">One benchmark per silicon stack</h2>
+  <div class="zoo">
+    <div class="ref-card anim anim-d1">
+      <div class="name">NPUKernelBench</div>
+      <div class="who">Cao et al. · Jan 2026</div>
+      <div class="blurb">158 Ascend NPU kernels · dual-path host+device evaluation.</div>
+    </div>
+    <div class="ref-card anim anim-d1 amber">
+      <div class="name">NKIBench</div>
+      <div class="who">Stanford PPL + AWS · Nov 2025</div>
+      <div class="blurb">First benchmark for AWS Trainium 1 &amp; 2 NKI kernels.</div>
+    </div>
+    <div class="ref-card anim anim-d2 blue">
+      <div class="name">MultiKernelBench v2</div>
+      <div class="who">Wen et al. · 2025</div>
+      <div class="blurb">CUDA + AscendC + Pallas · cycle-level analysis of API hallucinations.</div>
+    </div>
+    <div class="ref-card anim anim-d2 purple">
+      <div class="name">KernelCraft</div>
+      <div class="who">2026</div>
+      <div class="blurb">33 tasks across 3 emerging accelerator ISAs · compile / simulate / validate.</div>
+    </div>
+    <div class="ref-card anim anim-d3 magenta">
+      <div class="name">MSKernelBench</div>
+      <div class="who">Han et al. · Mar 2026</div>
+      <div class="blurb">Sparse, scientific, numerical · beyond dense ML ops · FP32 + BF16.</div>
+    </div>
+    <div class="ref-card anim anim-d3">
+      <div class="name">KForge</div>
+      <div class="who">Gimlet Labs · Nov 2025</div>
+      <div class="blurb">First serious LLM-to-Apple-Metal benchmark · single-shot CUDA → Metal.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     12 · Benchmarks went deeper
+============================================================ -->
+<div class="slide" data-slide="11" data-section="bench">
+  <div class="section-marker-inline anim">01.2 — beyond translation</div>
+  <h2 class="anim">…and deeper</h2>
+  <div class="card-grid cols-2" style="margin-top: 8px;">
+    <div class="card tagged anim anim-d1">
+      <h3 class="accent" style="font-size: clamp(14px, 1.3vw, 20px);">Beyond translation</h3>
+      <p style="font-size: clamp(11px, 1.1vw, 14px);"><strong>CUDABench</strong> (SJTU, Mar 2026): generate CUDA from <em>natural-language</em> task specs, not from a PyTorch reference. Reveals a wide gap between compilation and correctness.</p>
+    </div>
+    <div class="card tagged blue anim anim-d2">
+      <h3 class="blue" style="font-size: clamp(14px, 1.3vw, 20px);">KernelBench-v2</h3>
+      <p style="font-size: clamp(11px, 1.1vw, 14px);">Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow. (Community fork.)</p>
+    </div>
+    <div class="card tagged amber anim anim-d3">
+      <h3 class="amber" style="font-size: clamp(14px, 1.3vw, 20px);">KernelBench, hardened</h3>
+      <p style="font-size: clamp(11px, 1.1vw, 14px);">Adversarial unit tests for the obvious cheats: reused cached compute, mutated inputs, work hidden on async streams. Plus a static checker.</p>
+    </div>
+    <div class="card tagged purple anim anim-d4">
+      <h3 class="purple" style="font-size: clamp(14px, 1.3vw, 20px);">MLSys 2026 contests</h3>
+      <p style="font-size: clamp(11px, 1.1vw, 14px);"><strong>FlashInfer Bench</strong> on B200 (MoE / DSA / Gated Delta Net). Companion <strong>Trainium2/3 MoE Challenge</strong>. First public arena for kernel-gen agents.</p>
+    </div>
+  </div>
+  <div class="slide-ref">CUDABench arXiv 2603.02236 · KernelBench Issue #74 (Fall 2025 maintenance roadmap) · <a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a></div>
+</div>
+
+<!-- ============================================================
+     13 · Section II header — Eval4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="12" data-section="eval">
+  <div class="section-tag anim">SECTION 02 / 06 · Eval4Kernel</div>
+  <h2 class="anim anim-d1">What does <em>correct</em> even mean?</h2>
+  <p class="section-sub anim anim-d2">Verification, reward hacking, and the surprisingly high cost of <em>just measuring time accurately.</em></p>
+  <div class="domain-map anim anim-d3" data-active="2"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 02 / 06 — Eval4Kernel</span>
+    <span>3 problems most papers underrate</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     14 · What does correct mean?
+============================================================ -->
+<div class="slide" data-slide="13" data-section="eval">
+  <div class="section-marker-inline anim">02.1 — the verification problem</div>
+  <h2 class="anim">Unit tests are <span class="amber">not enough</span></h2>
+  <blockquote class="anim anim-d1" style="font-size: clamp(13px, 1.3vw, 19px);">
+    "Verifying kernels for a mathematical operation on their own is not enough — we need verification at the level of the model pipeline, the training pipeline, the full train-eval pipeline."
+    <cite>— Sakana AI, post-mortem on the AI CUDA Engineer</cite>
+  </blockquote>
+  <ul style="margin-top: 8px;">
+    <li class="anim anim-d2">Sakana's <strong>AI CUDA Engineer</strong> (Feb 2025) shipped impressive numbers — until people noticed the kernels were exploiting test loopholes.</li>
+    <li class="anim anim-d3">A <span class="highlight-red">softmax-1D</span> kernel can pass a unit test by being wrong in a way the test doesn't probe.</li>
+    <li class="anim anim-d4">Low-precision ops aren't <span class="highlight">deterministic</span>. So "matches reference" is itself fuzzy.</li>
+    <li class="anim anim-d5">Performance bounds — what's the actual ceiling? — remain dark arts even for human kernel engineers.</li>
+  </ul>
+</div>
+
+<!-- ============================================================
+     15 · Reward hacking
+============================================================ -->
+<div class="slide" data-slide="14" data-section="eval">
+  <div class="section-marker-inline anim">02.2 — reward hacking</div>
+  <h2 class="anim">Reward hacking is no longer hypothetical</h2>
+  <div class="split right-text" style="margin-top: 8px;">
+    <div>
+      <ul>
+        <li class="anim anim-d1"><strong>Makora KernelHacks</strong> (Jan 2026): a taxonomy of <span class="highlight-red">8 hack patterns</span> mined from 2,500+ problem-kernel pairs. Released as a 1K-example dataset.</li>
+        <li class="anim anim-d2"><strong>Dr. Kernel</strong> (HKUST + Sea AI Lab, Feb 2026): identifies a <em>biased</em> policy gradient in multi-turn GRPO and proposes <strong>TRLOO</strong> — turn-level reinforce-leave-one-out.</li>
+        <li class="anim anim-d3">Common cheats: cached-compute reuse, mutating the input, moving real work to a non-default CUDA stream.</li>
+        <li class="anim anim-d4">Bottom line: <span class="highlight">if your evaluator has a hole, RL will find it.</span></li>
+      </ul>
+    </div>
+    <div class="anim anim-d2">
+      <div class="card tagged red" style="background: var(--bg-card-alt);">
+        <div style="font-size: 10px; color: var(--red); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// observed hack patterns</div>
+        <ul style="font-size: clamp(11px, 1.05vw, 13px);">
+          <li style="margin-bottom: 0.4em;">Hardcode constants for known test inputs</li>
+          <li style="margin-bottom: 0.4em;">Skip work the test doesn't observe</li>
+          <li style="margin-bottom: 0.4em;">Time only the cached second call</li>
+          <li style="margin-bottom: 0.4em;">Divert real work to async streams</li>
+          <li style="margin-bottom: 0.4em;">Identity-pass on "trivial" shapes</li>
+          <li>Smuggle <code>torch</code> in the "kernel"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-ref">Makora <em>Reward Hacks in CUDA Kernel Generation</em>, Jan 2026 · Liu et al. <em>Dr. Kernel</em>, <a href="https://arxiv.org/abs/2602.05885" target="_blank">arXiv:2602.05885</a></div>
+</div>
+
+<!-- ============================================================
+     16 · Timing fidelity
+============================================================ -->
+<div class="slide" data-slide="15" data-section="eval">
+  <div class="section-marker-inline anim">02.3 — timing fidelity</div>
+  <h2 class="anim">Most "X% faster" claims <span class="amber">don't control for noise</span></h2>
+  <div class="stat-strip" style="margin: 14px 0;">
+    <div class="stat amber anim anim-d1">
+      <div class="num">+21%</div>
+      <div class="lab">Mean latency increase under GPU contention</div>
+    </div>
+    <div class="stat red anim anim-d2">
+      <div class="num">~30×</div>
+      <div class="lab">Variance blow-up under GPU contention</div>
+    </div>
+    <div class="stat blue anim anim-d3">
+      <div class="num">≈0%</div>
+      <div class="lab">CPU-load impact on mean latency</div>
+    </div>
+  </div>
+  <ul>
+    <li class="anim anim-d3"><strong>Standard Kernel</strong>'s Feb 2026 benchmarking study: GPU contention quietly destroys your numbers.</li>
+    <li class="anim anim-d4">Naive averages over noisy runs can fabricate or erase a 1.2× speedup.</li>
+    <li class="anim anim-d5">Treat small wins skeptically unless the paper explicitly reports trimmed-mean / persistent-mode / contention-controlled numbers.</li>
+  </ul>
+  <div class="slide-ref">Standard Kernel benchmarking blog, Feb 2026.</div>
+</div>
+
+<!-- ============================================================
+     17 · Section III header — Agent4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="16" data-section="agent">
+  <div class="section-tag anim">SECTION 03 / 06 · Agent4Kernel</div>
+  <h2 class="anim anim-d1">Profilers <span class="accent">in the loop</span>.</h2>
+  <p class="section-sub anim anim-d2">Single-shot is the strawman. <em>The systems that work all run a search.</em></p>
+  <div class="domain-map anim anim-d3" data-active="3"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 03 / 06 — Agent4Kernel</span>
+    <span>9 systems · 4 production deployments</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     18 · Profilers in the loop
+============================================================ -->
+<div class="slide" data-slide="17" data-section="agent">
+  <div class="section-marker-inline anim">03.1 — the loop</div>
+  <h2 class="anim">The agent loop</h2>
+  <p class="anim anim-d1" style="margin-bottom: 8px; font-size: clamp(13px, 1.2vw, 17px);">By 2026 the architecture is mostly settled: a search loop with a profiler in it.</p>
+  <div class="flow anim anim-d2">
+    <div class="step">
+      <div class="role">Coder</div>
+      <div class="what">writes / edits<br>the kernel</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step amber">
+      <div class="role">Verifier</div>
+      <div class="what">runs tests<br>checks outputs</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step blue">
+      <div class="role">Profiler</div>
+      <div class="what">NCU / Nsight<br>feedback</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="step purple">
+      <div class="role">Judge / Memory</div>
+      <div class="what">decides next move<br>stores skills</div>
+    </div>
+  </div>
+  <ul style="margin-top: 10px;">
+    <li class="anim anim-d3"><strong>The profiler is a tool call.</strong> NCU surfaces bandwidth, occupancy, and stalls as text the model can read.</li>
+    <li class="anim anim-d4"><strong>Memory across attempts</strong> is the live research question. Long-term <em>skills</em> the agent can reuse, short-term <em>anti-backtracking</em> so it doesn't keep retrying the same fix.</li>
+  </ul>
+</div>
+
+<!-- ============================================================
+     19 · Agent zoo
+============================================================ -->
+<div class="slide" data-slide="18" data-section="agent">
+  <div class="section-marker-inline anim">03.2 — the zoo</div>
+  <h2 class="anim">A non-exhaustive zoo</h2>
+  <div class="zoo">
+    <div class="ref-card anim anim-d1">
+      <div class="name">CudaForge</div>
+      <div class="who">U. Minnesota · Nov 2025</div>
+      <div class="blurb">Coder + Judge with NCU feedback · 97.6% correct · 1.68× geomean.</div>
+    </div>
+    <div class="ref-card anim anim-d1 amber">
+      <div class="name">PRAGMA</div>
+      <div class="who">Beihang · Nov 2025</div>
+      <div class="blurb">Conductor / Coder / Verifier / Profiler · GPU + CPU · 2.3× / 2.8× speedups.</div>
+    </div>
+    <div class="ref-card anim anim-d1 blue">
+      <div class="name">STARK</div>
+      <div class="who">Meta · Oct 2025</div>
+      <div class="blurb">Plan-Code-Debug + strategic tree search + within-task memory.</div>
+    </div>
+    <div class="ref-card anim anim-d2 purple">
+      <div class="name">KernelSkill</div>
+      <div class="who">NTU + Beihang · Mar 2026</div>
+      <div class="blurb">Long-term reusable skills · short-term anti-backtracking memory.</div>
+    </div>
+    <div class="ref-card anim anim-d2 magenta">
+      <div class="name">AutoKernel</div>
+      <div class="who">RightNow AI · Apr 2026</div>
+      <div class="blurb">Karpathy-style edit/benchmark/keep-or-revert on full PyTorch models.</div>
+    </div>
+    <div class="ref-card anim anim-d2">
+      <div class="name">KForge</div>
+      <div class="who">Gimlet Labs · Nov 2025</div>
+      <div class="blurb">Single-shot CUDA → Apple Metal · first Metal-on-Silicon agent.</div>
+    </div>
+    <div class="ref-card anim anim-d3 amber">
+      <div class="name">KernelEvolve</div>
+      <div class="who">Meta · Dec 2025</div>
+      <div class="blurb">Self-improving state machine · MTIA + GPU + AMD · runs in prod.</div>
+    </div>
+    <div class="ref-card anim anim-d3 blue">
+      <div class="name">CUDA Agent</div>
+      <div class="who">Tsinghua AIR + ByteDance · Mar 2026</div>
+      <div class="blurb">Large-scale agentic RL · 6K-task synthesis · 128k context · anti-hack rewards.</div>
+    </div>
+    <div class="ref-card anim anim-d3 purple">
+      <div class="name">GEAK family</div>
+      <div class="who">AMD AGI · Dec 2025</div>
+      <div class="blurb">Triton + HIP + OpenEvolve QD search on MI300 / MI355.</div>
+    </div>
+  </div>
+  <div class="slide-ref">arXiv 2511.01884 · 2511.06345 · 2510.16996 · 2603.10085 · 2603.21331 · 2511.13274 · 2512.23236 · 2602.24286 · AMD ROCm Blogs</div>
+</div>
+
+<!-- ============================================================
+     20 · L3 progression
+============================================================ -->
+<div class="slide" data-slide="19" data-section="agent">
+  <div class="section-marker-inline anim">03.3 — headline numbers</div>
+  <h2 class="anim">KernelBench Level 3, over time</h2>
+  <p class="anim anim-d1" style="margin-bottom: 6px; font-size: clamp(12px, 1.15vw, 15px);">Fraction of full-architecture tasks where the generated kernel beats the PyTorch baseline.</p>
+  <div class="barchart">
+    <div class="bar-row anim anim-d2" style="--w: 20%;">
+      <div class="bar-label">Frontier LLM, single-shot<span class="when">Dec 2024 baseline</span></div>
+      <div class="bar-track"><div class="bar-fill red"></div></div>
+      <div class="bar-val">~20%</div>
+    </div>
+    <div class="bar-row anim anim-d3" style="--w: 70%;">
+      <div class="bar-label">Kevin-32B<span class="when">multi-turn RL · Jul 2025</span></div>
+      <div class="bar-track"><div class="bar-fill amber"></div></div>
+      <div class="bar-val">~70%</div>
+    </div>
+    <div class="bar-row anim anim-d4" style="--w: 92%;">
+      <div class="bar-label">CUDA Agent<span class="when">agentic RL · Mar 2026</span></div>
+      <div class="bar-track"><div class="bar-fill"></div></div>
+      <div class="bar-val">92%</div>
+    </div>
+    <div class="bar-row anim anim-d5" style="--w: 100%;">
+      <div class="bar-label">KernelEvolve / KernelSkill<span class="when">multi-agent · Dec 2025 / Mar 2026</span></div>
+      <div class="bar-track"><div class="bar-fill gradient"></div></div>
+      <div class="bar-val">100%</div>
+    </div>
+  </div>
+  <p class="anim anim-d5" style="margin-top: 14px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
+    <strong>KernelEvolve</strong> ships continuously in Meta production for DLRM. <strong>CUDA-L2</strong> beats cuBLAS HGEMM. The gap KernelBench surfaced is mostly closed — <em>at least on the benchmark.</em>
+  </p>
+  <div class="slide-ref">Numbers self-reported; not all use identical L3 subsets or baselines (eager vs torch.compile). Cross-system comparison should remain careful.</div>
+</div>
+
+<!-- ============================================================
+     21 · Section IV header — LLM4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="20" data-section="llm">
+  <div class="section-tag anim">SECTION 04 / 06 · LLM4Kernel</div>
+  <h2 class="anim anim-d1">Specialists beat <span class="accent">frontier</span>.</h2>
+  <p class="section-sub anim anim-d2">Synthetic data plus the right RL setup <em>now beats frontier general models</em> on kernels.</p>
+  <div class="domain-map anim anim-d3" data-active="4"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 04 / 06 — LLM4Kernel</span>
+    <span>5 specialist models · 1 diffusion LLM</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     22 · Synthetic data scales
+============================================================ -->
+<div class="slide" data-slide="21" data-section="llm">
+  <div class="section-marker-inline anim">04.1 — synthesize the curriculum</div>
+  <h2 class="anim">Expert kernels are scarce — <span class="accent">synthesize them</span></h2>
+  <div class="card-grid cols-3" style="margin-top: 8px;">
+    <div class="card tagged anim anim-d1">
+      <h3 class="accent" style="font-size: clamp(13px, 1.3vw, 18px);">DRTriton</h3>
+      <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Texas A&amp;M + Oracle · Mar 2026</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;">CSP-DAG generator covers operator space uniformly. <strong>100K</strong> synthetic programs + 2K curated pairs. 7B model is faster on <span class="highlight">92%</span> of L2 vs 23% for GPT-5.2.</p>
+    </div>
+    <div class="card tagged blue anim anim-d2">
+      <h3 class="blue" style="font-size: clamp(13px, 1.3vw, 18px);">CUDA Agent</h3>
+      <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Tsinghua + ByteDance · Mar 2026</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;">~6K composed tasks from <code>torch</code> + <code>transformers</code>. AST-similarity decontamination. Multi-stage PPO + rejection-FT + value pretraining.</p>
+    </div>
+    <div class="card tagged purple anim anim-d3">
+      <h3 class="purple" style="font-size: clamp(13px, 1.3vw, 18px);">Ascend-CoT</h3>
+      <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Huawei · Jan 2026</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;"><strong>83,916</strong>-sample CoT corpus mixing real AscendC operators, doc-derived reasoning, and general code. Apache-2.0 on Hugging Face.</p>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top: 12px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
+    Shape beats size: operator coverage, controlled difficulty, and a decontamination check that catches near-duplicates of the eval.
+  </p>
+</div>
+
+<!-- ============================================================
+     23 · New specialists
+============================================================ -->
+<div class="slide" data-slide="22" data-section="llm">
+  <div class="section-marker-inline anim">04.2 — the specialists</div>
+  <h2 class="anim">Mid-size models <span class="accent">beat frontier</span> on kernels</h2>
+  <div class="zoo" style="grid-template-columns: 1fr 1fr;">
+    <div class="ref-card anim anim-d1">
+      <div class="name">CUDA Agent</div>
+      <div class="who">Tsinghua AIR + ByteDance · Mar 2026 · ICLR 2026 oral</div>
+      <div class="blurb">98.8% pass / 96.8% faster overall. <span class="highlight">100% / 100% / 92%</span> faster-than-<code>torch.compile</code> on L1/L2/L3.</div>
+    </div>
+    <div class="ref-card anim anim-d1 amber">
+      <div class="name">CUDA-L2</div>
+      <div class="who">DeepReinforce · Dec 2025</div>
+      <div class="blurb">Specialized to HGEMM. <span class="highlight">Surpasses cuBLAS / cuBLASLt</span> by 11.4% offline, 15.9% server. Open code on A100 / H100 / 3090.</div>
+    </div>
+    <div class="ref-card anim anim-d2 blue">
+      <div class="name">Dr. Kernel-14B</div>
+      <div class="who">HKUST + Sea AI Lab · Feb 2026</div>
+      <div class="blurb">Built in <strong>KernelGYM</strong>. TRLOO + profiling rewards. Competitive with Claude-4.5-Sonnet on KernelBench.</div>
+    </div>
+    <div class="ref-card anim anim-d2 purple">
+      <div class="name">QiMeng-Kernel</div>
+      <div class="who">Chinese Academy of Sciences · AAAI 2026</div>
+      <div class="blurb">Macro-Thinking + Micro-Coding split. Small RL'd LLM picks strategy; general LLM implements. ~100% L1-2, ~70% L3.</div>
+    </div>
+  </div>
+  <div class="slide-ref">arXiv 2602.24286 · 2512.02551 · 2602.05885 · 2511.20100 · AAAI / ICLR / NeurIPS DL4Code 2026 all accept kernel-gen work.</div>
+</div>
+
+<!-- ============================================================
+     24 · DICE
+============================================================ -->
+<div class="slide" data-slide="23" data-section="llm">
+  <div class="section-marker-inline anim">04.3 — DICE</div>
+  <h2 class="anim">Diffusion enters the chat</h2>
+  <div class="split equal" style="margin-top: 8px;">
+    <div>
+      <ul>
+        <li class="anim anim-d1"><strong>DICE</strong> (Feb 2026): the first <span class="highlight">diffusion LLM</span> for kernel generation.</li>
+        <li class="anim anim-d2">Two-phase RL: an infilling stage on partial kernels, then end-to-end. Three scales (1.7B / 4B / 8B).</li>
+        <li class="anim anim-d3">Beats AR baselines <em>at the same scale</em>. Non-autoregressive kernel gen isn't a curiosity anymore.</li>
+        <li class="anim anim-d4">Kernels have <span class="highlight">structure</span> diffusion exploits well — repeated tile patterns, parallel reductions, symmetric loops.</li>
+      </ul>
+    </div>
+    <div class="anim anim-d3">
+      <div class="card tagged purple" style="background: var(--bg-card);">
+        <div style="font-size: 10px; color: var(--purple); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// architecture takeaway</div>
+        <p style="font-size: clamp(12px, 1.15vw, 15px); margin: 0;">If your generation target has strong local structure and parallel substructure, diffusion may outperform AR — even at smaller scales.</p>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin-top: 10px; color: var(--text-muted);">Open question: does this generalize to other systems-code domains (compilers, schedulers, layout selection)?</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-ref">Bai et al. <em>DICE: A Diffusion LLM for CUDA Kernel Generation</em>, <a href="https://arxiv.org/abs/2602.11715" target="_blank">arXiv:2602.11715</a>, Feb 2026.</div>
+</div>
+
+<!-- ============================================================
+     25 · Section V header — HW4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="24" data-section="hw">
+  <div class="section-tag anim">SECTION 05 / 06 · HW4Kernel</div>
+  <h2 class="anim anim-d1">No longer <span class="accent">CUDA-only</span>.</h2>
+  <p class="section-sub anim anim-d2">The biggest wins are showing up on stacks where humans have spent the least time tuning.</p>
+  <div class="domain-map anim anim-d3" data-active="5"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 05 / 06 — HW4Kernel</span>
+    <span>8 hardware platforms · 5 commercial entrants</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     26 · Hardware grid
+============================================================ -->
+<div class="slide" data-slide="25" data-section="hw">
+  <div class="section-marker-inline anim">05.1 — hardware diversification</div>
+  <h2 class="anim">Eight stacks · five companies</h2>
+  <div class="hw-grid">
+    <div class="hw-item anim anim-d1">
+      <div class="vendor">Huawei</div>
+      <div class="platform">Ascend NPU</div>
+      <div class="systems">AscendKernelGen · AscendOptimizer · AscendCraft · AKG</div>
+    </div>
+    <div class="hw-item anim anim-d1">
+      <div class="vendor">AWS</div>
+      <div class="platform">Trainium NKI</div>
+      <div class="systems">AccelOpt + NKIBench · 49→61% peak throughput</div>
+    </div>
+    <div class="hw-item anim anim-d2">
+      <div class="vendor">Meta</div>
+      <div class="platform">MTIA</div>
+      <div class="systems">TritorX (481 ATen ops) · KernelEvolve in production</div>
+    </div>
+    <div class="hw-item anim anim-d2">
+      <div class="vendor">AMD</div>
+      <div class="platform">MI300 / MI355</div>
+      <div class="systems">GEAK-Triton v2 · GEAK-HIP · ARGUS · Kernel-Smith-MACA</div>
+    </div>
+    <div class="hw-item anim anim-d3">
+      <div class="vendor">Apple</div>
+      <div class="platform">Metal / MLX</div>
+      <div class="systems">KForge cross-platform · ZMLX</div>
+    </div>
+    <div class="hw-item anim anim-d3">
+      <div class="vendor">Google</div>
+      <div class="platform">TPU / Pallas</div>
+      <div class="systems">MultiKernelBench v2 · KForge · vLLM TPU team</div>
+    </div>
+    <div class="hw-item anim anim-d4">
+      <div class="vendor">Cross-vendor</div>
+      <div class="platform">SYCL</div>
+      <div class="systems">KernelFoundry · MAP-Elites QD search</div>
+    </div>
+    <div class="hw-item anim anim-d4">
+      <div class="vendor">Emerging</div>
+      <div class="platform">Custom ISAs</div>
+      <div class="systems">KernelCraft · PLENA / AMD NPU / Coral</div>
+    </div>
+  </div>
+  <p class="anim anim-d5" style="margin-top: 12px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
+    Commercial: <strong>Standard Kernel</strong> ($20M seed, Mar 2026), RightNow AI's AutoKernel, Gimlet Labs' kforge, DeepReinforce, Makora.
+  </p>
+</div>
+
+<!-- ============================================================
+     27 · Section VI header — Open Frontier
+============================================================ -->
+<div class="slide section-header" data-slide="26" data-section="open">
+  <div class="section-tag anim">SECTION 06 / 06 · Open Frontier</div>
+  <h2 class="anim anim-d1">What's <span class="amber">still hard</span>.</h2>
+  <p class="section-sub anim anim-d2">Three problems I'd rather have a room of systems people argue about <em>than try to settle myself.</em></p>
+  <div class="domain-map anim anim-d3" data-active="6"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 06 / 06 — Open Frontier</span>
+    <span>3 open problems → leave with ideas</span>
+  </div>
+</div>
+
+<!-- ============================================================
+     28 · Right abstractions
+============================================================ -->
+<div class="slide" data-slide="27" data-section="open">
+  <div class="section-marker-inline anim">06.1 — abstractions</div>
+  <h2 class="anim">Are we generating in the <span class="amber">wrong language</span>?</h2>
+  <div class="split equal" style="margin-top: 8px;">
+    <div>
+      <ul>
+        <li class="anim anim-d1">Most systems still target <span class="highlight">raw CUDA / Triton</span>. Triton has bank-conflict issues and is often stale on the latest hardware.</li>
+        <li class="anim anim-d2">Training corpora over-index on whatever's <em>available</em> — and a lot of available CUDA on GitHub is bad CUDA.</li>
+        <li class="anim anim-d3">2026 winners point higher up the stack: <strong>CuTe</strong>, <strong>PTX</strong>, invariant-guided IRs, "Unified Sketch" representations.</li>
+        <li class="anim anim-d4">Real question: <span class="highlight">should we design DSLs <em>for LLMs</em>?</span> The right abstraction for a compiler-team is not the right abstraction for a model.</li>
+      </ul>
+    </div>
+    <div class="anim anim-d3">
+      <div class="card tagged amber" style="background: var(--bg-card);">
+        <div style="font-size: 10px; color: var(--amber); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// pointing higher in 2026</div>
+        <ul style="font-size: clamp(11px, 1.05vw, 14px);">
+          <li><strong>CuTeGen</strong> — first CuTe-DSL agent <span style="color: var(--text-muted);">(U. Toronto + Standard Kernel)</span></li>
+          <li><strong>ARGUS</strong> — DSL + invariants + RL planner on MI300X</li>
+          <li><strong>Standard Kernel</strong> — PTX-layer hybrid blending Triton, TileLang, ThunderKittens, CUTLASS</li>
+          <li><strong>AKG / AscendCraft</strong> — Unified Sketch IR across DSLs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     29 · Non-stationary
+============================================================ -->
+<div class="slide" data-slide="28" data-section="open">
+  <div class="section-marker-inline anim">06.2 — non-stationarity</div>
+  <h2 class="anim">The <span class="amber">target keeps moving</span></h2>
+  <ul style="margin-top: 8px;">
+    <li class="anim anim-d1">The kernels we care about <em>today</em> — single-GPU attention, GEMM, layernorm — are not the kernels that will dominate in <strong>6–12 months</strong>.</li>
+    <li class="anim anim-d2">Already on the horizon: <span class="highlight">multi-GPU</span> kernels, MoE routing, sparse attention, speculative decoding, KV-cache compression, quantized attention.</li>
+    <li class="anim anim-d3">"Solving KernelBench" is not the same as "solving kernel generation." The benchmark is a snapshot of an industry that re-prioritizes every release cycle.</li>
+    <li class="anim anim-d4">Implication: we may need <span class="highlight-amber">rolling benchmarks</span> that retire and replace tasks as the field re-prioritizes.</li>
+  </ul>
+  <blockquote class="anim anim-d4" style="margin-top: 14px;">
+    What does it even <em>mean</em> for an automatic kernel-generation system to be "good"<br>when half its training distribution will be obsolete in a year?
+  </blockquote>
+</div>
+
+<!-- ============================================================
+     30 · Architecture search
+============================================================ -->
+<div class="slide" data-slide="29" data-section="open">
+  <div class="section-marker-inline anim">06.3 — kernel gen ≅ arch search</div>
+  <h2 class="anim">Kernel gen <em>is</em> architecture search</h2>
+  <div class="split right-text" style="margin-top: 8px;">
+    <div class="anim anim-d1">
+      <img class="fig" src="kg-gru.png" alt="GRU vs LSTM" style="max-height: 42vh;">
+      <p class="fig-caption">— architecture choices and kernel choices are entangled</p>
+    </div>
+    <div>
+      <ul>
+        <li class="anim anim-d2"><strong>Mamba, RWKV, gated linear attention</strong>: the wall-clock speedup is in the <em>architecture</em>, not the implementation.</li>
+        <li class="anim anim-d3">If we get really good at automatic kernels, the question shifts: <span class="highlight">what arch <em>should</em> we run, given what we can compile?</span></li>
+        <li class="anim anim-d4">For known architectures: kernel gen at PTX or IR is a search over assembly variants. Closer to <em>superoptimization</em> than to software engineering.</li>
+        <li class="anim anim-d5">For new architectures: <strong>hardware-first</strong> models, designed jointly with the kernels they'd compile to. Plausibly where this actually goes.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     31 · Discussion: where to spend compute
+============================================================ -->
+<div class="slide" data-slide="30" data-section="closing" style="justify-content: center;">
+  <div style="max-width: 1080px; margin: 0 auto;">
+    <div class="preamble anim" style="justify-content: center;">
+      <span class="tag amber">DISCUSSION</span>
+    </div>
+    <h1 class="anim anim-d1" style="text-align: center; font-size: clamp(34px, 5vw, 72px); margin-bottom: 20px;">Where would <em style="color: var(--amber); font-style: italic; font-weight: 500;">you</em><br>spend the compute?</h1>
+    <div class="card-grid cols-2 anim anim-d2" style="max-width: 920px; margin: 0 auto;">
+      <div class="card tagged">
+        <h3 class="accent" style="font-size: clamp(13px, 1.25vw, 17px);">[A] Synthesize</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 14px); color: var(--text-dim);">Generate broader operator coverage with synthetic curricula — scale the training distribution.</p>
+      </div>
+      <div class="card tagged blue">
+        <h3 class="blue" style="font-size: clamp(13px, 1.25vw, 17px);">[B] Post-train</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 14px); color: var(--text-dim);">RL with execution-grounded rewards inside hardened environments.</p>
+      </div>
+      <div class="card tagged amber">
+        <h3 class="amber" style="font-size: clamp(13px, 1.25vw, 17px);">[C] Inference-time scale</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 14px); color: var(--text-dim);">Search at decode — agentic loops, evolution, memory — then post-train on the search traces.</p>
+      </div>
+      <div class="card tagged purple">
+        <h3 class="purple" style="font-size: clamp(13px, 1.25vw, 17px);">[D] Teach the profiler</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 14px); color: var(--text-dim);">Train the model to use NCU well. Make profiler calls cheap and fast enough to be in the inner loop.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     32 · Hackathon hook
+============================================================ -->
+<div class="slide" data-slide="31" data-section="closing">
+  <div class="section-marker-inline anim">what's next for this group</div>
+  <h2 class="anim">What's next: a May 15 hackathon</h2>
+  <div class="split right-text" style="margin-top: 8px;">
+    <div>
+      <div class="preamble anim anim-d1" style="margin-bottom: 14px;">
+        <span class="tag">GPU MODE × OpenAI Codex</span>
+      </div>
+      <h3 class="anim anim-d2 accent" style="font-size: clamp(20px, 2.2vw, 30px);">Apple Metal kernel hackathon</h3>
+      <ul style="margin-top: 8px;">
+        <li class="anim anim-d3"><strong>May 15.</strong> Beginner-friendly. Bring yourself.</li>
+        <li class="anim anim-d4">Use Codex to build &amp; optimize Metal kernels for local inference on Apple Silicon.</li>
+        <li class="anim anim-d5">Infra from <strong>GPU MODE</strong>, credits from <strong>OpenAI</strong>. Submissions through GPU MODE.</li>
+        <li class="anim anim-d5">We'll cover the basics — PyTorch ↔ kernel integration, profilers, memory- vs compute-bound algorithms, how to think about the optimization space.</li>
+      </ul>
+    </div>
+    <div class="anim anim-d2">
+      <div class="card tagged amber" style="background: linear-gradient(160deg, var(--bg-card) 0%, var(--amber-soft) 200%); padding: 22px;">
+        <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.18em; text-transform: uppercase;">Toronto ML Systems Group · Vol. 02</div>
+        <h3 style="font-size: clamp(28px, 3vw, 44px); color: var(--amber); margin: 8px 0; font-weight: 800; letter-spacing: -0.03em;">2026.05.15</h3>
+        <p style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); line-height: 1.5;">Metal kernels on the GPU sitting in your laptop. No prior CUDA experience needed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     33 · Thanks
+============================================================ -->
+<div class="slide title-slide" data-slide="32" data-section="closing">
+  <div style="text-align: left; max-width: 940px; margin: 0 auto;">
+    <h1 class="anim" style="font-size: clamp(56px, 9vw, 144px);">$ ./<span class="accent">thanks</span><span class="cursor">_</span></h1>
+    <p class="lead anim anim-d1" style="margin-top: 12px;">Discussion, disagreements, and "you forgot system X" all welcome.</p>
+    <div class="meta anim anim-d2" style="margin-top: 24px;">
+      <span><b>Shashank Shekhar</b></span>
+      <span class="arrow">→</span>
+      <span><a href="https://shashankshekhar.com" target="_blank">shashankshekhar.com</a></span>
+      <span class="arrow">→</span>
+      <span>May 2026</span>
+    </div>
+    <p class="anim anim-d3" style="margin-top: 28px; font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; line-height: 1.6;">
+      KernelBench · Ouyang et al. 2024, figures used with attribution<br>
+      Post-Oct-2025 catalog: <em>Towards Automated Kernel Generation in the Era of LLMs</em> (arXiv 2601.15727)
+    </p>
+  </div>
+</div>
+
+</div><!-- /.deck -->
+
+<script>
+// ===========================================================================
+// DOMAIN MAP — populated from JS so we don't repeat 7 copies of the markup
+// ===========================================================================
+const AREAS = [
+  { num: '01', label: 'Benchmarks',   name: 'Bench4Kernel',   gloss: 'KernelBench → NPU · Trainium · Metal · MTIA. Hardened harnesses.' },
+  { num: '02', label: 'Verification', name: 'Eval4Kernel',    gloss: 'Reward hacking · timing fidelity · what "correct" means.' },
+  { num: '03', label: 'Agents',       name: 'Agent4Kernel',   gloss: 'Profiler loops · search · multi-turn memory.' },
+  { num: '04', label: 'Specialists',  name: 'LLM4Kernel',     gloss: 'Synthetic data + RL → mid-size models that beat frontier.' },
+  { num: '05', label: 'Hardware',     name: 'HW4Kernel',      gloss: 'Ascend · MTIA · MI300 · Metal · Trainium · Pallas.' },
+  { num: '06', label: 'Frontier',     name: 'Open Questions', gloss: 'Abstractions · non-stationarity · arch search.' },
+];
+
+// --- radial domain map (SVG) -----------------------------------------------
+function polar(r, deg) {
+  // 0° = top, increases clockwise
+  const a = (deg - 90) * Math.PI / 180;
+  return [r * Math.cos(a), r * Math.sin(a)];
+}
+
+function arcPath(rIn, rOut, deg1, deg2) {
+  const a1 = (deg1 - 90) * Math.PI / 180;
+  const a2 = (deg2 - 90) * Math.PI / 180;
+  const x1 = (rIn  * Math.cos(a1)).toFixed(2), y1 = (rIn  * Math.sin(a1)).toFixed(2);
+  const x2 = (rOut * Math.cos(a1)).toFixed(2), y2 = (rOut * Math.sin(a1)).toFixed(2);
+  const x3 = (rOut * Math.cos(a2)).toFixed(2), y3 = (rOut * Math.sin(a2)).toFixed(2);
+  const x4 = (rIn  * Math.cos(a2)).toFixed(2), y4 = (rIn  * Math.sin(a2)).toFixed(2);
+  const large = (deg2 - deg1) > 180 ? 1 : 0;
+  return `M ${x1},${y1} L ${x2},${y2} A ${rOut},${rOut} 0 ${large} 1 ${x3},${y3} L ${x4},${y4} A ${rIn},${rIn} 0 ${large} 0 ${x1},${y1} Z`;
+}
+
+document.querySelectorAll('.domain-map').forEach(el => {
+  const active = parseInt(el.dataset.active) || 0;
+  const rIn = 92, rOut = 148;
+  const numR = (rIn + rOut) / 2;
+  const labelR = rOut + 28;
+  const gap = 2.2;
+
+  let svg = `<svg viewBox="-330 -230 660 460" class="domain-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Domain map of automatic kernel generation">`;
+
+  // decorative outer dashed ring (always present)
+  svg += `<circle class="dash-ring" cx="0" cy="0" r="${rOut + 12}" />`;
+
+  // active spoke from hub to ring (drawn behind arcs)
+  if (active > 0) {
+    const midDeg = (active - 1) * 60 + 30;
+    const [sx, sy] = polar(rIn - 18, midDeg);
+    const [ex, ey] = polar(rIn - 1,  midDeg);
+    svg += `<line class="spoke" x1="${sx.toFixed(2)}" y1="${sy.toFixed(2)}" x2="${ex.toFixed(2)}" y2="${ey.toFixed(2)}" />`;
+  }
+
+  // arcs
+  AREAS.forEach((area, i) => {
+    const d1 = i * 60 + gap;
+    const d2 = (i + 1) * 60 - gap;
+    const isActive = active === i + 1;
+    svg += `<path d="${arcPath(rIn, rOut, d1, d2)}" class="arc${isActive ? ' active' : ''}" />`;
+  });
+
+  // arc numbers (inside the ring)
+  AREAS.forEach((area, i) => {
+    const midDeg = i * 60 + 30;
+    const [x, y] = polar(numR, midDeg);
+    const isActive = active === i + 1;
+    svg += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" class="arc-num${isActive ? ' active' : ''}" text-anchor="middle" dominant-baseline="middle">${area.num}</text>`;
+  });
+
+  // outer labels (system name + category)
+  AREAS.forEach((area, i) => {
+    const midDeg = i * 60 + 30;
+    const [lx, ly] = polar(labelR, midDeg);
+    const isActive = active === i + 1;
+    let anchor = 'middle', dx = 0;
+    if      (midDeg > 5   && midDeg < 175) { anchor = 'start'; dx = 4; }
+    else if (midDeg > 185 && midDeg < 355) { anchor = 'end';   dx = -4; }
+    const x = (lx + dx).toFixed(2);
+    svg += `<text x="${x}" y="${(ly - 4).toFixed(2)}" class="arc-name${isActive ? ' active' : ''}" text-anchor="${anchor}">${area.name}</text>`;
+    svg += `<text x="${x}" y="${(ly + 12).toFixed(2)}" class="arc-meta${isActive ? ' active' : ''}" text-anchor="${anchor}">${area.label.toUpperCase()}</text>`;
+  });
+
+  // active "NOW" marker — sits between spoke and arc, outside hub
+  if (active > 0) {
+    const midDeg = (active - 1) * 60 + 30;
+    const [mx, my] = polar(rIn + 6, midDeg);
+    let anchor = 'middle', dx = 0, dy = 4;
+    if      (midDeg > 5   && midDeg < 175) { anchor = 'start'; dx = 6; }
+    else if (midDeg > 185 && midDeg < 355) { anchor = 'end';   dx = -6; }
+    // Skip the marker — the green-glow arc + spoke is enough indication
+    // (kept here intentionally minimal; uncomment to enable a "▸ NOW" tag)
+    // svg += `<text x="${(mx + dx).toFixed(2)}" y="${(my + dy).toFixed(2)}" class="active-marker" text-anchor="${anchor}">▸ NOW</text>`;
+  }
+
+  // hub — center "AI Kernels"
+  svg += `<circle class="hub" cx="0" cy="0" r="${rIn - 14}" />`;
+  svg += `<circle class="hub-inner-ring" cx="0" cy="0" r="${rIn - 22}" />`;
+  // svg += `<text class="hub-text small" x="0" y="-22" text-anchor="middle" dominant-baseline="middle">// CORE</text>`;
+  svg += `<text class="hub-text large" x="0" y="-2" text-anchor="middle" dominant-baseline="middle">AI</text>`;
+  svg += `<text class="hub-text large" x="0" y="20" text-anchor="middle" dominant-baseline="middle">Kernels</text>`;
+
+  svg += `</svg>`;
+  el.innerHTML = svg;
+});
+
+// ===========================================================================
+// THEME TOGGLE
+// ===========================================================================
+let currentTheme = new URLSearchParams(window.location.search).get('theme') || localStorage.getItem('kg-theme') || 'dark';
+document.documentElement.setAttribute('data-theme', currentTheme);
+
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  localStorage.setItem('kg-theme', currentTheme);
+}
+document.getElementById('theme-toggle').addEventListener('click', e => {
+  e.stopPropagation();
+  toggleTheme();
+});
+
+// ===========================================================================
+// KATEX — fast_p formula
+// ===========================================================================
+function renderMath() {
+  if (typeof katex === 'undefined') { setTimeout(renderMath, 100); return; }
+  const target = document.getElementById('math-fastp');
+  if (target) {
+    katex.render(
+      "\\text{fast}_p \\;=\\; \\frac{1}{N}\\sum_{i=1}^{N} \\mathbb{1}\\!\\left[\\,\\text{correct}_i \\;\\wedge\\; \\frac{t_{\\text{ref}}^{(i)}}{t_{\\text{gen}}^{(i)}} > p\\,\\right]",
+      target,
+      { throwOnError: false, displayMode: true }
+    );
+  }
+}
+renderMath();
+
+// ===========================================================================
+// SLIDE ENGINE
+// ===========================================================================
+const isIframe = window.self !== window.top;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let current = 0;
+
+const SECTION_LABELS = {
+  setup:   { num: '─',  name: 'setup' },
+  kb:      { num: 'II',  name: 'kernelbench' },
+  reveal:  { num: 'III', name: 'state of the field' },
+  bench:   { num: '01',  name: 'bench4kernel' },
+  eval:    { num: '02',  name: 'eval4kernel' },
+  agent:   { num: '03',  name: 'agent4kernel' },
+  llm:     { num: '04',  name: 'llm4kernel' },
+  hw:      { num: '05',  name: 'hw4kernel' },
+  open:    { num: '06',  name: 'open frontier' },
+  closing: { num: '─',  name: 'closing' },
+};
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function updateChrome() {
+  const slide = slides[current];
+  const section = slide.dataset.section || 'setup';
+  const lbl = SECTION_LABELS[section];
+  document.querySelector('#topbar .section-marker').innerHTML =
+    `<span class="num">${lbl.num}</span> ${lbl.name}`;
+  document.querySelector('#topbar .counter').innerHTML =
+    `<span class="cur">${pad(current + 1)}</span> / ${pad(totalSlides)}`;
+  document.getElementById('progress').style.width =
+    ((current / (totalSlides - 1)) * 100) + '%';
+}
+
+function goTo(n) {
+  if (n < 0 || n >= totalSlides || n === current) return;
+  slides[current].classList.remove('active');
+  slides[current].classList.add('exiting');
+  const prev = current;
+  current = n;
+  slides[current].classList.add('active');
+  setTimeout(() => slides[prev].classList.remove('exiting'), 400);
+  slides[current].scrollTop = 0;
+  updateChrome();
+  if (history.replaceState) history.replaceState(null, '', '#' + current);
+}
+
+document.addEventListener('keydown', e => {
+  if (isIframe) return;
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   { e.preventDefault(); goTo(current - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End')  { e.preventDefault(); goTo(totalSlides - 1); }
+  if (e.key === 't' || e.key === 'T') { toggleTheme(); }
+});
+
+document.addEventListener('click', e => {
+  if (isIframe) return;
+  if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) return;
+  const x = e.clientX / window.innerWidth;
+  if (x < 0.3) goTo(current - 1);
+  else goTo(current + 1);
+});
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { if (!isIframe) touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  if (isIframe) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) {
+    if (dx < 0) goTo(current + 1);
+    else goTo(current - 1);
+  }
+});
+
+function readHash() {
+  const h = parseInt(location.hash.replace('#', ''));
+  if (!isNaN(h) && h >= 0 && h < totalSlides) return h;
+  return 0;
+}
+window.addEventListener('hashchange', () => goTo(readHash()));
+
+// Init
+current = readHash();
+slides[current].classList.add('active');
+updateChrome();
+
+// Iframe embed
+if (isIframe) {
+  document.documentElement.classList.add('in-iframe');
+  ['topbar','progress','nav-hint','site-logo','theme-toggle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'theme-change') {
+      const newTheme = e.data.theme;
+      if (newTheme !== currentTheme) {
+        currentTheme = newTheme;
+        document.documentElement.setAttribute('data-theme', currentTheme);
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
