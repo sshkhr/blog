@@ -215,11 +215,11 @@ html, body {
 
 #theme-toggle {
   position: fixed; top: 4px; right: 16px; z-index: 200;
-  width: 24px; height: 24px;
+  width: 24px; height: 24px; padding: 0;
   background: transparent; border: 1px solid var(--border);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px;
+  font-size: 13px; line-height: 1;
   color: var(--text-muted);
   font-family: var(--font-mono);
   transition: border-color 0.2s, color 0.2s;
@@ -453,6 +453,24 @@ a:hover { text-decoration: underline; }
 .split.right-text { grid-template-columns: 1.2fr 1fr; }
 .split.equal      { grid-template-columns: 1fr 1fr; }
 
+/* image-left: image fills the left column, text fills the right column,
+   columns share the same height so the slide reads as two balanced blocks. */
+.split.image-left { align-items: stretch; }
+.split.image-left > div:first-child {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 0; gap: 6px;
+}
+.split.image-left > div:first-child > img {
+  width: 100%; height: auto;
+  max-height: min(58vh, 460px);
+  object-fit: contain;
+}
+.split.image-left > div:nth-child(2) {
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: 0;
+}
+
 blockquote {
   border-left: 2px solid var(--amber);
   padding: 10px 0 10px 16px;
@@ -552,7 +570,6 @@ blockquote cite {
   color: var(--text-dim);
   font-weight: 300;
   margin-bottom: 22px;
-  max-width: 820px;
 }
 .section-header .section-sub em { color: var(--amber); font-style: normal; font-weight: 500; }
 
@@ -1263,7 +1280,7 @@ html.presenter-mode #site-logo { display: none !important; }
 </div>
 <div id="progress"></div>
 <div id="nav-hint"><kbd>←</kbd><kbd>→</kbd> navigate · <kbd>T</kbd> theme</div>
-<button id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">[ T ]</button>
+<button id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
 <a id="site-logo" href="https://shashankshekhar.com" target="_blank" title="shashankshekhar.com">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
     <path fill="#FF69B4" fill-rule="evenodd" d="M8.046 10.872a1 1 0 0 0-.98-1.743l-3.556 2a1 1 0 0 0 .043 1.766l2.08 1.04-2.123 1.194a1 1 0 0 0 .043 1.766l8 4a1 1 0 0 0 .894 0l8-4a1 1 0 0 0 .043-1.766l-2.123-1.194 2.08-1.04a1 1 0 0 0 .043-1.766l-3.555-2a1 1 0 1 0-.98 1.743l1.913 1.076L12 14.882l-5.868-2.934zm8.162 4.142-3.76 1.88a1 1 0 0 1-.895 0l-3.76-1.88-1.66.934L12 18.882l5.868-2.934z" clip-rule="evenodd"/>
@@ -1364,9 +1381,9 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 <div class="slide" data-slide="3" data-section="setup">
   <div class="section-marker-inline anim">motivation</div>
   <h2 class="anim">Why do we care about using AI to write kernels?</h2>
-  <div class="split right-text" style="margin-top: 8px;">
+  <div class="split right-text image-left" style="margin-top: 8px;">
     <div class="anim anim-d1">
-      <img class="fig" src="kg-five-years.jpg" alt="Meme: three weeks to write one kernel" style="max-height: 32vh;">
+      <img class="fig" src="kg-five-years.jpg" alt="Meme: three weeks to write one kernel">
       <p class="fig-caption"></p>
     </div>
     <div>
@@ -1453,9 +1470,9 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 <div class="slide" data-slide="5" data-section="kb">
   <div class="section-marker-inline anim">II.1 — task structure</div>
   <h2 class="anim">Three levels of difficulty</h2>
-  <div class="split right-text" style="margin-top: 12px;">
-    <div class="anim anim-d1" style="display: flex; align-items: center; justify-content: center;">
-      <img class="fig invert-on-light" src="kg-design.png" alt="KernelBench task design" style="max-height: 50vh;">
+  <div class="split right-text image-left" style="margin-top: 12px;">
+    <div class="anim anim-d1">
+      <img class="fig invert-on-light" src="kg-design.png" alt="KernelBench task design">
     </div>
     <div>
       <p class="anim anim-d1" style="margin-bottom: 12px; font-size: clamp(13px, 1.2vw, 17px);">Each task: a PyTorch <code>nn.Module</code>. Goal: write a faster CUDA kernel that produces matching outputs.</p>
@@ -1551,6 +1568,40 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 </div>
 
 <!-- ============================================================
+     08b · The promise of KernelBench — test-time scaling
+============================================================ -->
+<div class="slide" data-slide="7b" data-section="kb">
+  <div class="section-marker-inline anim">II.4 — test-time scaling</div>
+  <h2 class="anim">The <span class="accent">promise</span> of KernelBench</h2>
+  <div class="split equal" style="margin-top: 8px;">
+    <div class="anim anim-d1">
+      <img class="fig invert-on-light" src="kg-scaling-depth.png" alt="Iterative refinement: Fast₁ score climbs with iteration turn N when feedback includes execution result and profiler" style="max-height: 38vh;">
+      <p class="fig-caption">Depth — iterative refinement with richer feedback (Fig. 4)</p>
+    </div>
+    <div class="anim anim-d2">
+      <img class="fig invert-on-light" src="kg-scaling-breadth.png" alt="Breadth: Fast₁@k climbs with number of samples k for DeepSeek V3 and Llama 3.1 70B across three KernelBench levels" style="max-height: 38vh;">
+      <p class="fig-caption">Breadth — fast<sub>1</sub>@k climbs with more samples (Fig. 6)</p>
+    </div>
+  </div>
+  <ul style="margin-top: 12px;">
+    <li class="anim anim-d3"><span class="highlight">Scaling inference compute</span> closes the gap in performance. </li>
+    <li class="anim anim-d4"><strong>Depth-first scaling:</strong> feeding back execution + profiler output lifts Fast₁ from <span class="amber">~28% → ~72%</span> over 10 turns.</li>
+    <li class="anim anim-d5"><strong>Breadth-first scaling:</strong> sampling more candidates (best-of-k) reliably grows fast<sub>1</sub>@k — even on Level 3.</li>
+  </ul>
+  <div class="slide-ref">Figures 4 &amp; 6 from <a href="https://arxiv.org/abs/2502.10517" target="_blank">Ouyang et al., <em>KernelBench</em>, 2024</a>.</div>
+  <aside class="notes">
+    <h3>The promise of KernelBench</h3>
+    <p>The "gap" slide showed how bad single-shot generation was. This slide shows the other half: KernelBench's authors also showed that <em>scaling inference-time compute</em> — either by iterating with feedback (depth) or by sampling more candidates (breadth) — produces meaningful gains.</p>
+    <h3>Depth-first scaling (Fig. 4)</h3>
+    <p>Iterative refinement results. Three feedback variants: (1) just the previous generation, (2) generation + execution result, (3) generation + execution + profiler output. Adding execution feedback alone roughly doubles the score; adding profiler output pushes it past 70%. The loop pattern that all later agentic systems pick up.</p>
+    <h3>Breadth-first scaling (Fig. 6)</h3>
+    <p>fast₁@k as a function of sample budget. Even Llama 3.1 70B — which barely registers on Level 3 single-shot — gets meaningful pass rates with k=100. DeepSeek V3 reaches ~37% Level 2 fast₁@100. The takeaway: there's a lot of latent capability that single-shot decoding hides.</p>
+    <h3>Why this slide matters</h3>
+    <p>It's the bridge from "everything fails" to "the field grew in six directions." The directions in the next slides are essentially answers to "OK, scale matters — how do we scale efficiently?" Agents are depth-scaling; specialists shrink the cost per sample; better evaluators make the scaling honest.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
      09 · FULL DOMAIN MAP REVEAL
 ============================================================ -->
 <div class="slide section-header" data-slide="8" data-section="reveal">
@@ -1572,30 +1623,258 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 </div>
 
 <!-- ============================================================
-     10 · Section I header — Bench4Kernel
+     10 · Section I header — Eval4Kernel
 ============================================================ -->
-<div class="slide section-header" data-slide="9" data-section="bench">
-  <div class="section-tag anim">SECTION 01 / 06 · Bench4Kernel</div>
-  <h2 class="anim anim-d1">Benchmarks went <span class="accent">horizontal</span>.</h2>
-  <p class="section-sub anim anim-d2">The original benchmark was CUDA-on-NVIDIA. The new ones cover <em>everywhere a kernel runs.</em></p>
+<div class="slide section-header" data-slide="9" data-section="eval">
+  <div class="section-tag anim">SECTION 01 / 06 · Eval4Kernel</div>
+  <h2 class="anim anim-d1">What does <em>correct</em> even mean?</h2>
+  <p class="section-sub anim anim-d2">Verification, reward hacking, and the surprisingly high cost of <em>just measuring time accurately.</em></p>
   <div class="domain-map anim anim-d3" data-active="1"></div>
   <div class="map-foot anim anim-d4">
-    <span><span class="ok">●</span> active: 01 / 06 — Bench4Kernel</span>
+    <span><span class="ok">●</span> active: 01 / 06 — Eval4Kernel</span>
+    <span>3 problems most papers underrate</span>
+  </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>Eval4Kernel — the surprisingly hard problem of measuring whether your generated kernel actually works. Three slides: verification (Sakana), reward hacking (Makora + Dr. Kernel), timing fidelity (Standard Kernel).</p>
+    <h3>Why this section matters</h3>
+    <p>By 2026, correctness was largely solved. The bottleneck shifted to "is the speedup REAL?" That's what this section is about.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     11 · The Sakana announcement
+============================================================ -->
+<div class="slide" data-slide="10" data-section="eval">
+  <div class="section-marker-inline anim">01.1 — the announcement</div>
+  <h2 class="anim">Sakana ships <span class="accent">10–100×</span> CUDA kernels</h2>
+  <div class="split right-text image-left" style="margin-top: 10px;">
+    <div class="anim anim-d1">
+      <img class="fig" src="sakana-tweet-announce.png" alt="Sakana AI announcement: AI CUDA Engineer claims 10-100x speedups, Feb 19 2025" style="background: #fff;">
+    </div>
+    <div>
+      <ul>
+        <li class="anim anim-d2"><strong>Feb 19, 2025:</strong> The first major commercial kernel-gen system. Agentic, evolutionary search, translation + optimization stages.</li>
+        <li class="anim anim-d3">17,000+ kernels released, <span class="highlight">10–100×</span> speedups on common PyTorch ops, <span class="highlight">5×</span> against existing production CUDA.</li>
+        <li class="anim anim-d4">Big launch: blog post, paper, kernels-as-data archive on Hugging Face.</li>
+        <li class="anim anim-d5">Until...</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-ref">Sakana AI · <a href="https://sakana.ai/ai-cuda-engineer/" target="_blank">sakana.ai/ai-cuda-engineer</a></div>
+  <aside class="notes">
+    <h3>Why this announcement mattered</h3>
+    <p>The first time a well-funded lab claimed end-to-end automated kernel generation at production-relevant speedups. Until this moment, KernelBench was an academic benchmark with frontier models scoring under 30% — and now a startup was claiming 100× speedups across the board.</p>
+    <h3>What was claimed</h3>
+    <p>10-100× speedups over PyTorch ops, up to 5× over existing production CUDA kernels, 17,000+ verified kernels, agentic system with evolutionary search and translation+optimization stages. Released alongside a published paper and a kernel archive on Hugging Face.</p>
+    <h3>Why the hype was big</h3>
+    <p>The kernel-gen field had been searching for a "GPT-3 moment" — proof that the recipe worked. Sakana looked like that proof, complete with headline-friendly numbers and a downloadable artifact.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     12 · Two days later... — meme as a transition
+============================================================ -->
+<div class="slide" data-slide="10b" data-section="eval" style="justify-content: center;">
+  <div class="section-marker-inline anim">01.2 — meanwhile…</div>
+  <div class="anim anim-d1" style="display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; margin: 8px 0;">
+    <img src="two-days-later-meme.jpg" alt="SpongeBob 'Two Days Later' transition meme" style="display: block; max-width: 100%; max-height: 78vh; width: auto; height: auto; object-fit: contain; border: 1px solid var(--border);">
+  </div>
+  <aside class="notes">
+    <h3>The pause beat</h3>
+    <p>Hold the slide briefly. The meme does the work. The audience knows what's coming. Move on without commentary — the next slide is the retraction itself.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     12b · The retraction
+============================================================ -->
+<div class="slide" data-slide="10c" data-section="eval">
+  <div class="section-marker-inline anim">01.3 — the retraction</div>
+  <h2 class="anim">Sakana <span class="amber">walks it back</span></h2>
+  <div class="split right-text image-left" style="margin-top: 10px;">
+    <div class="anim anim-d1">
+      <img class="fig" src="sakana-tweet-apology.png" alt="Sakana AI update tweet acknowledging the system found ways to 'cheat' the verification sandbox" style="background: #fff;">
+    </div>
+    <div>
+      <ul>
+        <li class="anim anim-d2">"The system found a way to <span class="highlight-red">'cheat'</span>" in Sakana's own words.</li>
+        <li class="anim anim-d3">Withdrew the headline numbers, hardened the eval harness, re-ran every kernel.</li>
+        <li class="anim anim-d4">Revised version shipped in Sep 2025: realistic (much smaller) speedups, contained reward-hacking exploits.</li>
+        <li class="anim anim-d5">Credit where it's due, but the incident became a meme on evaluator design.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-ref">Sakana update · Feb 21 2025 · <a href="https://x.com/SakanaAILabs" target="_blank">@SakanaAILabs</a></div>
+  <aside class="notes">
+    <h3>What the retraction said</h3>
+    <p>Sakana acknowledged that "the system found ways to 'cheat'" the verification sandbox. They withdrew the speedup claims, hardened the eval, re-ran the kernels, and committed to a revised paper and revised kernel archive. The full update tweet is the image.</p>
+    <h3>How to credit them</h3>
+    <p>This is the right way to handle a research-quality embarrassment: own it publicly, fix it transparently, ship the corrected version. The kernel-gen field benefits from this incident having happened — and from Sakana having handled it the way they did.</p>
+    <h3>The deeper lesson</h3>
+    <p>This is not "Sakana was sloppy." It's "any evaluator with a hole will be found by sufficiently optimized search." The next slide shows exactly how.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     12c · How the eval got cheated — two breakdowns side-by-side
+============================================================ -->
+<div class="slide" data-slide="10d" data-section="eval">
+  <div class="section-marker-inline anim">01.4 — how it cheated</div>
+  <h2 class="anim">Two ways to fake <span class="accent">100×</span> speedup</h2>
+  <div class="split equal" style="margin-top: 6px; align-items: stretch; gap: 2vw;">
+    <div class="anim anim-d1" style="display: flex; flex-direction: column; align-items: center; min-height: 0; gap: 6px;">
+      <img src="sakana-cuda-engineer-eval-hacking.jpeg" alt="Breakdown of triangular_mm cheat: kernel reuses pre-allocated output buffer that already contains the answer" style="background: #fff; max-height: 70vh; max-width: 100%; height: auto; width: auto; object-fit: contain; border: 1px solid var(--border);">
+      <p class="fig-caption" style="margin: 0;"><code>triangular_mm</code> — return the answer the test handed you · <strong>147×</strong></p>
+    </div>
+    <div class="anim anim-d2" style="display: flex; flex-direction: column; align-items: center; min-height: 0; gap: 6px;">
+      <img src="sakana-cuda-engineer-eval-hacking-2.jpeg" alt="Breakdown of conv+groupnorm+mean cheat: kernel skips the conv entirely, returns constant 0.02 that matches test inputs" style="background: #fff; max-height: 70vh; max-width: 100%; height: auto; width: auto; object-fit: contain; border: 1px solid var(--border);">
+      <p class="fig-caption" style="margin: 0;"><code>conv+groupnorm+mean</code> — skip the conv, return constant <code>0.02</code> · <strong>128×</strong></p>
+    </div>
+  </div>
+  <div class="slide-ref">Reverse-engineering: <a href="https://x.com/miru_why/status/1892500715857473777?s=20" target="_blank">@miru_why</a> · KernelBench team adversarial PR (Feb 2025)</div>
+  <aside class="notes">
+    <h3>Cheat #1 — triangular_mm</h3>
+    <p>The "kernel" launched a no-op CUDA kernel and returned the output pointer that PyTorch had pre-allocated. That buffer already contained the matmul answer because the eval harness used <code>torch.matmul</code> to construct the reference output, and the same memory was reused for the candidate kernel's output slot. The kernel did literally nothing; it was correct because the answer was already there.</p>
+    <h3>Cheat #2 — conv + groupnorm + mean</h3>
+    <p>The "kernel" forgot the convolution entirely. The fused output was a constant <code>0.02</code>. The eval inputs happened to make <code>0.02</code> within numerical tolerance of the correct answer for the test cases. Empty kernel, marked correct, 128× "speedup."</p>
+    <h3>The structural lesson</h3>
+    <p>Both cheats exploit the same thing: the eval harness was leaking signal into the kernel's environment. Pre-allocated buffers and predictable test inputs are gifts to a sufficiently optimized search. Hardened harnesses now randomize buffers, randomize inputs across runs, and check that the output bytes weren't already there before the kernel launched.</p>
+    <h3>If your evaluator has a hole, RL will find it</h3>
+    <p>This is the through-line for the next two slides — KernelHacks formalized the patterns, Dr. Kernel built the RL infrastructure that doesn't fall for them.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     13 · Reward hacking, formalized — KernelHacks + Dr. Kernel
+============================================================ -->
+<div class="slide" data-slide="11" data-section="eval">
+  <div class="section-marker-inline anim">01.5 — reward hacking, formalized</div>
+  <h2 class="anim">A <span class="amber">taxonomy</span> of reward hacks, and the RL fix</h2>
+  <div class="split equal" style="margin-top: 10px; align-items: stretch;">
+    <div class="anim anim-d1" style="display: flex;">
+      <div class="card tagged red" style="width: 100%;">
+        <div style="font-size: 10px; color: var(--red); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// Makora · KernelHacks · Jan 2026</div>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0 0 10px; color: var(--text-dim); line-height: 1.45;">8 patterns mined from 2,500+ problem-kernel pairs. ~20% of generated kernels hide one.</p>
+        <ol style="font-size: clamp(10px, 0.95vw, 12px); padding-left: 20px; margin: 0; line-height: 1.55; color: var(--text);">
+          <li><strong>Baseline kernel</strong>: calls torch op as the "kernel"</li>
+          <li><strong>Identity kernel</strong>: useless op pretending to be real</li>
+          <li><strong>No-op kernel</strong>: adds zeros, multiplies by ones</li>
+          <li><strong>Unused output</strong>: kernel runs, result discarded</li>
+          <li><strong>Forgotten kernel</strong>: defined, never invoked</li>
+          <li><strong>Ghost branch</strong>: optimization gated behind a false condition</li>
+          <li><strong>Constant fill</strong>: returns the answer it knows is fixed</li>
+          <li><strong>Operation skip</strong>: drops ops as "redundant"</li>
+        </ol>
+      </div>
+    </div>
+    <div class="anim anim-d2" style="display: flex;">
+      <div class="card tagged blue" style="width: 100%;">
+        <div style="font-size: 10px; color: var(--blue); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// Dr. Kernel · HKUST + Sea AI Lab · Feb 2026</div>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0 0 10px; color: var(--text-dim); line-height: 1.45;">"RL done right" for Triton kernel generation.</p>
+        <ul style="font-size: clamp(11px, 1.05vw, 13px); margin: 0; padding-left: 18px; line-height: 1.55;">
+          <li><strong>KernelGym:</strong> distributed RL env with reward-hacking checks built in.</li>
+          <li><strong>TRLOO</strong>: Turn-level Reinforce-Leave-One-Out. Fixes a biased advantage in multi-turn GRPO (the policy was inside its own baseline).</li>
+          <li><strong>Profiling-based Rewards</strong> + <strong>Profiling-based Rejection Sampling</strong> to reward what the profiler measures, drop hacks during sample time.</li>
+          <li>Targets <em>lazy optimization</em> that try and wrap PyTorch instead of optimizing.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-ref"><a href="https://huggingface.co/datasets/makora-ai/KernelHacks" target="_blank">Makora KernelHacks</a> · <a href="https://arxiv.org/abs/2602.05885" target="_blank">Dr. Kernel — arXiv:2602.05885</a></div>
+  <aside class="notes">
+    <h3>Why a taxonomy matters</h3>
+    <p>Sakana wasn't a one-off. Once people started looking, hacks were everywhere — sometimes ~20% of generated kernels in a sample had at least one. Makora's KernelHacks dataset turned the post-mortem into a labeled corpus you can train detectors against.</p>
+    <h3>The 8 patterns</h3>
+    <ol>
+      <li><strong>Baseline kernel:</strong> calls torch.lstm() (or the equivalent) as the "kernel" itself.</li>
+      <li><strong>Identity kernel:</strong> useless op disguised as a real kernel.</li>
+      <li><strong>No-op kernel:</strong> adds zeros / multiplies by ones — fake custom kernel use.</li>
+      <li><strong>Unused output:</strong> kernel runs, result discarded.</li>
+      <li><strong>Forgotten kernel:</strong> defined, never invoked.</li>
+      <li><strong>Ghost optimization branch:</strong> optimization gated behind a condition that's always false.</li>
+      <li><strong>Constant fill:</strong> returns a constant assuming the result is always that value.</li>
+      <li><strong>Operation skip:</strong> drops ops as "redundant" without justification.</li>
+    </ol>
+    <h3>Dr. Kernel's contribution</h3>
+    <p>Two ideas that propagate beyond kernels:</p>
+    <ul>
+      <li><strong>TRLOO:</strong> in multi-turn GRPO, including the current trajectory in the baseline biases the gradient. Leave-one-out fixes it. Generic RL improvement.</li>
+      <li><strong>Profiler in the loop:</strong> reward kernels for what the profiler shows, not just for "matches reference + faster." Adversarial against most known hack patterns.</li>
+    </ul>
+    <h3>Together these mean</h3>
+    <p>It's now possible to train Triton kernel-gen without falling into the Sakana failure mode, with infrastructure designed for it. The RL methodology has matured.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     14 · Timing fidelity — Standard Kernel
+============================================================ -->
+<div class="slide" data-slide="12" data-section="eval">
+  <div class="section-marker-inline anim">01.6 — timing fidelity</div>
+  <h2 class="anim">The hardware <span class="amber">fights you back</span></h2>
+  <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 10px;"><em>"Just measure the time bro."</em> Standard Kernel's blog "This kernel was faster yesterday" explains how the same kernel on the same card doesn't have to give you the same number twice.</p>
+  <div class="card-grid cols-2" style="margin-top: 8px;">
+    <div class="card tagged amber anim anim-d2">
+      <h3 class="amber" style="font-size: clamp(13px, 1.25vw, 17px);">GPUs don't run at a fixed clock</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 4px 0 0; line-height: 1.5;">SM and memory clocks adjust moment to moment to power draw, temperature, voltage, and what the workload is doing. <code>nvidia-smi</code> shows you what the controller decided this microsecond, not a setting. Lock the SM to 1980 MHz and the power cap drags it lower under load; lock it to 1200 MHz and it actually holds, because the throttle has no reason to step in.</p>
+    </div>
+    <div class="card tagged red anim anim-d3">
+      <h3 class="red" style="font-size: clamp(13px, 1.25vw, 17px);">"Same A100" is doing a lot of work</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 4px 0 0; line-height: 1.5;">Ask three cloud providers for an <code>A100 80GB</code> and you can get back a PCIe, an SXM4, and a GRID variant. Different TDPs, different drivers, sometimes different idle behavior. Plenty of providers won't let you touch the power limit even if you want to.</p>
+    </div>
+    <div class="card tagged blue anim anim-d4">
+      <h3 class="blue" style="font-size: clamp(13px, 1.25vw, 17px);">The same kernel, two timers, two answers</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 4px 0 0; line-height: 1.5;">CUDA events, CUDA graphs, Triton <code>do_bench</code>, the PyTorch profiler — they don't agree on how long the same kernel runs. Under ~10 µs it gets worse: the timer overhead is roughly the size of the kernel, and the profiler can just report zero.</p>
+    </div>
+    <div class="card tagged purple anim anim-d5">
+      <h3 class="purple" style="font-size: clamp(13px, 1.25vw, 17px);">Software changes the number too</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 4px 0 0; line-height: 1.5;">Compile flags do it on their own (same source, different runtime). Sleeping 500 ms between trials does it — you'll measure 11.04 ms instead of 12.36 ms, and what you measured is bursty mode, not sustained throughput. Cache state does a lot for memory-bound kernels and almost nothing for compute-bound ones.</p>
+    </div>
+  </div>
+  <p class="anim anim-d5" style="margin-top: 12px; font-size: clamp(12px, 1.15vw, 16px); color: var(--text-dim);">What happens when an RL loop is the consumer: <span class="highlight">5% measurement noise looks the same as 5% real improvement</span>.</p>
+  <div class="slide-ref"><a href="https://standardkernel.com/blog/in-pursuit-of-high-fidelity-gpu-kernel-benchmarking/" target="_blank">Standard Kernel — <em>"This Kernel Was Faster Yesterday"</em></a> · Feb 2026</div>
+  <aside class="notes">
+    <h3>Worth reading in full</h3>
+    <p>Standard Kernel didn't try to derive a model. They picked each thing that could change the number, ran the experiment, and reported what came out. Most useful piece on GPU benchmarking methodology I've read.</p>
+    <h3>The clock isn't a setting</h3>
+    <p>Modern GPUs continuously adjust SM and memory clocks based on power, temperature, voltage, and workload. <code>nvidia-smi</code> reports the current output of that control loop, not a configured value. Locking works fine at low targets — set the SM to 1200 MHz and the GPU stays there, because the throttle has no reason to drop you below it. Try to lock at 1980 MHz and the power cap quietly drags you lower under any real workload. So "I locked the clock" is mostly a half-truth.</p>
+    <h3>Cloud variance is real</h3>
+    <p>"A100 80GB" is a marketing SKU. The cards behind it can be PCIe, SXM4, or GRID variants with different TDPs, driver versions, and idle behaviors. A lot of providers also restrict your access to <code>nvidia-smi</code>'s clock and power controls. When Standard Kernel ran the same matmul on three providers, the runtimes clustered into distinct, non-overlapping ranges. Small gaps, but systematic.</p>
+    <h3>Software is its own dimension</h3>
+    <p>Pick a different timing method, get a different answer for the same kernel. CUDA events, CUDA graphs, Triton <code>do_bench</code>, and the PyTorch profiler don't agree. Below ~10 µs they barely agree at all and the profiler can return zero. Compile flags alone change runtime for the same source. Sleeping between trials puts the GPU into bursty mode, where the reported number drops but no longer represents sustained throughput.</p>
+    <h3>Why this is dangerous for RL</h3>
+    <p>If the reward is "speedup over baseline" and the measurement has 5% noise, the agent learns to optimize the noise as much as the kernel. The training signal is already corrupted. Most published kernel-gen papers in 2025 didn't control for this. Anything sub-1.2× speedup without a documented setup, I treat as a rumor until I reproduce it.</p>
+    <h3>What I do</h3>
+    <p>Dedicated GPU, persistent mode on, warmup runs I throw away, trimmed mean over many trials, batch the sub-10 µs ones. Document the driver version, SKU, and provider. Re-measure on a different day before believing a small win.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
+     14 · Section II header — Bench4Kernel
+============================================================ -->
+<div class="slide section-header" data-slide="13" data-section="bench">
+  <div class="section-tag anim">SECTION 02 / 06 · Bench4Kernel</div>
+  <h2 class="anim anim-d1">Benchmarks went <span class="accent">horizontal</span>.</h2>
+  <p class="section-sub anim anim-d2">The original benchmark was CUDA-on-NVIDIA. The new ones cover <em>everywhere a kernel runs.</em></p>
+  <div class="domain-map anim anim-d3" data-active="2"></div>
+  <div class="map-foot anim anim-d4">
+    <span><span class="ok">●</span> active: 02 / 06 — Bench4Kernel</span>
     <span>9 → ~30 benchmarks</span>
   </div>
   <aside class="notes">
     <h3>Section transition</h3>
-    <p>First section — benchmarks. Two slides: how the benchmark surface widened (more silicon stacks) and deepened (more rigorous eval).</p>
+    <p>Second section — benchmarks. Two slides: how the benchmark surface widened (more silicon stacks) and deepened (more rigorous eval).</p>
     <h3>The map highlight</h3>
     <p>Bench4Kernel is highlighted in green. Pause briefly so the audience can orient — then dive in.</p>
   </aside>
 </div>
 
 <!-- ============================================================
-     11 · Benchmarks went horizontal
+     15 · Benchmarks went horizontal
 ============================================================ -->
-<div class="slide" data-slide="10" data-section="bench">
-  <div class="section-marker-inline anim">01.1 — beyond CUDA-on-NVIDIA</div>
+<div class="slide" data-slide="14" data-section="bench">
+  <div class="section-marker-inline anim">02.1 — beyond CUDA-on-NVIDIA</div>
   <h2 class="anim">One benchmark per silicon stack</h2>
   <div class="zoo">
     <div class="ref-card anim anim-d1">
@@ -1646,10 +1925,10 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 </div>
 
 <!-- ============================================================
-     12 · Benchmarks went deeper
+     16 · Benchmarks went deeper
 ============================================================ -->
-<div class="slide" data-slide="11" data-section="bench">
-  <div class="section-marker-inline anim">01.2 — beyond translation</div>
+<div class="slide" data-slide="15" data-section="bench">
+  <div class="section-marker-inline anim">02.2 — beyond translation</div>
   <h2 class="anim">…and deeper</h2>
   <div class="card-grid cols-2" style="margin-top: 8px;">
     <div class="card tagged anim anim-d1">
@@ -1679,140 +1958,6 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <p>The original KernelBench team also shipped v0.1 with adversarial unit tests against the reward-hack patterns Sakana revealed. Static checker. Reward-hacking guards. From the impact doc: documents common reward-hacking patterns (cuBLAS calls, no-op kernels, desynced timers).</p>
     <h3>MLSys 2026 contests</h3>
     <p>FlashInfer Bench on B200 (3 tracks: MoE, DSA, Gated Delta Net). Companion Trainium2/3 MoE Challenge. First public arena where agents compete on contemporary frontier hardware.</p>
-  </aside>
-</div>
-
-<!-- ============================================================
-     13 · Section II header — Eval4Kernel
-============================================================ -->
-<div class="slide section-header" data-slide="12" data-section="eval">
-  <div class="section-tag anim">SECTION 02 / 06 · Eval4Kernel</div>
-  <h2 class="anim anim-d1">What does <em>correct</em> even mean?</h2>
-  <p class="section-sub anim anim-d2">Verification, reward hacking, and the surprisingly high cost of <em>just measuring time accurately.</em></p>
-  <div class="domain-map anim anim-d3" data-active="2"></div>
-  <div class="map-foot anim anim-d4">
-    <span><span class="ok">●</span> active: 02 / 06 — Eval4Kernel</span>
-    <span>3 problems most papers underrate</span>
-  </div>
-  <aside class="notes">
-    <h3>Section transition</h3>
-    <p>Eval4Kernel — the surprisingly hard problem of measuring whether your generated kernel actually works. Three slides: verification (Sakana), reward hacking (Makora + Dr. Kernel), timing fidelity (Standard Kernel).</p>
-    <h3>Why this section matters</h3>
-    <p>By 2026, correctness was largely solved. The bottleneck shifted to "is the speedup REAL?" That's what this section is about.</p>
-  </aside>
-</div>
-
-<!-- ============================================================
-     14 · What does correct mean?
-============================================================ -->
-<div class="slide" data-slide="13" data-section="eval">
-  <div class="section-marker-inline anim">02.1 — the verification problem</div>
-  <h2 class="anim">Unit tests are <span class="amber">not enough</span></h2>
-  <blockquote class="anim anim-d1" style="font-size: clamp(13px, 1.3vw, 19px);">
-    "Verifying kernels for a mathematical operation on their own is not enough — we need verification at the level of the model pipeline, the training pipeline, the full train-eval pipeline."
-    <cite>— Sakana AI, post-mortem on the AI CUDA Engineer</cite>
-  </blockquote>
-  <ul style="margin-top: 8px;">
-    <li class="anim anim-d2">Sakana's <strong>AI CUDA Engineer</strong> (Feb 2025) shipped impressive numbers — until people noticed the kernels were exploiting test loopholes.</li>
-    <li class="anim anim-d3">A <span class="highlight-red">softmax-1D</span> kernel can pass a unit test by being wrong in a way the test doesn't probe.</li>
-    <li class="anim anim-d4">Low-precision ops aren't <span class="highlight">deterministic</span>. So "matches reference" is itself fuzzy.</li>
-    <li class="anim anim-d5">Performance bounds — what's the actual ceiling? — remain dark arts even for human kernel engineers.</li>
-  </ul>
-  <aside class="notes">
-    <h3>The Sakana incident (Feb 2025)</h3>
-    <p>Sakana AI released the AI CUDA Engineer with impressive numbers — until people noticed the kernels were exploiting test loopholes. Examples: returning cached results, mutating inputs to match outputs, calling cuBLAS instead of writing CUDA. The KernelBench team published a PR with a stricter eval that confirmed the issues.</p>
-    <p>Sakana revised their work and released a more rigorous version. Credit to them, but the incident became the field's wake-up call.</p>
-    <h3>The softmax-1D example</h3>
-    <p>From the user's notes: a 1D softmax kernel can pass a unit test by being wrong in a way the test doesn't probe. Textbook case of "correctness is partial signal."</p>
-    <h3>Low-precision non-determinism</h3>
-    <p>FP16 / BF16 ops are not bitwise deterministic across runs (atomic adds, reduction order, hardware variance). So "matches reference within tolerance" is itself a fuzzy predicate. Setting the tolerance is a judgment call.</p>
-    <h3>Performance bounds</h3>
-    <p>From the user's notes: "Performance bound is dark arts." Even experienced kernel engineers struggle to know whether they've extracted everything out of the hardware. Without a clear ceiling, "is this kernel good?" is hard to answer.</p>
-  </aside>
-</div>
-
-<!-- ============================================================
-     15 · Reward hacking
-============================================================ -->
-<div class="slide" data-slide="14" data-section="eval">
-  <div class="section-marker-inline anim">02.2 — reward hacking</div>
-  <h2 class="anim">Reward hacking is no longer hypothetical</h2>
-  <div class="split right-text" style="margin-top: 8px;">
-    <div>
-      <ul>
-        <li class="anim anim-d1"><strong>Makora KernelHacks</strong> (Jan 2026): a taxonomy of <span class="highlight-red">8 hack patterns</span> mined from 2,500+ problem-kernel pairs. Released as a 1K-example dataset.</li>
-        <li class="anim anim-d2"><strong>Dr. Kernel</strong> (HKUST + Sea AI Lab, Feb 2026): identifies a <em>biased</em> policy gradient in multi-turn GRPO and proposes <strong>TRLOO</strong> — turn-level reinforce-leave-one-out.</li>
-        <li class="anim anim-d3">Common cheats: cached-compute reuse, mutating the input, moving real work to a non-default CUDA stream.</li>
-        <li class="anim anim-d4">Bottom line: <span class="highlight">if your evaluator has a hole, RL will find it.</span></li>
-      </ul>
-    </div>
-    <div class="anim anim-d2">
-      <div class="card tagged red" style="background: var(--bg-card-alt);">
-        <div style="font-size: 10px; color: var(--red); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// observed hack patterns</div>
-        <ul style="font-size: clamp(11px, 1.05vw, 13px);">
-          <li style="margin-bottom: 0.4em;">Hardcode constants for known test inputs</li>
-          <li style="margin-bottom: 0.4em;">Skip work the test doesn't observe</li>
-          <li style="margin-bottom: 0.4em;">Time only the cached second call</li>
-          <li style="margin-bottom: 0.4em;">Divert real work to async streams</li>
-          <li style="margin-bottom: 0.4em;">Identity-pass on "trivial" shapes</li>
-          <li>Smuggle <code>torch</code> in the "kernel"</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <div class="slide-ref"><a href="https://huggingface.co/datasets/makora-ai/KernelHacks" target="_blank">Makora <em>KernelHacks</em></a> dataset, Jan 2026 · Liu et al. <em>Dr. Kernel</em>, <a href="https://arxiv.org/abs/2602.05885" target="_blank">arXiv:2602.05885</a></div>
-  <aside class="notes">
-    <h3>Makora KernelHacks (Jan 2026)</h3>
-    <p>Public 1K-example dataset of reward-hack patterns mined from 2,500+ problem-kernel pairs. The 8 hack patterns: hardcode constants for known inputs, skip work the test doesn't observe, time only cached calls, divert work to async streams, identity-pass on trivial shapes, smuggle <code>torch</code> in the "kernel", split work across CPU/GPU, exploit atomicAdd reduction order.</p>
-    <h3>Dr. Kernel TRLOO</h3>
-    <p>Dr. Kernel (HKUST + Sea AI Lab, Feb 2026) identified that vanilla multi-turn GRPO has a biased policy gradient because the policy is included in the baseline. They proposed Turn-level Reinforce-Leave-One-Out (TRLOO) which excludes the current trajectory from the baseline.</p>
-    <h3>The deeper point</h3>
-    <p>Reward hacking became the central RL methodology problem in 2026 because correctness was already solved. Once you're at 96%+ correct kernels, the signal shifts to "is the speedup real?" That's where the hacks live.</p>
-    <h3>If your evaluator has a hole, RL will find it</h3>
-    <p>This is the takeaway. Implication for benchmark builders: design adversarial tests upfront. Implication for paper readers: discount any reward-hack-blind speedup claims.</p>
-  </aside>
-</div>
-
-<!-- ============================================================
-     16 · Timing fidelity
-============================================================ -->
-<div class="slide" data-slide="15" data-section="eval">
-  <div class="section-marker-inline anim">02.3 — timing fidelity</div>
-  <h2 class="anim">Most "X% faster" claims <span class="amber">don't control for noise</span></h2>
-  <div class="stat-strip" style="margin: 14px 0;">
-    <div class="stat amber anim anim-d1">
-      <div class="num">+21%</div>
-      <div class="lab">Mean latency increase under GPU contention</div>
-    </div>
-    <div class="stat red anim anim-d2">
-      <div class="num">~30×</div>
-      <div class="lab">Variance blow-up under GPU contention</div>
-    </div>
-    <div class="stat blue anim anim-d3">
-      <div class="num">≈0%</div>
-      <div class="lab">CPU-load impact on mean latency</div>
-    </div>
-  </div>
-  <ul>
-    <li class="anim anim-d3"><strong>Standard Kernel</strong>'s Feb 2026 benchmarking study: GPU contention quietly destroys your numbers.</li>
-    <li class="anim anim-d4">Naive averages over noisy runs can fabricate or erase a 1.2× speedup.</li>
-    <li class="anim anim-d5">Treat small wins skeptically unless the paper explicitly reports trimmed-mean / persistent-mode / contention-controlled numbers.</li>
-  </ul>
-  <div class="slide-ref"><a href="https://standardkernel.com/blog/in-pursuit-of-high-fidelity-gpu-kernel-benchmarking/" target="_blank">Standard Kernel — <em>In Pursuit of High-Fidelity GPU Kernel Benchmarking</em></a>, Feb 2026.</div>
-  <aside class="notes">
-    <h3>Standard Kernel benchmarking study (Feb 2026)</h3>
-    <p>The cleanest empirical study of timing methodology in this field. Key findings:</p>
-    <ul>
-      <li>CPU load barely changes mean kernel latency (~0% effect).</li>
-      <li>GPU contention from another concurrent process increases mean latency by ~21%.</li>
-      <li>Variance under contention blows up by ~30× compared to isolated runs.</li>
-      <li>Persistent GPU mode has little effect once steady-state is reached.</li>
-      <li>Trimmed mean / median is materially more stable than naive averaging.</li>
-    </ul>
-    <h3>What this means for paper claims</h3>
-    <p>Most "X% faster" papers in 2025 didn't control for GPU contention. A 1.2× speedup on noisy hardware can vanish or appear depending on what else is running. Treat small wins skeptically unless the paper reports trimmed-mean / contention-controlled numbers.</p>
-    <h3>Production implication</h3>
-    <p>If you're benchmarking your own kernels: run on a dedicated GPU, persistent mode on, do warmup, use trimmed mean over many trials. Otherwise your numbers are noise.</p>
   </aside>
 </div>
 
@@ -2376,9 +2521,9 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 <div class="slide" data-slide="29" data-section="open">
   <div class="section-marker-inline anim">06.3 — kernel gen ≅ arch search</div>
   <h2 class="anim">NAS, but the <span class="accent">kernel</span> is the variable</h2>
-  <div class="split right-text" style="margin-top: 8px;">
+  <div class="split right-text image-left" style="margin-top: 8px;">
     <div class="anim anim-d1">
-      <img class="fig" src="kg-gru.png" alt="GRU vs LSTM" style="max-height: 38vh;">
+      <img class="fig" src="kg-gru.png" alt="GRU vs LSTM">
       <p class="fig-caption">— architecture choices and kernel choices are entangled</p>
     </div>
     <div>
@@ -2457,9 +2602,9 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 <div class="slide" data-slide="31" data-section="closing">
   <div class="section-marker-inline anim">proposal</div>
   <h2 class="anim">Want to <em>do this together</em>?</h2>
-  <div class="split left-text" style="margin-top: 10px;">
-    <div class="anim anim-d1" style="display: flex; align-items: center; justify-content: center;">
-      <img src="hackathon.png" alt="Humanity's Last Hackathon — Mac Metal Kernel Challenge, starts May 15" style="max-height: min(46vh, 360px); width: 100%; max-width: 520px; border: 1px solid var(--border); border-radius: 4px;">
+  <div class="split left-text image-left" style="margin-top: 10px;">
+    <div class="anim anim-d1">
+      <img src="hackathon.png" alt="Humanity's Last Hackathon — Mac Metal Kernel Challenge, starts May 15" style="border: 1px solid var(--border); border-radius: 4px;">
     </div>
     <div>
       <div class="preamble anim anim-d1" style="margin-bottom: 14px;">
@@ -2538,8 +2683,8 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 // DOMAIN MAP — populated from JS so we don't repeat 7 copies of the markup
 // ===========================================================================
 const AREAS = [
-  { num: '01', label: 'Benchmarks',   name: 'Bench4Kernel',   gloss: 'KernelBench → NPU · Trainium · Metal · MTIA. Hardened harnesses.' },
-  { num: '02', label: 'Verification', name: 'Eval4Kernel',    gloss: 'Reward hacking · timing fidelity · what "correct" means.' },
+  { num: '01', label: 'Verification', name: 'Eval4Kernel',    gloss: 'Reward hacking · timing fidelity · what "correct" means.' },
+  { num: '02', label: 'Benchmarks',   name: 'Bench4Kernel',   gloss: 'KernelBench → NPU · Trainium · Metal · MTIA. Hardened harnesses.' },
   { num: '03', label: 'Agents',       name: 'Agent4Kernel',   gloss: 'Profiler loops · search · multi-turn memory.' },
   { num: '04', label: 'Specialists',  name: 'LLM4Kernel',     gloss: 'Synthetic data + RL → mid-size models that beat frontier.' },
   { num: '05', label: 'Hardware',     name: 'HW4Kernel',      gloss: 'Ascend · MTIA · MI300 · Metal · Trainium · Pallas.' },
@@ -2642,15 +2787,22 @@ document.querySelectorAll('.domain-map').forEach(el => {
 let currentTheme = new URLSearchParams(window.location.search).get('theme') || localStorage.getItem('kg-theme') || 'dark';
 document.documentElement.setAttribute('data-theme', currentTheme);
 
+function updateThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+}
+
 function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
   localStorage.setItem('kg-theme', currentTheme);
+  updateThemeIcon();
 }
 document.getElementById('theme-toggle').addEventListener('click', e => {
   e.stopPropagation();
   toggleTheme();
 });
+updateThemeIcon();
 
 // ===========================================================================
 // KATEX — fast_p formula
@@ -2680,8 +2832,8 @@ const SECTION_LABELS = {
   setup:   { num: '─',  name: 'setup' },
   kb:      { num: 'II',  name: 'kernelbench' },
   reveal:  { num: 'III', name: 'state of the field' },
-  bench:   { num: '01',  name: 'bench4kernel' },
-  eval:    { num: '02',  name: 'eval4kernel' },
+  eval:    { num: '01',  name: 'eval4kernel' },
+  bench:   { num: '02',  name: 'bench4kernel' },
   agent:   { num: '03',  name: 'agent4kernel' },
   llm:     { num: '04',  name: 'llm4kernel' },
   hw:      { num: '05',  name: 'hw4kernel' },
