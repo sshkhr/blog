@@ -2022,6 +2022,48 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 </div>
 
 <!-- ============================================================
+     · 02.4 · MLSys 2026 contests — the new arena
+============================================================ -->
+<div class="slide" data-slide="15b" data-section="bench">
+  <div class="section-marker-inline anim">02.4 — MLSys 2026</div>
+  <h2 class="anim">…and the first <span class="accent">public arena</span>.</h2>
+  <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 14px;">Until 2026, kernel-gen progress was self-reported. Different subsets, different baselines, different GPUs. That ends here.</p>
+  <div class="card-grid cols-2" style="margin-top: 8px;">
+    <div class="card tagged anim anim-d2">
+      <h3 class="accent" style="font-size: clamp(14px, 1.3vw, 20px);">FlashInfer Bench · B200</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 6px 0 0;">NVIDIA + FlashInfer team · MLSys 2026.</p>
+      <ul style="font-size: clamp(11px, 1.05vw, 13px); padding-left: 18px; margin: 8px 0 0; line-height: 1.55;">
+        <li>Three tracks: <strong>MoE</strong>, <strong>DeepSeek Sparse Attention</strong>, <strong>Gated Delta Net</strong>.</li>
+        <li>OpenEvolve agent baseline ships with the starter kit.</li>
+        <li>Registration opened Feb 15 2026. Finals at MLSys 2026.</li>
+      </ul>
+    </div>
+    <div class="card tagged blue anim anim-d3">
+      <h3 class="blue" style="font-size: clamp(14px, 1.3vw, 20px);">Trainium2/3 MoE Challenge</h3>
+      <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 6px 0 0;">AWS · companion track to FlashInfer Bench.</p>
+      <ul style="font-size: clamp(11px, 1.05vw, 13px); padding-left: 18px; margin: 8px 0 0; line-height: 1.55;">
+        <li>First time Trainium kernels go to a public leaderboard.</li>
+        <li>NKI authoring stack; co-announced with FlashInfer Bench.</li>
+        <li>Google Graph Scheduling Competition runs alongside.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="anim anim-d4" style="margin-top: 18px; font-size: clamp(13px, 1.2vw, 17px); color: var(--text); line-height: 1.5;">For the first time, kernel-gen agents compete in public — same hardware, same baselines, same eval harness. <span class="highlight">As of today, finals haven't run yet.</span></p>
+  <p class="anim anim-d5" style="margin-top: 10px; font-size: clamp(13px, 1.25vw, 18px); color: var(--text-dim); font-style: italic;">So: how do agents win on these?</p>
+  <div class="slide-ref"><a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a> · <a href="https://github.com/flashinfer-ai/flashinfer-bench-starter-kit" target="_blank">flashinfer-bench-starter-kit</a></div>
+  <aside class="notes">
+    <h3>Why this slide closes the section</h3>
+    <p>The whole section argued that the bench layer grew up — wider (silicon) and deeper (rigor). The natural next step is "where do agents now compete?" — and the answer is "in public, for the first time, this year." That sets up Agent4Kernel: the audience now wants to know what an agent that can win on these contests looks like.</p>
+    <h3>The "we don't know yet" hook</h3>
+    <p>Live talks rarely get a true cliffhanger. This is one. As of May 2026 the finals haven't run; the audience can't look up the results yet. Mention this — it's the kind of thing that makes people follow up after the talk.</p>
+    <h3>Starter kit details, worth knowing</h3>
+    <p>The FlashInfer starter kit ships with TVM FFI bindings, Modal cloud benchmark runners, and an OpenEvolve agent baseline. That's a statement about what kernel-gen tooling looks like in 2026: the arena gives you a working baseline so the comparison is what your agent does <em>on top of</em> it, not whether it can run at all. (See the GitHub repo for setup details.)</p>
+    <h3>If the talk slips past finals</h3>
+    <p>If you're presenting this after MLSys 2026 finals, replace the "as of today, finals haven't run" line with a one-sentence summary of who won. Keep the cliffhanger sentence — it still works as a transition.</p>
+  </aside>
+</div>
+
+<!-- ============================================================
      17 · Section III header — Agent4Kernel
 ============================================================ -->
 <div class="slide section-header" data-slide="16" data-section="agent">
