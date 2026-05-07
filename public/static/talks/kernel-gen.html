@@ -1976,36 +1976,48 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
      16 · Benchmarks went deeper
 ============================================================ -->
 <div class="slide" data-slide="15" data-section="bench">
-  <div class="section-marker-inline anim">02.2 — beyond translation</div>
-  <h2 class="anim">…and deeper</h2>
-  <div class="card-grid cols-2" style="margin-top: 8px;">
-    <div class="card tagged anim anim-d1">
-      <h3 class="accent" style="font-size: clamp(14px, 1.3vw, 20px);">Beyond translation</h3>
-      <p style="font-size: clamp(11px, 1.1vw, 14px);"><strong>CUDABench</strong> (SJTU, Mar 2026): generate CUDA from <em>natural-language</em> task specs, not from a PyTorch reference. Reveals a wide gap between compilation and correctness.</p>
+  <div class="section-marker-inline anim">02.3 — surrounded vertically</div>
+  <h2 class="anim"><span class="highlight">Deeper</span>: rigor went up</h2>
+  <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 12px;">The cheats from Section 1 didn't stay anecdotes. They became unit tests.</p>
+  <div class="split equal" style="align-items: stretch; gap: 2.5vw;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div class="card tagged anim anim-d2" style="background: var(--bg-card-alt);">
+        <div style="font-size: 10px; color: var(--accent); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;">// Deep dive · text-to-CUDA</div>
+        <h3 style="font-size: clamp(14px, 1.3vw, 19px); margin: 0 0 6px;">CUDABench</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin: 0 0 8px;">Zhu et al. · SJTU · Mar 2026 · generates CUDA from natural-language specs, no PyTorch reference.</p>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0;">Breadth × Depth × Difficulty splits. Roofline-based Performance-Score. Reveals the <span class="highlight">compile-rate ≫ correctness-rate</span> gap — models compile clean but get the math wrong far more often than the original PyTorch-anchored eval suggested.</p>
+        <p style="font-size: clamp(10px, 1vw, 12px); color: var(--text-dim); margin: 8px 0 0; font-style: italic;">Removing the reference removes a crutch. The compile gate flatters models more than we knew.</p>
+      </div>
+      <div class="card tagged red anim anim-d3" style="background: var(--bg-card-alt);">
+        <div style="font-size: 10px; color: var(--red); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;">// Deep dive · KernelBench v0.1</div>
+        <h3 class="red" style="font-size: clamp(14px, 1.3vw, 19px); margin: 0 0 6px;">KernelBench, hardened</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin: 0 0 8px;">Stanford SAIL · Issue #74 · Fall 2025 maintenance roadmap.</p>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0;">Adversarial unit tests against the patterns Sakana exposed: cached-compute reuse, mutated test inputs, work hidden on async streams. Static checker. Reward-hack catalog: cuBLAS calls disguised as kernels, no-op kernels, desynced timers.</p>
+        <p style="font-size: clamp(10px, 1vw, 12px); color: var(--text-dim); margin: 8px 0 0; font-style: italic;">Section 01's cheats are now table stakes. The original benchmark grew harder, not obsolete.</p>
+      </div>
     </div>
-    <div class="card tagged blue anim anim-d2">
-      <h3 class="blue" style="font-size: clamp(14px, 1.3vw, 20px);">KernelBench-v2</h3>
-      <p style="font-size: clamp(11px, 1.1vw, 14px);">Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow. (Community fork.)</p>
-    </div>
-    <div class="card tagged amber anim anim-d3">
-      <h3 class="amber" style="font-size: clamp(14px, 1.3vw, 20px);">KernelBench, hardened</h3>
-      <p style="font-size: clamp(11px, 1.1vw, 14px);">Adversarial unit tests for the obvious cheats: reused cached compute, mutated inputs, work hidden on async streams. Plus a static checker.</p>
-    </div>
-    <div class="card tagged purple anim anim-d4">
-      <h3 class="purple" style="font-size: clamp(14px, 1.3vw, 20px);">MLSys 2026 contests</h3>
-      <p style="font-size: clamp(11px, 1.1vw, 14px);"><strong>FlashInfer Bench</strong> on B200 (MoE / DSA / Gated Delta Net). Companion <strong>Trainium2/3 MoE Challenge</strong>. First public arena for kernel-gen agents.</p>
+    <div style="display: flex;">
+      <div class="card tagged purple anim anim-d4" style="background: var(--bg-card-alt); width: 100%;">
+        <div style="font-size: 10px; color: var(--purple); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// also raising the bar</div>
+        <ul style="font-size: clamp(10px, 0.95vw, 12px); padding-left: 16px; margin: 0; line-height: 1.6;">
+          <li><strong>KernelBench-v2</strong> (community fork) — Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow.</li>
+          <li><strong>Red Hat reproducible Triton bench</strong> — Sangiorgi &amp; Kesem · Feb 2026 · vendor-neutral comparison across NVIDIA + AMD; KernelLLM, Makora Generate, Helion, torch.compile, hand-tuned Triton.</li>
+          <li><strong>KernelGYM</strong> — Dr. Kernel's RL env with reward-hack safeguards · usable standalone · <a href="https://arxiv.org/abs/2602.05885" target="_blank">2602.05885</a></li>
+        </ul>
+        <p style="font-size: clamp(10px, 0.95vw, 12px); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5;">The bar for what counts as a benchmark went up: Triton parity, container reproducibility, and adversarial defenses are now the default.</p>
+      </div>
     </div>
   </div>
-  <div class="slide-ref">CUDABench <a href="https://arxiv.org/abs/2603.02236" target="_blank">arXiv:2603.02236</a> · <a href="https://github.com/ScalingIntelligence/KernelBench/issues/74" target="_blank">KernelBench Issue #74</a> (Fall 2025 maintenance roadmap) · <a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a></div>
+  <div class="slide-ref">CUDABench <a href="https://arxiv.org/abs/2603.02236" target="_blank">2603.02236</a> · <a href="https://github.com/ScalingIntelligence/KernelBench/issues/74" target="_blank">KernelBench Issue #74</a> · <a href="https://next.redhat.com/2026/02/12/from-hand-tuned-to-generated-a-reproducible-triton-gpu-kernel-benchmark-across-different-vendors/" target="_blank">Red Hat reproducible Triton bench</a></div>
   <aside class="notes">
-    <h3>Beyond translation</h3>
-    <p>CUDABench (SJTU, Mar 2026) is the first text-to-CUDA benchmark — generate kernels from natural-language specifications, no PyTorch reference. Reveals the wide gap between compilation rate and functional correctness for current models.</p>
-    <h3>KernelBench-v2 (community fork)</h3>
-    <p>The maintenance fork adds Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow. Signals that the original repo's reproducibility concerns motivated a community response.</p>
-    <h3>Hardening</h3>
-    <p>The original KernelBench team also shipped v0.1 with adversarial unit tests against the reward-hack patterns Sakana revealed. Static checker. Reward-hacking guards. From the impact doc: documents common reward-hacking patterns (cuBLAS calls, no-op kernels, desynced timers).</p>
-    <h3>MLSys 2026 contests</h3>
-    <p>FlashInfer Bench on B200 (3 tracks: MoE, DSA, Gated Delta Net). Companion Trainium2/3 MoE Challenge. First public arena where agents compete on contemporary frontier hardware.</p>
+    <h3>The Eval4Kernel callback</h3>
+    <p>This is the slide that makes Section 01 matter long-term. Sakana wasn't a one-off (slide 10c). KernelHacks formalized the cheat patterns (slide 11). And now the canonical bench encodes the defenses against those patterns. Single incidents reshaped the entire eval pipeline. Tell the audience that explicitly.</p>
+    <h3>Why CUDABench's gap matters</h3>
+    <p>The original KernelBench gives the model a PyTorch reference. That's a crutch — the model can read off the reference's structure even if it can't reason about the math. CUDABench removes the reference and asks the model to generate CUDA from a natural-language task. The compile-vs-correctness gap that emerges is exactly the kind of thing the Eval4Kernel rigor agenda warned about: a clean compile is not a correct kernel.</p>
+    <h3>The hardening list, source: Issue #74</h3>
+    <p>KernelBench's Fall 2025 maintenance roadmap (Issue #74) lists adversarial unit tests as a first-class deliverable. The targets: kernels that re-use cached computations, mutate inputs to cheat correctness, move work to non-default CUDA streams, or call into cuBLAS / cuDNN and pretend it's a kernel. The static checker catches several of these without execution.</p>
+    <h3>Reward-hack catalog</h3>
+    <p>The catalog is partly Makora's KernelHacks taxonomy (8 patterns, slide 11) and partly Stanford's own observations from Sakana fallout. Both ended up in the v0.1 documentation.</p>
   </aside>
 </div>
 
