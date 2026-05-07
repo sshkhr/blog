@@ -1873,6 +1873,55 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 </div>
 
 <!-- ============================================================
+     · 02.1 · Saturation moment — why the bench layer had to grow
+============================================================ -->
+<div class="slide" data-slide="13b" data-section="bench">
+  <div class="section-marker-inline anim">02.1 — saturation</div>
+  <h2 class="anim">…because the original <span class="accent">saturated</span>.</h2>
+  <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 14px;">KernelBench Level 3 fast<sub>1</sub>, the hardest level — over 17 months.</p>
+  <div class="barchart anim anim-d2">
+    <div class="bar-row">
+      <div class="bar-label">Frontier single-shot<span class="when">Dec 2024</span></div>
+      <div class="bar-track"><div class="bar-fill red" style="--w: 20%"></div></div>
+      <div class="bar-val">~20%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">Kevin-32B · multi-turn RL<span class="when">Jul 2025</span></div>
+      <div class="bar-track"><div class="bar-fill amber" style="--w: 70%"></div></div>
+      <div class="bar-val">~70%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">CUDA Agent · agentic RL<span class="when">Mar 2026</span></div>
+      <div class="bar-track"><div class="bar-fill" style="--w: 92%"></div></div>
+      <div class="bar-val">92%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">KernelEvolve / KernelSkill<span class="when">Mar 2026</span></div>
+      <div class="bar-track"><div class="bar-fill gradient" style="--w: 100%"></div></div>
+      <div class="bar-val">100%</div>
+    </div>
+  </div>
+  <p class="anim anim-d3" style="margin-top: 18px; font-size: clamp(13px, 1.2vw, 17px); color: var(--text);"><strong>17 months. The hardest level, solved.</strong></p>
+  <p class="anim anim-d4" style="margin-top: 8px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); line-height: 1.5;">When a benchmark saturates, you either declare victory or build new ones. The field built new ones — along two axes. <span class="highlight">Wider</span>: every silicon stack got its own. <span class="highlight">Deeper</span>: rigor went up.</p>
+  <div class="slide-ref">Ouyang et al. <em>KernelBench</em> (Dec 2024) · Kevin-32B (Jul 2025) · CUDA Agent <a href="https://arxiv.org/abs/2602.24286" target="_blank">arXiv:2602.24286</a> · KernelEvolve / KernelSkill <a href="https://arxiv.org/abs/2603.10085" target="_blank">arXiv:2603.10085</a></div>
+  <aside class="notes">
+    <h3>The arc this slide opens</h3>
+    <p>The original KernelBench was a 250-task suite split across three difficulty levels. Level 3 — fused-architecture kernels — was supposed to be the floor that nobody hit. By Mar 2026 multi-agent systems hit 100% on it. L1 and L2 saturated even earlier.</p>
+    <h3>What the audience should feel</h3>
+    <p>A benchmark saturating is good news for the original benchmark and bad news for using it as a yardstick. The field's response wasn't "declare victory" — it was "surround the original with new layers." Slides 3 and 4 are the two axes of that surrounding.</p>
+    <h3>Caveat to keep in your back pocket</h3>
+    <p>"Solved" here means fast<sub>1</sub> against torch eager / torch.compile, not against hand-tuned production kernels. The same systems that hit 100% on L3 still struggle when the comparison is FlashAttention or cuBLAS. That nuance is what slide 4's CUDABench result is about — and it's why MLSys 2026 needed a new arena (slide 5).</p>
+    <h3>The numbers, sourced</h3>
+    <ul>
+      <li>Dec 2024 baseline: Ouyang et al., <em>KernelBench</em> (arXiv:2502.10517) — frontier models scored under 20% on L3 single-shot.</li>
+      <li>Kevin-32B (Jul 2025): multi-turn RL, ~70% on L3.</li>
+      <li>CUDA Agent (Mar 2026): Dai et al., arXiv:2602.24286 — 92% L3 fast-rate over <code>torch.compile</code>; 98.8% pass overall.</li>
+      <li>KernelEvolve / KernelSkill (Dec 2025 / Mar 2026): multi-agent loops with persistent memory; 100% on L3 in the published settings.</li>
+    </ul>
+  </aside>
+</div>
+
+<!-- ============================================================
      15 · Benchmarks went horizontal
 ============================================================ -->
 <div class="slide" data-slide="14" data-section="bench">
