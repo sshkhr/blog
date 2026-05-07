@@ -1926,7 +1926,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="14" data-section="bench">
   <div class="section-marker-inline anim">02.2 — surrounded horizontally</div>
-  <h2 class="anim"><span class="accent">Wider</span>: one benchmark per silicon stack</h2>
+  <h2 class="anim"><span class="highlight">Wider</span>: one benchmark per silicon stack</h2>
   <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 12px;">Almost every new bench is funded by the silicon it targets. Benchmarks here are commercial as much as academic.</p>
   <div class="split equal" style="align-items: stretch; gap: 2.5vw;">
     <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -1937,7 +1937,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
         <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0;">Complex Level-2 compile rate jumped from <span class="highlight-red">0%</span> → <span class="highlight">95.5% Pass@10</span> with Ascend-CoT — an 83K-sample hardware-native reasoning corpus. Functional correctness 64.3%.</p>
         <p style="font-size: clamp(10px, 1vw, 12px); color: var(--text-dim); margin: 8px 0 0; font-style: italic;">Generic frontier models can't write NPU kernels at all. Hardware-native data does the work, not scale.</p>
       </div>
-      <div class="card tagged blue anim anim-d3">
+      <div class="card tagged blue anim anim-d3" style="background: var(--bg-card-alt);">
         <div style="font-size: 10px; color: var(--blue); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;">// Deep dive · Apple Metal</div>
         <h3 class="blue" style="font-size: clamp(14px, 1.3vw, 19px); margin: 0 0 6px;">KForge</h3>
         <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin: 0 0 8px;">Sereda et al. · Gimlet Labs · Nov 2025 · two collaborative agents (generation + perf-analysis).</p>
@@ -1950,12 +1950,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
         <div style="font-size: 10px; color: var(--amber); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// also widening the surface</div>
         <ul style="font-size: clamp(10px, 0.95vw, 12px); padding-left: 16px; margin: 0; line-height: 1.6;">
           <li><strong>NKIBench / AccelOpt</strong> — AWS Trainium 1 &amp; 2 · Stanford PPL + AWS · Nov 2025 · <a href="https://arxiv.org/abs/2511.15915" target="_blank">2511.15915</a></li>
-          <li><strong>MultiKernelBench v2</strong> — CUDA + AscendC + Pallas · Pallas API hallucinations dropped pass to ~6% · <a href="https://arxiv.org/abs/2507.17773" target="_blank">2507.17773</a></li>
+          <li><strong>MultiKernelBench v2</strong> — CUDA + AscendC + Pallas · Pallas pass rate ~6% vs CUDA ~88% (API hallucinations) · <a href="https://arxiv.org/abs/2507.17773" target="_blank">2507.17773</a></li>
           <li><strong>KernelCraft</strong> — 33 tasks across 3 emerging accelerator ISAs · 2026</li>
           <li><strong>MSKernelBench</strong> — sparse / scientific / numerical · beyond dense ML · FP32 + BF16 · Mar 2026</li>
           <li><strong>NPUEval</strong> — AMD XDNA / AIE NPUs · cycle-accurate vectorization-score · <a href="https://arxiv.org/abs/2507.14403" target="_blank">2507.14403</a></li>
         </ul>
-        <p style="font-size: clamp(10px, 0.95vw, 12px); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5;">Count the sponsors: Huawei, AWS, Apple-leaning startup, AMD. The benchmark layer is where commercial competition shows up now, not just academic comparison.</p>
+        <p style="font-size: clamp(10px, 0.95vw, 12px); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5;">Most have a silicon sponsor: Huawei, AWS, Gimlet/Apple, AMD. The benchmark layer is where commercial competition shows up now, not just academic comparison.</p>
       </div>
     </div>
   </div>
