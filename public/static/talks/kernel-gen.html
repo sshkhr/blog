@@ -1925,53 +1925,50 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
      15 · Benchmarks went horizontal
 ============================================================ -->
 <div class="slide" data-slide="14" data-section="bench">
-  <div class="section-marker-inline anim">02.1 — beyond CUDA-on-NVIDIA</div>
-  <h2 class="anim">One benchmark per silicon stack</h2>
-  <div class="zoo">
-    <div class="ref-card anim anim-d1">
-      <div class="name">NPUKernelBench</div>
-      <div class="who">Cao et al. · Jan 2026</div>
-      <div class="blurb">158 Ascend NPU kernels · dual-path host+device evaluation.</div>
+  <div class="section-marker-inline anim">02.2 — surrounded horizontally</div>
+  <h2 class="anim"><span class="accent">Wider</span>: one benchmark per silicon stack</h2>
+  <p class="anim anim-d1" style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); margin: 4px 0 12px;">Almost every new bench is funded by the silicon it targets. Benchmarks here are commercial as much as academic.</p>
+  <div class="split equal" style="align-items: stretch; gap: 2.5vw;">
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <div class="card tagged anim anim-d2" style="background: var(--bg-card-alt);">
+        <div style="font-size: 10px; color: var(--accent); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;">// Deep dive · Huawei NPU</div>
+        <h3 style="font-size: clamp(14px, 1.3vw, 19px); margin: 0 0 6px;">NPUKernelBench &amp; AscendKernelGen</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin: 0 0 8px;">Cao et al. · Jan 2026 · 158 Ascend NPU kernels, dual-path host+device evaluation.</p>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0;">Complex Level-2 compile rate jumped from <span class="highlight-red">0%</span> → <span class="highlight">95.5% Pass@10</span> with Ascend-CoT — an 83K-sample hardware-native reasoning corpus. Functional correctness 64.3%.</p>
+        <p style="font-size: clamp(10px, 1vw, 12px); color: var(--text-dim); margin: 8px 0 0; font-style: italic;">Generic frontier models can't write NPU kernels at all. Hardware-native data does the work, not scale.</p>
+      </div>
+      <div class="card tagged blue anim anim-d3">
+        <div style="font-size: 10px; color: var(--blue); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 6px;">// Deep dive · Apple Metal</div>
+        <h3 class="blue" style="font-size: clamp(14px, 1.3vw, 19px); margin: 0 0 6px;">KForge</h3>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin: 0 0 8px;">Sereda et al. · Gimlet Labs · Nov 2025 · two collaborative agents (generation + perf-analysis).</p>
+        <p style="font-size: clamp(11px, 1.05vw, 13px); margin: 0;">First single-shot CUDA → Apple Metal cross-platform LLM transfer that produces runnable Metal kernels. Powers <code>kforge.ai</code>.</p>
+        <p style="font-size: clamp(10px, 1vw, 12px); color: var(--text-dim); margin: 8px 0 0; font-style: italic;">Apple Silicon is finally on the kernel-gen map. The transfer story matters more than absolute speed.</p>
+      </div>
     </div>
-    <div class="ref-card anim anim-d1 amber">
-      <div class="name">NKIBench</div>
-      <div class="who">Stanford PPL + AWS · Nov 2025</div>
-      <div class="blurb">First benchmark for AWS Trainium 1 &amp; 2 NKI kernels.</div>
-    </div>
-    <div class="ref-card anim anim-d2 blue">
-      <div class="name">MultiKernelBench v2</div>
-      <div class="who">Wen et al. · 2025</div>
-      <div class="blurb">CUDA + AscendC + Pallas · cycle-level analysis of API hallucinations.</div>
-    </div>
-    <div class="ref-card anim anim-d2 purple">
-      <div class="name">KernelCraft</div>
-      <div class="who">2026</div>
-      <div class="blurb">33 tasks across 3 emerging accelerator ISAs · compile / simulate / validate.</div>
-    </div>
-    <div class="ref-card anim anim-d3 magenta">
-      <div class="name">MSKernelBench</div>
-      <div class="who">Han et al. · Mar 2026</div>
-      <div class="blurb">Sparse, scientific, numerical · beyond dense ML ops · FP32 + BF16.</div>
-    </div>
-    <div class="ref-card anim anim-d3">
-      <div class="name">KForge</div>
-      <div class="who">Gimlet Labs · Nov 2025</div>
-      <div class="blurb">First serious LLM-to-Apple-Metal benchmark · single-shot CUDA → Metal.</div>
+    <div style="display: flex;">
+      <div class="card tagged amber anim anim-d4" style="background: var(--bg-card-alt); width: 100%;">
+        <div style="font-size: 10px; color: var(--amber); letter-spacing: 0.18em; text-transform: uppercase; margin-bottom: 8px;">// also widening the surface</div>
+        <ul style="font-size: clamp(10px, 0.95vw, 12px); padding-left: 16px; margin: 0; line-height: 1.6;">
+          <li><strong>NKIBench / AccelOpt</strong> — AWS Trainium 1 &amp; 2 · Stanford PPL + AWS · Nov 2025 · <a href="https://arxiv.org/abs/2511.15915" target="_blank">2511.15915</a></li>
+          <li><strong>MultiKernelBench v2</strong> — CUDA + AscendC + Pallas · Pallas API hallucinations dropped pass to ~6% · <a href="https://arxiv.org/abs/2507.17773" target="_blank">2507.17773</a></li>
+          <li><strong>KernelCraft</strong> — 33 tasks across 3 emerging accelerator ISAs · 2026</li>
+          <li><strong>MSKernelBench</strong> — sparse / scientific / numerical · beyond dense ML · FP32 + BF16 · Mar 2026</li>
+          <li><strong>NPUEval</strong> — AMD XDNA / AIE NPUs · cycle-accurate vectorization-score · <a href="https://arxiv.org/abs/2507.14403" target="_blank">2507.14403</a></li>
+        </ul>
+        <p style="font-size: clamp(10px, 0.95vw, 12px); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5;">Count the sponsors: Huawei, AWS, Apple-leaning startup, AMD. The benchmark layer is where commercial competition shows up now, not just academic comparison.</p>
+      </div>
     </div>
   </div>
-  <div class="slide-ref"><a href="https://arxiv.org/abs/2601.07160" target="_blank">NPUKernelBench</a> · <a href="https://arxiv.org/abs/2511.15915" target="_blank">NKIBench / AccelOpt</a> · <a href="https://arxiv.org/abs/2507.17773" target="_blank">MultiKernelBench</a> · <a href="https://arxiv.org/abs/2511.13274" target="_blank">KForge</a> · <a href="https://gimletlabs.ai/blog/ai-generated-metal-kernels" target="_blank">Gimlet Labs Metal blog</a></div>
+  <div class="slide-ref">NPUKernelBench <a href="https://arxiv.org/abs/2601.07160" target="_blank">2601.07160</a> · KForge <a href="https://arxiv.org/abs/2511.13274" target="_blank">2511.13274</a> · Gimlet Metal blog <a href="https://gimletlabs.ai/blog/ai-generated-metal-kernels" target="_blank">gimletlabs.ai</a></div>
   <aside class="notes">
-    <h3>Six post-cutoff benchmarks at a glance</h3>
-    <ul>
-      <li><strong>NPUKernelBench</strong> (Cao et al., Jan 2026): 158 Ascend NPU kernels, dual-path host+device evaluation. Compile rate jumped from 0% to 95.5% with the AscendKernelGen system.</li>
-      <li><strong>NKIBench</strong> (Stanford PPL + AWS, Nov 2025): first AWS Trainium 1 + 2 benchmark, real LLM workloads. Co-developed with FlashInfer.</li>
-      <li><strong>MultiKernelBench v2</strong> (Nanjing U.): CUDA + AscendC + Pallas. Cycle-level analysis revealed Pallas API hallucinations (~6% pass rate on Pallas, vs 88% on CUDA).</li>
-      <li><strong>KernelCraft</strong>: 33 tasks across 3 emerging accelerator ISAs. The "agents on hardware no one has trained on" benchmark.</li>
-      <li><strong>MSKernelBench</strong> (Han et al., Mar 2026): 50 tasks beyond ML — sparse, scientific, numerical kernels in pure C/CUDA. FP32 + BF16.</li>
-      <li><strong>KForge</strong> (Gimlet Labs, Nov 2025): the first serious Apple Metal benchmark. Cross-platform CUDA → Metal transfer.</li>
-    </ul>
-    <h3>Pattern</h3>
-    <p>Each benchmark is sponsored by either a hardware vendor or a startup with skin in the game on that platform. Benchmarks here are commercial as much as academic.</p>
+    <h3>The pattern: vendor-sponsored benchmarks</h3>
+    <p>NPUKernelBench is Huawei. NKIBench is AWS. KForge is Apple-leaning (kforge.ai). KernelCraft and NPUEval target emerging-accelerator vendors and AMD. Each new bench has a sponsor with skin on that platform. That's why the framing line says "as commercial as academic" — it's a real shift from KernelBench's pure-academic origin.</p>
+    <h3>Why these two as deep dives</h3>
+    <p>NPUKernelBench is the strongest "domain-specific data wins" story in the post-Oct-2025 corpus: a corpus + bench combination took compile rate from 0% to 95.5%. KForge is the most evocative for a Mac-heavy ML audience: their laptop is now a kernel-gen target.</p>
+    <h3>Asymmetry in the roll-call</h3>
+    <p>NPUs and Metal needed full-stack benches because frontier models started from 0%. CUDA-extending benches like MSKernelBench and MultiKernelBench v2 are about <em>coverage</em> — sparse / scientific / numerical kernels and Pallas — not feasibility.</p>
+    <h3>The Pallas hallucination number</h3>
+    <p>MultiKernelBench v2 ran Qwen3-235B on Pallas (Google TPU's kernel DSL) and got ~6.3% Pass@5, vs ~88% on CUDA. Almost all failures are LLMs hallucinating Pallas APIs that don't exist. That's a strong "specialist data, not scale" datapoint.</p>
   </aside>
 </div>
 
