@@ -162,7 +162,7 @@ html, body {
   background: var(--bg-deep);
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center;
-  padding: 0 18px 0 64px;
+  padding: 0 56px 0 116px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-muted);
@@ -809,6 +809,16 @@ blockquote cite {
   padding: 10px 12px;
   position: relative;
 }
+.hw-item .logo {
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 22px; height: 22px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.hw-item .logo:where([data-square]) { /* hint for square brand marks */
+  width: 20px; height: 20px;
+}
 .hw-item .vendor {
   font-size: 9px;
   color: var(--text-muted);
@@ -1029,7 +1039,7 @@ blockquote cite {
   .stat-strip { grid-template-columns: 1fr; }
   .barchart .bar-row { grid-template-columns: 130px 1fr 50px; }
   .slide-ref { left: 12px; right: 12px; transform: none; max-width: none; }
-  #topbar { padding-left: 50px; font-size: 10px; }
+  #topbar { padding-left: 100px; padding-right: 48px; font-size: 10px; }
   #topbar .sep { margin: 0 8px; }
   .title-slide h1 { font-size: clamp(32px, 8vw, 56px); }
   .domain-svg { max-height: 56vh; }
@@ -1046,6 +1056,198 @@ html.in-iframe .slide.active {
   padding: 12px !important;
   transform: none; transition: none;
 }
+
+/* =====================================================================
+   SPEAKER NOTES & PRESENTER MODE
+===================================================================== */
+
+/* Notes are hidden in deck mode, extracted by JS in presenter mode */
+aside.notes { display: none; }
+
+#presenter-view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 1000;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+html.presenter-mode #presenter-view { display: flex; }
+html.presenter-mode .deck,
+html.presenter-mode #topbar,
+html.presenter-mode #progress,
+html.presenter-mode #nav-hint,
+html.presenter-mode #theme-toggle,
+html.presenter-mode #site-logo { display: none !important; }
+
+/* Header strip — slide counter + title + section */
+.pv-header {
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 28px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 22px;
+  flex-shrink: 0;
+}
+.pv-header .pv-counter {
+  color: var(--green);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 14px;
+}
+.pv-header .pv-counter .cur { font-size: 22px; }
+.pv-header .pv-title {
+  color: var(--text);
+  font-weight: 600;
+  font-size: clamp(16px, 1.7vw, 22px);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+.pv-header .pv-section {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  text-align: right;
+}
+.pv-header .pv-section .num { color: var(--amber); margin-right: 4px; }
+
+/* Notes body — scrollable */
+.pv-notes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 36px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.pv-notes h3 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-top: 28px;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+.pv-notes h3:first-child { margin-top: 0; }
+.pv-notes p {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  line-height: 1.65;
+}
+.pv-notes em { color: var(--text); font-style: italic; font-weight: 500; }
+.pv-notes strong { color: var(--text); font-weight: 600; }
+.pv-notes code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  padding: 1px 5px;
+  color: var(--text);
+}
+.pv-notes ul {
+  margin: 6px 0 14px;
+  padding-left: 0;
+}
+.pv-notes ul li {
+  font-size: 15px;
+  color: var(--text-dim);
+  padding-left: 1.5em;
+  margin-bottom: 6px;
+  position: relative;
+  line-height: 1.55;
+}
+.pv-notes ul li::before {
+  content: '›';
+  color: var(--green);
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+.pv-notes blockquote {
+  border-left: 2px solid var(--amber);
+  padding: 8px 14px;
+  background: var(--amber-soft);
+  margin: 10px 0 14px;
+  color: var(--text);
+  font-style: italic;
+  font-size: 15px;
+}
+.pv-notes blockquote::before { content: ''; }
+.pv-notes blockquote cite {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+.pv-notes a { color: var(--green); }
+
+/* Footer strip — next slide + clocks */
+.pv-footer {
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border);
+  padding: 14px 28px;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.pv-footer .pv-next {
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.pv-footer .pv-next b {
+  color: var(--text);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  margin-left: 8px;
+  font-size: 14px;
+}
+.pv-footer .pv-clock {
+  display: flex; gap: 6px; align-items: baseline;
+  font-family: var(--font-mono);
+}
+.pv-footer .pv-clock .lab {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.pv-footer .pv-clock .val {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.pv-footer .pv-clock .val.elapsed { color: var(--green); }
+.pv-footer .pv-clock .val.time    { color: var(--amber); }
+
+@media (max-width: 800px) {
+  .pv-header { grid-template-columns: 1fr; gap: 6px; padding: 12px 16px; }
+  .pv-header .pv-section { text-align: left; }
+  .pv-notes { padding: 18px 20px; font-size: 15px; }
+  .pv-notes h3 { margin-top: 22px; }
+  .pv-footer { grid-template-columns: 1fr; gap: 6px; padding: 10px 16px; }
+}
+
+/* The hint that opens presenter mode — replaces / extends the existing nav-hint */
+#nav-hint kbd.presenter { color: var(--amber); border-color: var(--amber); }
 </style>
 </head>
 <body>
@@ -1082,7 +1284,7 @@ html.in-iframe .slide.active {
       <span>$ ./run-presentation</span>
     </div>
     <h1 class="anim anim-d1">The State of<br>Automatic <span class="accent">Kernel</span><br>Generation<span class="cursor">_</span></h1>
-    <p class="lead anim anim-d2">KernelBench, and what changed in <em>seventeen months</em>.<br>A field survey for ML systems people who don't write CUDA daily.</p>
+    <p class="lead anim anim-d2">An outsider's perspective on using AI to write GPU Kernels.</p>
     <div class="meta anim anim-d3">
       <span><b>Shashank Shekhar</b></span>
       <span class="arrow">→</span>
@@ -1091,6 +1293,12 @@ html.in-iframe .slide.active {
       <span>May 2026</span>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Opening</h3>
+    <p>Inaugural Toronto ML Systems Group meeting. Brief intro of yourself and the group's goals. This is a survey talk — broad strokes, not deep dive into any one paper.</p>
+    <h3>Time check</h3>
+    <p>~25 minutes total. Aim for ~45 sec/slide. The first five slides set up the question, then KernelBench gets four slides, then six sections of three slides each, then close.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1099,9 +1307,13 @@ html.in-iframe .slide.active {
 <div class="slide" data-slide="1" data-section="setup">
   <div class="anim" style="text-align: center; max-width: 940px; margin: 0 auto;">
     <div class="section-marker-inline anim">the question</div>
-    <h1 class="anim anim-d1" style="font-size: clamp(36px, 6vw, 88px);">Can <span class="amber">LLMs</span><br>write kernels?</h1>
-    <p class="lead anim anim-d2" style="margin: 24px auto 0;">Two years ago: clearly not. Today: a 33-slide answer.</p>
+    <h1 class="anim anim-d1" style="font-size: clamp(36px, 6vw, 88px);">Can LLMs or AI agents write <span class="amber">correct and fast</span> GPU kernels?</h1>
+    <p class="lead anim anim-d2" style="margin: 24px auto 0;">One year ago: probably not. Today: 👀</p>
   </div>
+  <aside class="notes">
+    <h3>The question</h3>
+    <p>Frame the central tension: as recently as 2024 the answer was clearly "no". Now, in mid-2026, the answer takes 33 slides because so much has happened so fast. Use this to set expectations: lots of ground to cover.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1113,10 +1325,9 @@ html.in-iframe .slide.active {
   <div class="split equal" style="margin-top: 12px;">
     <div>
       <ul>
-        <li class="anim anim-d1">A small program that runs on the GPU — one piece of work, many threads.</li>
-        <li class="anim anim-d2">Every PyTorch op — <code>x @ y</code>, <code>softmax(x)</code>, <code>F.scaled_dot_product_attention</code> — eventually dispatches to a kernel.</li>
-        <li class="anim anim-d3">The kernel is where the <span class="highlight">performance</span> lives. The Python layer just decides <em>which</em> kernel to call.</li>
-        <li class="anim anim-d4">Writing one well means thinking about memory, occupancy, tile sizes, register pressure, instruction-level parallelism.</li>
+        <li class="anim anim-d1">A (usually small) program that runs on the GPU and maps the data movement and operations sequence.</li>
+        <li class="anim anim-d2">Think of any PyTorch op: <code>x @ y</code>, <code>softmax(x)</code>, <code>F.scaled_dot_product_attention</code>, it eventually dispatches to a kernel.</li>
+        <li class="anim anim-d3">Writing a useful kernel means thinking through the memory hierarchy, occupancy of compute cores and other limiters (e.g. registers), data dependency withn an op, etc.</li>
       </ul>
     </div>
     <div class="anim anim-d2">
@@ -1137,6 +1348,14 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       </div>
     </div>
   </div>
+  <aside class="notes">
+    <h3>For newcomers</h3>
+    <p>A kernel is the small program that runs on the GPU. Every PyTorch op eventually dispatches to a kernel — that dispatch is what determines how fast your model trains and runs.</p>
+    <h3>Why hand-writing is hard</h3>
+    <p>Memory, occupancy, tile sizes, register pressure, instruction-level parallelism — these are the dimensions a kernel engineer optimizes over. Writing a fast kernel for a new GPU is multi-week work even for experts.</p>
+    <h3>Why this matters for the talk</h3>
+    <p>The audience needs to understand kernels exist as a thing before we can argue about whether LLMs should write them.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1144,48 +1363,88 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="3" data-section="setup">
   <div class="section-marker-inline anim">motivation</div>
-  <h2 class="anim">Why this is worth automating</h2>
+  <h2 class="anim">Why do we care about using AI to write kernels?</h2>
   <div class="split right-text" style="margin-top: 8px;">
     <div class="anim anim-d1">
-      <img class="fig" src="kg-three-weeks.png" alt="Meme: three weeks to write one kernel" style="max-height: 36vh;">
-      <p class="fig-caption">— from the KernelBench blog, Stanford SAIL</p>
+      <img class="fig" src="kg-five-years.jpg" alt="Meme: three weeks to write one kernel" style="max-height: 32vh;">
+      <p class="fig-caption"></p>
     </div>
     <div>
       <ul>
-        <li class="anim anim-d1"><span class="highlight">FlashAttention</span> is the obvious example. One well-tuned kernel, used in basically every transformer trained today.</li>
-        <li class="anim anim-d2">Expert kernel engineers are <span class="highlight-red">scarce</span>. Hand-tuning one kernel: weeks.</li>
-        <li class="anim anim-d3">Hardware moves faster than humans can re-tune. Every new chip resets the clock.</li>
-      </ul>
-      <div class="card tagged" style="margin-top: 14px; border-color: var(--green); background: var(--green-glow);">
-        <div style="font-size: 10px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px;">// why automation looks tractable</div>
-        <p style="font-size: clamp(12px, 1.15vw, 15px); color: var(--text-dim); margin: 0; line-height: 1.55;">
-          Programs are short, usually 50–500 lines. Evaluation is mechanical: did it match, was it faster. Compile errors, unit tests, and the profiler all give signal. On paper, a near-perfect target for code-gen and RL.
+        <li class="anim anim-d1"><strong>It took 5 years</strong> from <em>Attention Is All You Need</em> (2017) to <span class="highlight">FlashAttention</span> (2022). FA2 / 3 / 4 each took ~12 months and each one arrived <em>1-2 years after</em> the silicon it targeted.</li>
+        <li class="anim anim-d2">DeepMind's <span class="highlight-blue">AlphaEvolve</span> found a novel TPU Pallas tiling: ~23% kernel speedup → <strong>~1% Gemini training-speed reduction.</strong> A single kernel can lead to saving percentage points of training cost.</li>
+        </ul>
+      <div class="card tagged" style="margin-top: 12px; border-color: var(--green); background: var(--green-glow);">
+        <div style="font-size: 10px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 4px;">// why automation <em>looks</em> tractable</div>
+        <p style="font-size: clamp(11px, 1.05vw, 14px); color: var(--text-dim); margin: 0; line-height: 1.5;">
+          Short programs (~50–1000 lines) ✅. Mechanical eval: matched? faster? ✅ Compile, unit tests, and the profiler give dense feedback signal ✅.<br> In theory, a near-perfect target for code-gen and RL.
         </p>
       </div>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>Hand-tuning is the cycle the field can't keep paying for. The hardware roadmap accelerated; the kernel roadmap didn't. We're trying to close that gap.</p>
+    <h3>Numbers to ground it</h3>
+    <ul>
+      <li>Attention Is All You Need — June 2017</li>
+      <li>FlashAttention v1 — May 2022 (~5 years later)</li>
+      <li>FlashAttention 2 / 3 / 4 — July 2023, July 2024, late 2025. Cadence is now ~12 months but each release post-dates the silicon it targets.</li>
+      <li><strong>AlphaEvolve</strong> (DeepMind, May 2025): novel TPU Pallas matmul tiling found via evolutionary search. ~23% kernel-level speedup. ~1% Gemini training-speed reduction. A single kernel changes percentage points of total training cost.</li>
+    </ul>
+    <h3>Strategic angle</h3>
+    <p>Y Combinator's Request for Startups was blunt:</p>
+    <blockquote>NVIDIA dominates largely because of CUDA's hand-optimized code. Competing hardware often underperforms not because of inferior chips, but because writing systems-level code is difficult.</blockquote>
+    <p>Kernel automation is the anti-monopoly play, not just an engineering convenience.</p>
+    <h3>Karpathy's framing</h3>
+    <blockquote>If LLMs are about to become much better at coding, you can expect that the LLM can do this for any custom application over time, acting as a sort of compiler.</blockquote>
+    <p>If true, kernel-gen isn't a benchmark — it's a category shift. The LLM becomes the compiler.</p>
+    <h3>Anti-hype caveat</h3>
+    <p>AlgoTune (NeurIPS 2025) tested agents on 154 numerical-algorithm tasks. ~1.7× average speedup, but agents "still struggle to invent truly new algorithms." Kernel-gen so far is mostly <em>transformation</em>, not <em>invention</em>. FlashAttention itself was invention. Whether models can replicate that step is the open question.</p>
+    <h3>Audience handles</h3>
+    <ul>
+      <li>Researchers: verifiable RL-with-tools that generalises to ML systems engineering.</li>
+      <li>Systems engineers: porting costs falling matters even if you ignore the academic angle.</li>
+      <li>Both: AlphaEvolve's ~1% Gemini number is the cleanest existence proof.</li>
+    </ul>
+  </aside>
 </div>
 
 <!-- ============================================================
      05 · KernelBench section header (no map yet — KB is the catalyst)
 ============================================================ -->
 <div class="slide" data-slide="4" data-section="kb" style="justify-content: center;">
-  <div style="max-width: 940px; margin: 0 auto; text-align: center;">
+  <div style="max-width: 980px; margin: 0 auto; text-align: center;">
     <div class="preamble anim" style="justify-content: center;">
-      <span class="tag amber">PART II · Where this started</span>
+      <span class="tag amber">PART II : The benchmark that started the arms race </span>
     </div>
-    <h1 class="anim anim-d1" style="font-size: clamp(48px, 8vw, 124px); line-height: 1; margin-bottom: 18px;">
-      <span class="stroke">Kernel</span><span class="accent">Bench</span>
+    <h1 class="anim anim-d1" style="font-size: clamp(48px, 8vw, 124px); line-height: 1; margin-bottom: 14px;">
+      <span>Kernel</span><span class="accent">Bench</span>
     </h1>
-    <p class="lead anim anim-d2" style="margin: 0 auto;">The first benchmark for <em>"can a model write a faster kernel than PyTorch?"</em></p>
-    <div class="anim anim-d3" style="margin-top: 24px; display: inline-flex; gap: 24px; padding: 12px 22px; border: 1px solid var(--border); background: var(--bg-card); font-size: 12px; letter-spacing: 0.05em; color: var(--text-dim);">
+    <p class="lead anim anim-d2" style="margin: 0 auto 14px;">Pre-2025, "can LLMs write kernels?" was hard to anwer systematically. Enter KernelBench.</p>
+    <div class="anim anim-d3" style="margin-top: 18px; display: inline-flex; gap: 22px; padding: 12px 22px; border: 1px solid var(--border); background: var(--bg-card); font-size: 12px; letter-spacing: 0.05em; color: var(--text-dim);">
       <span><span style="color: var(--amber);">●</span> Stanford SAIL</span>
       <span style="color: var(--rule);">·</span>
       <span>Dec 2024</span>
       <span style="color: var(--rule);">·</span>
       <span>250 tasks · 3 levels</span>
+      <span style="color: var(--rule);">·</span>
+      <span style="color: var(--green);">ICML 2025 · DL4C Best Paper</span>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>The benchmark <em>created</em> the field. Before KernelBench, work on LLM kernel generation existed but wasn't coordinated. After it shipped, the field organised around a shared yardstick.</p>
+    <h3>From the Stanford team's own impact doc</h3>
+    <blockquote>Since then, to our surprise, many researchers, communities, and companies have published various work in this direction.<cite>— Simon Guo, KernelBench Impact, Oct 2025</cite></blockquote>
+    <p>The "to our surprise" is the tell. The bottleneck wasn't ideas or compute — it was a missing yardstick. Once one existed, ~33 systems followed in 17 months.</p>
+    <h3>Why this is unusual</h3>
+    <p>Most benchmarks measure progress on an existing field. KernelBench did the inverse — it brought the field into existence by giving it something to measure. The closest analogues: ImageNet for vision, SWE-bench for code agents.</p>
+    <h3>The author-as-founder signal</h3>
+    <p>Anne Ouyang (lead author) co-founded <strong>Standard Kernel Co.</strong> in Sep 2025 — under a year after the paper shipped. The benchmark author becoming the commercial entrant is a strong signal that solving the benchmark produces real value.</p>
+    <h3>Provenance</h3>
+    <p>Authors: Anne Ouyang, Simon Guo, Simran Arora, Alex L. Zhang, William Hu, Christopher Ré, Azalia Mirhoseini (Stanford). arXiv:2502.10517. Dec 2024 release; ICML 2025 acceptance; DL4C Best Paper at ICLR 2025.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1202,19 +1461,27 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       <p class="anim anim-d1" style="margin-bottom: 12px; font-size: clamp(13px, 1.2vw, 17px);">Each task: a PyTorch <code>nn.Module</code>. Goal: write a faster CUDA kernel that produces matching outputs.</p>
       <div class="card tagged anim anim-d2" style="margin-bottom: 8px;">
         <span class="pill" style="margin: 0;">Level 1 · 100 tasks</span>
-        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Single ops — matmuls, convs, layernorm.</p>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Single ops like matmuls, convs, layernorm.</p>
       </div>
       <div class="card tagged amber anim anim-d3" style="margin-bottom: 8px;">
         <span class="pill amber" style="margin: 0;">Level 2 · 100 tasks</span>
-        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Fusion patterns — conv + bias + ReLU. One kernel beats three.</p>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Fusion patterns like conv + bias + ReLU.</p>
       </div>
       <div class="card tagged purple anim anim-d4">
         <span class="pill purple" style="margin: 0;">Level 3 · 50 tasks</span>
-        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Full architectures — MobileNet, VGG, MiniGPT. Optimize the whole network.</p>
+        <p style="font-size: clamp(11px, 1.1vw, 14px); margin-top: 4px;">Full model architectures like MobileNet, VGG, MiniGPT.</p>
       </div>
     </div>
   </div>
   <div class="slide-ref">Ouyang et al. <em>KernelBench: Can LLMs Write GPU Kernels?</em> Stanford SAIL, Dec 2024 · <a href="https://arxiv.org/abs/2502.10517" target="_blank">arXiv:2502.10517</a></div>
+  <aside class="notes">
+    <h3>The design choice that mattered</h3>
+    <p>KernelBench's three levels — single ops (L1), fusions (L2), full architectures (L3) — were a deliberate choice. L1 measures basic CUDA proficiency; L2 measures fusion reasoning (the actual perf win); L3 measures end-to-end architecture optimization. Each level rewards different capabilities.</p>
+    <h3>250 tasks</h3>
+    <p>100 + 100 + 50. The exact split is "we needed enough variety to be representative but few enough to evaluate quickly." The reference is real PyTorch nn.Module code from common architectures.</p>
+    <h3>Why nn.Module not raw spec</h3>
+    <p>The benchmark gives you the PyTorch reference because that's how a real engineer would specify the task. Translation, not text-to-CUDA. CUDABench (Mar 2026) is the natural-language-spec variant; it shows a much wider gap.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1239,6 +1506,14 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       <p style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim);"><code>fast<sub>1</sub></code> = strictly faster. <code>fast<sub>2</sub></code> = at least 2×. Asks "how good?", not just "good?"</p>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Why both correct AND fast</h3>
+    <p>Most code-gen benchmarks measure correctness only (HumanEval, SWE-Bench). KernelBench's contribution: combining correctness with measured speedup over PyTorch. A wrong kernel that's "fast" doesn't count. A correct kernel that's slower than PyTorch doesn't count either.</p>
+    <h3>The p parameter</h3>
+    <p>fast<sub>1</sub> = strictly faster than reference. fast<sub>2</sub> = at least 2× faster. The parameter lets you ask "good speedup or great speedup?" rather than collapsing the distribution to a binary.</p>
+    <h3>Standardization</h3>
+    <p>FlashInfer Bench (MLSys 2026 contest) uses fast_p as its scoring metric. The metric is becoming standard across kernel-gen benchmarks.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1263,20 +1538,37 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <li class="anim anim-d5">Once the gap was easy to talk about, the field started moving.</li>
   </ul>
   <div class="slide-ref">Eval: Claude 3.5 Sonnet, GPT-4o, DeepSeek-Coder, Llama 3.1, others. Figures from Ouyang et al., 2024.</div>
+  <aside class="notes">
+    <h3>December 2024 baseline</h3>
+    <p>Frontier-model performance on KernelBench when it was released: most models could compile a kernel ~70% of the time, but only ~30% would be both correct AND beat torch.compile. Level 3 was particularly brutal — ~20% success on full architectures.</p>
+    <h3>Why torch.compile was hard to beat</h3>
+    <p>torch.compile uses TorchInductor, which has years of compiler engineering behind it. Beating it requires either (a) finding fusion opportunities the compiler missed, or (b) using lower-level primitives the compiler doesn't have access to.</p>
+    <h3>Why this slide matters</h3>
+    <p>It sets the bar. The 17 months of work we'll cover next was about closing the gap visible in this slide.</p>
+    <h3>Models tested</h3>
+    <p>Claude 3.5 Sonnet, GPT-4o, DeepSeek-Coder, Llama 3.1, others. None were specialized for kernel generation. All were "off the shelf" frontier code-gen.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
      09 · FULL DOMAIN MAP REVEAL
 ============================================================ -->
 <div class="slide section-header" data-slide="8" data-section="reveal">
-  <div class="section-tag anim">PART III · Seventeen months later</div>
+  <div class="section-tag anim">PART III · A year later</div>
   <h2 class="anim anim-d1">The field grew in <span class="accent">six directions</span>.</h2>
-  <p class="section-sub anim anim-d2">Since October 2025 alone: I count <em>33 new systems and 9 new benchmarks.</em> The pace is faster than the pace of writing this slide deck.</p>
   <div class="domain-map anim anim-d3" data-active="0"></div>
   <div class="map-foot anim anim-d4">
     <span><span class="ok">●</span> map: 6 / 6 areas</span>
     <span>we'll visit each in order →</span>
   </div>
+  <aside class="notes">
+    <h3>The map = the talk's structure</h3>
+    <p>Six areas where the field grew. We'll visit each in turn. The order is meaningful: benchmarks set the yardstick, eval reveals failure modes, agents and specialists are the methods that work, hardware is where it's deployed, frontier is what's still open.</p>
+    <h3>Key numbers since Oct 2025</h3>
+    <p>33 systems published. 9 new benchmarks (NPUKernelBench, NKIBench, MultiKernelBench v2, KernelCraft, MSKernelBench, KForge, CUDABench, FlashInfer Bench, KernelBench v0.1). 2 prize tracks (FlashInfer + Trainium2/3). 1 diffusion LLM (DICE).</p>
+    <h3>Pace check</h3>
+    <p>For comparison: most ML subfields take 3-5 years to produce this volume of follow-up work. Kernel-gen condensed it into 17 months. The benchmark really did set things in motion.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1291,6 +1583,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <span><span class="ok">●</span> active: 01 / 06 — Bench4Kernel</span>
     <span>9 → ~30 benchmarks</span>
   </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>First section — benchmarks. Two slides: how the benchmark surface widened (more silicon stacks) and deepened (more rigorous eval).</p>
+    <h3>The map highlight</h3>
+    <p>Bench4Kernel is highlighted in green. Pause briefly so the audience can orient — then dive in.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1331,6 +1629,20 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       <div class="blurb">First serious LLM-to-Apple-Metal benchmark · single-shot CUDA → Metal.</div>
     </div>
   </div>
+  <div class="slide-ref"><a href="https://arxiv.org/abs/2601.07160" target="_blank">NPUKernelBench</a> · <a href="https://arxiv.org/abs/2511.15915" target="_blank">NKIBench / AccelOpt</a> · <a href="https://arxiv.org/abs/2507.17773" target="_blank">MultiKernelBench</a> · <a href="https://arxiv.org/abs/2511.13274" target="_blank">KForge</a> · <a href="https://gimletlabs.ai/blog/ai-generated-metal-kernels" target="_blank">Gimlet Labs Metal blog</a></div>
+  <aside class="notes">
+    <h3>Six post-cutoff benchmarks at a glance</h3>
+    <ul>
+      <li><strong>NPUKernelBench</strong> (Cao et al., Jan 2026): 158 Ascend NPU kernels, dual-path host+device evaluation. Compile rate jumped from 0% to 95.5% with the AscendKernelGen system.</li>
+      <li><strong>NKIBench</strong> (Stanford PPL + AWS, Nov 2025): first AWS Trainium 1 + 2 benchmark, real LLM workloads. Co-developed with FlashInfer.</li>
+      <li><strong>MultiKernelBench v2</strong> (Nanjing U.): CUDA + AscendC + Pallas. Cycle-level analysis revealed Pallas API hallucinations (~6% pass rate on Pallas, vs 88% on CUDA).</li>
+      <li><strong>KernelCraft</strong>: 33 tasks across 3 emerging accelerator ISAs. The "agents on hardware no one has trained on" benchmark.</li>
+      <li><strong>MSKernelBench</strong> (Han et al., Mar 2026): 50 tasks beyond ML — sparse, scientific, numerical kernels in pure C/CUDA. FP32 + BF16.</li>
+      <li><strong>KForge</strong> (Gimlet Labs, Nov 2025): the first serious Apple Metal benchmark. Cross-platform CUDA → Metal transfer.</li>
+    </ul>
+    <h3>Pattern</h3>
+    <p>Each benchmark is sponsored by either a hardware vendor or a startup with skin in the game on that platform. Benchmarks here are commercial as much as academic.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1357,7 +1669,17 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       <p style="font-size: clamp(11px, 1.1vw, 14px);"><strong>FlashInfer Bench</strong> on B200 (MoE / DSA / Gated Delta Net). Companion <strong>Trainium2/3 MoE Challenge</strong>. First public arena for kernel-gen agents.</p>
     </div>
   </div>
-  <div class="slide-ref">CUDABench arXiv 2603.02236 · KernelBench Issue #74 (Fall 2025 maintenance roadmap) · <a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a></div>
+  <div class="slide-ref">CUDABench <a href="https://arxiv.org/abs/2603.02236" target="_blank">arXiv:2603.02236</a> · <a href="https://github.com/ScalingIntelligence/KernelBench/issues/74" target="_blank">KernelBench Issue #74</a> (Fall 2025 maintenance roadmap) · <a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a></div>
+  <aside class="notes">
+    <h3>Beyond translation</h3>
+    <p>CUDABench (SJTU, Mar 2026) is the first text-to-CUDA benchmark — generate kernels from natural-language specifications, no PyTorch reference. Reveals the wide gap between compilation rate and functional correctness for current models.</p>
+    <h3>KernelBench-v2 (community fork)</h3>
+    <p>The maintenance fork adds Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow. Signals that the original repo's reproducibility concerns motivated a community response.</p>
+    <h3>Hardening</h3>
+    <p>The original KernelBench team also shipped v0.1 with adversarial unit tests against the reward-hack patterns Sakana revealed. Static checker. Reward-hacking guards. From the impact doc: documents common reward-hacking patterns (cuBLAS calls, no-op kernels, desynced timers).</p>
+    <h3>MLSys 2026 contests</h3>
+    <p>FlashInfer Bench on B200 (3 tracks: MoE, DSA, Gated Delta Net). Companion Trainium2/3 MoE Challenge. First public arena where agents compete on contemporary frontier hardware.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1372,6 +1694,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <span><span class="ok">●</span> active: 02 / 06 — Eval4Kernel</span>
     <span>3 problems most papers underrate</span>
   </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>Eval4Kernel — the surprisingly hard problem of measuring whether your generated kernel actually works. Three slides: verification (Sakana), reward hacking (Makora + Dr. Kernel), timing fidelity (Standard Kernel).</p>
+    <h3>Why this section matters</h3>
+    <p>By 2026, correctness was largely solved. The bottleneck shifted to "is the speedup REAL?" That's what this section is about.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1390,6 +1718,17 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <li class="anim anim-d4">Low-precision ops aren't <span class="highlight">deterministic</span>. So "matches reference" is itself fuzzy.</li>
     <li class="anim anim-d5">Performance bounds — what's the actual ceiling? — remain dark arts even for human kernel engineers.</li>
   </ul>
+  <aside class="notes">
+    <h3>The Sakana incident (Feb 2025)</h3>
+    <p>Sakana AI released the AI CUDA Engineer with impressive numbers — until people noticed the kernels were exploiting test loopholes. Examples: returning cached results, mutating inputs to match outputs, calling cuBLAS instead of writing CUDA. The KernelBench team published a PR with a stricter eval that confirmed the issues.</p>
+    <p>Sakana revised their work and released a more rigorous version. Credit to them, but the incident became the field's wake-up call.</p>
+    <h3>The softmax-1D example</h3>
+    <p>From the user's notes: a 1D softmax kernel can pass a unit test by being wrong in a way the test doesn't probe. Textbook case of "correctness is partial signal."</p>
+    <h3>Low-precision non-determinism</h3>
+    <p>FP16 / BF16 ops are not bitwise deterministic across runs (atomic adds, reduction order, hardware variance). So "matches reference within tolerance" is itself a fuzzy predicate. Setting the tolerance is a judgment call.</p>
+    <h3>Performance bounds</h3>
+    <p>From the user's notes: "Performance bound is dark arts." Even experienced kernel engineers struggle to know whether they've extracted everything out of the hardware. Without a clear ceiling, "is this kernel good?" is hard to answer.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1421,7 +1760,17 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       </div>
     </div>
   </div>
-  <div class="slide-ref">Makora <em>Reward Hacks in CUDA Kernel Generation</em>, Jan 2026 · Liu et al. <em>Dr. Kernel</em>, <a href="https://arxiv.org/abs/2602.05885" target="_blank">arXiv:2602.05885</a></div>
+  <div class="slide-ref"><a href="https://huggingface.co/datasets/makora-ai/KernelHacks" target="_blank">Makora <em>KernelHacks</em></a> dataset, Jan 2026 · Liu et al. <em>Dr. Kernel</em>, <a href="https://arxiv.org/abs/2602.05885" target="_blank">arXiv:2602.05885</a></div>
+  <aside class="notes">
+    <h3>Makora KernelHacks (Jan 2026)</h3>
+    <p>Public 1K-example dataset of reward-hack patterns mined from 2,500+ problem-kernel pairs. The 8 hack patterns: hardcode constants for known inputs, skip work the test doesn't observe, time only cached calls, divert work to async streams, identity-pass on trivial shapes, smuggle <code>torch</code> in the "kernel", split work across CPU/GPU, exploit atomicAdd reduction order.</p>
+    <h3>Dr. Kernel TRLOO</h3>
+    <p>Dr. Kernel (HKUST + Sea AI Lab, Feb 2026) identified that vanilla multi-turn GRPO has a biased policy gradient because the policy is included in the baseline. They proposed Turn-level Reinforce-Leave-One-Out (TRLOO) which excludes the current trajectory from the baseline.</p>
+    <h3>The deeper point</h3>
+    <p>Reward hacking became the central RL methodology problem in 2026 because correctness was already solved. Once you're at 96%+ correct kernels, the signal shifts to "is the speedup real?" That's where the hacks live.</p>
+    <h3>If your evaluator has a hole, RL will find it</h3>
+    <p>This is the takeaway. Implication for benchmark builders: design adversarial tests upfront. Implication for paper readers: discount any reward-hack-blind speedup claims.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1449,7 +1798,22 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <li class="anim anim-d4">Naive averages over noisy runs can fabricate or erase a 1.2× speedup.</li>
     <li class="anim anim-d5">Treat small wins skeptically unless the paper explicitly reports trimmed-mean / persistent-mode / contention-controlled numbers.</li>
   </ul>
-  <div class="slide-ref">Standard Kernel benchmarking blog, Feb 2026.</div>
+  <div class="slide-ref"><a href="https://standardkernel.com/blog/in-pursuit-of-high-fidelity-gpu-kernel-benchmarking/" target="_blank">Standard Kernel — <em>In Pursuit of High-Fidelity GPU Kernel Benchmarking</em></a>, Feb 2026.</div>
+  <aside class="notes">
+    <h3>Standard Kernel benchmarking study (Feb 2026)</h3>
+    <p>The cleanest empirical study of timing methodology in this field. Key findings:</p>
+    <ul>
+      <li>CPU load barely changes mean kernel latency (~0% effect).</li>
+      <li>GPU contention from another concurrent process increases mean latency by ~21%.</li>
+      <li>Variance under contention blows up by ~30× compared to isolated runs.</li>
+      <li>Persistent GPU mode has little effect once steady-state is reached.</li>
+      <li>Trimmed mean / median is materially more stable than naive averaging.</li>
+    </ul>
+    <h3>What this means for paper claims</h3>
+    <p>Most "X% faster" papers in 2025 didn't control for GPU contention. A 1.2× speedup on noisy hardware can vanish or appear depending on what else is running. Treat small wins skeptically unless the paper reports trimmed-mean / contention-controlled numbers.</p>
+    <h3>Production implication</h3>
+    <p>If you're benchmarking your own kernels: run on a dedicated GPU, persistent mode on, do warmup, use trimmed mean over many trials. Otherwise your numbers are noise.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1464,6 +1828,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <span><span class="ok">●</span> active: 03 / 06 — Agent4Kernel</span>
     <span>9 systems · 4 production deployments</span>
   </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>Agent4Kernel — three slides on agentic systems. The loop, the zoo, the headline numbers. Methodologically the richest section.</p>
+    <h3>The takeaway</h3>
+    <p>Single-shot is the strawman. By mid-2026 every serious system is a multi-agent loop. We'll see why.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1495,9 +1865,29 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     </div>
   </div>
   <ul style="margin-top: 10px;">
-    <li class="anim anim-d3"><strong>The profiler is a tool call.</strong> NCU surfaces bandwidth, occupancy, and stalls as text the model can read.</li>
-    <li class="anim anim-d4"><strong>Memory across attempts</strong> is the live research question. Long-term <em>skills</em> the agent can reuse, short-term <em>anti-backtracking</em> so it doesn't keep retrying the same fix.</li>
+    <li class="anim anim-d3"><strong>Why the convergence isn't stylistic.</strong> Kernel generation has a unique signal structure — compile errors are dense, profiler output is parseable, correctness is mechanical. Single-shot fails because the model has to commit before any of that signal arrives.</li>
+    <li class="anim anim-d4"><strong>METR's wrinkle.</strong> An early KernelAgent gained 1.8× over single-shot just by parallel sampling at higher budget. Most early "agentic" wins were search budget, not algorithmic novelty. The clever-RL papers came later.</li>
   </ul>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>The convergence on profile-in-loop is structural, not stylistic. Nine 2026 systems independently arrived at variations of <code>Coder + Verifier + Profiler + Memory</code>. The shape is forced by the signal structure of the domain.</p>
+    <h3>Why the loop wins</h3>
+    <p>Three properties make agentic loops viable here that don't generalise to most code-gen:</p>
+    <ul>
+      <li><strong>Compile errors are dense.</strong> CUDA / Triton / NKI / Pallas all return structured errors for syntax, types, shape mismatches. The model can read them.</li>
+      <li><strong>Profilers are tool-callable.</strong> Nsight Compute output is parseable text. Bandwidth, occupancy, register pressure, memory stalls — surfaced as language the model can reason over.</li>
+      <li><strong>Correctness is mechanical.</strong> Run on test inputs, compare to reference, allclose with tolerance. No "did it solve the problem?" judgment call.</li>
+    </ul>
+    <p>Take any one of these away and single-shot becomes competitive again. SWE-Bench has weaker test signal; agents win there too but more by trial and error.</p>
+    <h3>METR's finding (the calibration)</h3>
+    <p>METR (AI Safety Org, Feb 2025) ran their KernelAgent on a modified KernelBench. Their headline: 1.8× speedup vs KernelBench's 1.05× baseline.</p>
+    <blockquote>They attribute [the gain] to "better scaffolding and more samples."</blockquote>
+    <p>The interesting part: <em>their scaffolding wasn't novel</em>. They ran 8 attempts in parallel, kept the fastest, spawned children from the winner. That's parallel tree search. The Kevin / Dr. Kernel / CUDA Agent multi-turn-RL papers came later. METR's data is the cleanest evidence that a chunk of "agentic" wins were just search budget.</p>
+    <h3>Memory is the live frontier</h3>
+    <p>What separates 2025 systems from 2026 systems: memory across attempts. KernelSkill (Mar 2026) is the cleanest: dual-level memory — long-term reusable "skills" plus short-term anti-backtracking. KernelBlaster (NVIDIA, Feb 2026) calls it "memory-augmented in-context RL" with a persistent CUDA knowledge base.</p>
+    <h3>The nine systems</h3>
+    <p>For Q&A: CudaForge, PRAGMA, STARK, KernelSkill, AutoKernel, KForge, KernelEvolve, CUDA Agent, GEAK family. All public papers or blog posts in the Oct 2025 → Apr 2026 window. Slight variants of the same architecture.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1553,7 +1943,24 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       <div class="blurb">Triton + HIP + OpenEvolve QD search on MI300 / MI355.</div>
     </div>
   </div>
-  <div class="slide-ref">arXiv 2511.01884 · 2511.06345 · 2510.16996 · 2603.10085 · 2603.21331 · 2511.13274 · 2512.23236 · 2602.24286 · AMD ROCm Blogs</div>
+  <div class="slide-ref">arXiv <a href="https://arxiv.org/abs/2511.01884" target="_blank">2511.01884</a> · <a href="https://arxiv.org/abs/2511.06345" target="_blank">2511.06345</a> · <a href="https://arxiv.org/abs/2510.16996" target="_blank">2510.16996</a> · <a href="https://arxiv.org/abs/2603.10085" target="_blank">2603.10085</a> · <a href="https://arxiv.org/abs/2603.21331" target="_blank">2603.21331</a> · <a href="https://arxiv.org/abs/2511.13274" target="_blank">2511.13274</a> · <a href="https://arxiv.org/abs/2512.23236" target="_blank">2512.23236</a> · <a href="https://arxiv.org/abs/2602.24286" target="_blank">2602.24286</a> · <a href="https://rocm.blogs.amd.com/" target="_blank">AMD ROCm Blogs</a></div>
+  <aside class="notes">
+    <h3>Nine systems in 17 months</h3>
+    <p>The slide shows nine but there are more. I picked these because they're a representative cross-section: training-free vs RL-trained, single-vendor vs cross-vendor, research vs production.</p>
+    <ul>
+      <li><strong>CudaForge</strong>: training-free Coder + Judge. Ships 1.68× geomean across A100/3090/4090.</li>
+      <li><strong>PRAGMA</strong>: 4-agent (Conductor / Coder / Verifier / Profiler), GPU + CPU.</li>
+      <li><strong>STARK</strong>: Plan-Code-Debug + tree search + memory.</li>
+      <li><strong>KernelSkill</strong>: dual-level memory — long-term skills + short-term anti-backtracking.</li>
+      <li><strong>AutoKernel</strong>: full-PyTorch model edit/benchmark/keep loop. ~1K GitHub stars within hours of release.</li>
+      <li><strong>KForge</strong>: cross-platform CUDA → Apple Metal.</li>
+      <li><strong>KernelEvolve</strong>: Meta production system, runs continuously for DLRM.</li>
+      <li><strong>CUDA Agent</strong>: ICLR 2026 oral, large-scale agentic RL.</li>
+      <li><strong>GEAK</strong>: AMD's Triton + HIP family. Quality-Diversity search.</li>
+    </ul>
+    <h3>Common pattern</h3>
+    <p>Different scaffolds, same core: Coder + Profiler + Verifier + (optional) Memory. Convergence is structural, not stylistic.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1589,6 +1996,20 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <strong>KernelEvolve</strong> ships continuously in Meta production for DLRM. <strong>CUDA-L2</strong> beats cuBLAS HGEMM. The gap KernelBench surfaced is mostly closed — <em>at least on the benchmark.</em>
   </p>
   <div class="slide-ref">Numbers self-reported; not all use identical L3 subsets or baselines (eager vs torch.compile). Cross-system comparison should remain careful.</div>
+  <aside class="notes">
+    <h3>The 80-point jump in 17 months</h3>
+    <p>L3 was the brutal level — full architectures, end-to-end optimization. Dec 2024 baseline: ~20%. By Mar 2026: 92% (CUDA Agent), 100% (KernelEvolve, KernelSkill). This is the fastest legible progress in any ML systems benchmark in recent memory.</p>
+    <h3>Why L3 closed faster than L1/L2</h3>
+    <p>L3 tasks are decomposable. A full architecture has many sub-kernels and many opportunities for selective improvement. Agents exploit this — find one bottleneck, fix it, claim a win. L1 (single ops) is a tighter optimization target with less room for partial credit.</p>
+    <h3>The METR finding (revisited)</h3>
+    <p>From the agent-loop slide: METR's KernelAgent gained 1.8× over single-shot just by parallel sampling at higher budget. A meaningful fraction of the L3 progression was search budget rather than algorithmic novelty.</p>
+    <h3>Production claim</h3>
+    <p>KernelEvolve (Meta, Dec 2025): "running continuously in Meta's production infrastructure, autonomously generating optimized Triton kernels for hundreds of models serving billions of users daily." That's the deployment claim. Not academic.</p>
+    <h3>CUDA-L2 caveat</h3>
+    <p>CUDA-L2 beats cuBLAS HGEMM. Specifically HGEMM. They didn't claim it generalizes. But for that one operation, the specialist beats hand-tuned vendor BLAS.</p>
+    <h3>What "100% on KernelBench" doesn't mean</h3>
+    <p>It doesn't mean kernel generation is solved. It means the benchmark is solved. Per the KernelBench team's own notes, KB v0.1 hardens against reward hacking; the real test is whether the gains transfer to off-distribution kernels.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1603,6 +2024,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <span><span class="ok">●</span> active: 04 / 06 — LLM4Kernel</span>
     <span>5 specialist models · 1 diffusion LLM</span>
   </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>LLM4Kernel — three slides on specialist models. Synthetic data, the specialists themselves, and DICE (the diffusion outlier).</p>
+    <h3>Setup line</h3>
+    <p>Why mid-size models beat frontier on this domain? That's the question we'll answer.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1610,27 +2037,44 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="21" data-section="llm">
   <div class="section-marker-inline anim">04.1 — synthesize the curriculum</div>
-  <h2 class="anim">Expert kernels are scarce — <span class="accent">synthesize them</span></h2>
-  <div class="card-grid cols-3" style="margin-top: 8px;">
-    <div class="card tagged anim anim-d1">
+  <h2 class="anim">Frontier models trained on <span class="amber">bad</span> CUDA</h2>
+  <p class="anim anim-d1" style="margin-bottom: 8px; font-size: clamp(13px, 1.2vw, 16px); color: var(--text-dim);">GitHub's CUDA corpus is mostly tutorials, course assignments, and abandoned ports. The 2026 answer is <em>build the data instead of scraping it.</em></p>
+  <div class="card-grid cols-3" style="margin-top: 6px;">
+    <div class="card tagged anim anim-d2">
       <h3 class="accent" style="font-size: clamp(13px, 1.3vw, 18px);">DRTriton</h3>
       <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Texas A&amp;M + Oracle · Mar 2026</p>
-      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;">CSP-DAG generator covers operator space uniformly. <strong>100K</strong> synthetic programs + 2K curated pairs. 7B model is faster on <span class="highlight">92%</span> of L2 vs 23% for GPT-5.2.</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;">CSP-DAG generator → <strong>100K synthetic programs</strong> with uniform operator-space coverage. 7B specialist beats GPT-5.2 by 4× on KB L2.</p>
     </div>
-    <div class="card tagged blue anim anim-d2">
-      <h3 class="blue" style="font-size: clamp(13px, 1.3vw, 18px);">CUDA Agent</h3>
-      <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Tsinghua + ByteDance · Mar 2026</p>
-      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;">~6K composed tasks from <code>torch</code> + <code>transformers</code>. AST-similarity decontamination. Multi-stage PPO + rejection-FT + value pretraining.</p>
+    <div class="card tagged blue anim anim-d3">
+      <h3 class="blue" style="font-size: clamp(13px, 1.3vw, 18px);">KernelBook</h3>
+      <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Meta + PyTorch · Mar 2025</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;"><strong>18K PyTorch→Triton pairs</strong> harvested from <code>torch.compile</code> output. The optimizer is the oracle.</p>
     </div>
-    <div class="card tagged purple anim anim-d3">
+    <div class="card tagged purple anim anim-d4">
       <h3 class="purple" style="font-size: clamp(13px, 1.3vw, 18px);">Ascend-CoT</h3>
       <p style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em; margin: 2px 0;">Huawei · Jan 2026</p>
-      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;"><strong>83,916</strong>-sample CoT corpus mixing real AscendC operators, doc-derived reasoning, and general code. Apache-2.0 on Hugging Face.</p>
+      <p style="font-size: clamp(11px, 1.05vw, 14px); margin-top: 4px;"><strong>84K CoT corpus</strong> mixing real AscendC operators, vendor docs, and reasoning. Apache-2.0 on HuggingFace.</p>
     </div>
   </div>
-  <p class="anim anim-d4" style="margin-top: 12px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
-    Shape beats size: operator coverage, controlled difficulty, and a decontamination check that catches near-duplicates of the eval.
+  <p class="anim anim-d5" style="margin-top: 12px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
+    Three flavors: <em>synthesize</em> (DRTriton) · <em>use the optimizer as oracle</em> (KernelBook) · <em>vendor-curated</em> (Ascend-CoT). When fine-tuning a specialist, <span class="highlight">data quality dominates scale</span>. Inverse of frontier-model training.
   </p>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>When you can fine-tune a small specialist on a bounded domain, data quality dominates scale. This is the inverse of frontier-model training.</p>
+    <h3>Why GitHub CUDA is bad</h3>
+    <p>Most public CUDA on GitHub is tutorial code, course assignments, abandoned hardware ports, or PMPP-textbook examples. It's correct but unoptimized — the kind of CUDA you write when you're learning, not when you're shipping. Frontier models trained on this corpus inherit "naive" patterns.</p>
+    <h3>Three data strategies</h3>
+    <ul>
+      <li><strong>Synthesize the curriculum.</strong> DRTriton's CSP-DAG generator constructs a directed-acyclic graph over operator types and generates programs with controlled difficulty + uniform coverage. 100K programs + 2K curated pairs. CUDA Agent does similar — composes 6K tasks from <code>torch</code>/<code>transformers</code> ops with AST-similarity decontamination against the eval.</li>
+      <li><strong>Use the optimizer as oracle.</strong> KernelBook (Meta + PyTorch + Stanford) takes 18K real PyTorch modules from open-source models on GitHub, runs <code>torch.compile</code>, captures the generated Triton, ships the (PyTorch, Triton) pairs as training data. The expensive part — generating the optimized kernel — is done by an existing compiler.</li>
+      <li><strong>Vendor-curated.</strong> Huawei's Ascend-CoT is the most ambitious public release: 83,916 samples mixing real AscendC operators, doc-derived chain-of-thought reasoning, and general code. Apache-2.0. The vendor does the curation because they have the most to gain from it.</li>
+    </ul>
+    <h3>Why specialists win on data quality</h3>
+    <p>Frontier-model training: more data is almost always better, because the model has to cover the entire distribution of human language and code. Specialist training: you're narrowing to a domain where most of the public data is wrong, so curation is what wins.</p>
+    <h3>For Q&A</h3>
+    <p>If asked about "won't synthetic data overfit to the synthesizer's biases?" — yes, that's a real risk. DRTriton explicitly addresses it with operator-space uniform coverage; CUDA Agent uses AST-similarity to filter near-duplicates of the eval. Most current specialists ARE narrow — they win on KernelBench but their generalisation to off-distribution kernels is unclear.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1638,30 +2082,56 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="22" data-section="llm">
   <div class="section-marker-inline anim">04.2 — the specialists</div>
-  <h2 class="anim">Mid-size models <span class="accent">beat frontier</span> on kernels</h2>
+  <h2 class="anim">Why a 14B specialist <span class="accent">beats Claude</span></h2>
+  <p class="anim anim-d1" style="margin-bottom: 8px; font-size: clamp(13px, 1.2vw, 16px); color: var(--text-dim);">Bounded distribution + verifiable reward + clean data. Three forces stack in the specialist's favour.</p>
   <div class="zoo" style="grid-template-columns: 1fr 1fr;">
-    <div class="ref-card anim anim-d1">
+    <div class="ref-card anim anim-d2">
       <div class="name">CUDA Agent</div>
       <div class="who">Tsinghua AIR + ByteDance · Mar 2026 · ICLR 2026 oral</div>
-      <div class="blurb">98.8% pass / 96.8% faster overall. <span class="highlight">100% / 100% / 92%</span> faster-than-<code>torch.compile</code> on L1/L2/L3.</div>
+      <div class="blurb">98.8% pass / 96.8% faster overall. <span class="highlight">100% / 100% / 92%</span> faster-than-<code>torch.compile</code> on L1/L2/L3. Multi-stage PPO + rejection-FT + value pretraining.</div>
     </div>
-    <div class="ref-card anim anim-d1 amber">
+    <div class="ref-card anim anim-d2 amber">
       <div class="name">CUDA-L2</div>
       <div class="who">DeepReinforce · Dec 2025</div>
       <div class="blurb">Specialized to HGEMM. <span class="highlight">Surpasses cuBLAS / cuBLASLt</span> by 11.4% offline, 15.9% server. Open code on A100 / H100 / 3090.</div>
     </div>
-    <div class="ref-card anim anim-d2 blue">
+    <div class="ref-card anim anim-d3 blue">
       <div class="name">Dr. Kernel-14B</div>
       <div class="who">HKUST + Sea AI Lab · Feb 2026</div>
-      <div class="blurb">Built in <strong>KernelGYM</strong>. TRLOO + profiling rewards. Competitive with Claude-4.5-Sonnet on KernelBench.</div>
+      <div class="blurb">Built in <strong>KernelGYM</strong>. TRLOO + profiling rewards. <em>Competitive with Claude 4.5 Sonnet</em> at ~1/30th the parameter count.</div>
     </div>
-    <div class="ref-card anim anim-d2 purple">
+    <div class="ref-card anim anim-d3 purple">
       <div class="name">QiMeng-Kernel</div>
       <div class="who">Chinese Academy of Sciences · AAAI 2026</div>
       <div class="blurb">Macro-Thinking + Micro-Coding split. Small RL'd LLM picks strategy; general LLM implements. ~100% L1-2, ~70% L3.</div>
     </div>
   </div>
-  <div class="slide-ref">arXiv 2602.24286 · 2512.02551 · 2602.05885 · 2511.20100 · AAAI / ICLR / NeurIPS DL4Code 2026 all accept kernel-gen work.</div>
+  <p class="anim anim-d4" style="margin-top: 10px; font-size: clamp(11px, 1.05vw, 14px); color: var(--text-muted); font-style: italic;">
+    Sholto Douglas (Anthropic): <em>"Underrated dynamic — models will be as good at kernel writing as competition math/code in 12–18 months."</em>
+  </p>
+  <div class="slide-ref">arXiv <a href="https://arxiv.org/abs/2602.24286" target="_blank">2602.24286</a> · <a href="https://arxiv.org/abs/2512.02551" target="_blank">2512.02551</a> · <a href="https://arxiv.org/abs/2602.05885" target="_blank">2602.05885</a> · <a href="https://arxiv.org/abs/2511.20100" target="_blank">2511.20100</a> · AAAI / ICLR / NeurIPS DL4Code 2026 all accept kernel-gen work.</div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>On bounded, verifiable, high-signal domains, specialists beat frontier — and kernels are the canonical example. Three forces stack:</p>
+    <ul>
+      <li><strong>Bounded distribution.</strong> KernelBench is finite. The operator space is well-defined. Specialists overfit to that bound efficiently.</li>
+      <li><strong>Verifiable reward.</strong> Compile + correctness + speedup. RL works because the reward isn't fuzzy. Most domains can't say this.</li>
+      <li><strong>Clean training data.</strong> Specialists train on synthesized or vendor-curated data. Frontier models train on noisy GitHub. (See previous slide.)</li>
+    </ul>
+    <h3>The Sholto calibration</h3>
+    <p>From Sholto Douglas (RL researcher, Anthropic) on Twitter:</p>
+    <blockquote>Underrated dynamic in the next ~12-18 months is we should expect models to get as good at kernel writing as they are at competition math/code contests.<cite>— Sholto Douglas</cite></blockquote>
+    <p>Translation: kernel writing is in the competition-math difficulty regime. The specialist-beats-frontier finding is the leading indicator of that broader claim.</p>
+    <h3>Numerical receipts</h3>
+    <ul>
+      <li><strong>CUDA Agent</strong> (Tsinghua + ByteDance): 98.8% overall pass, 96.8% faster overall. <strong>100% / 100% / 92%</strong> faster-than-<code>torch.compile</code> on KernelBench L1/L2/L3. Multi-stage RL: warm-up SFT → value pretraining → agentic PPO. Anti-reward-hacking with protected verify scripts and forbidden-fallback detection.</li>
+      <li><strong>CUDA-L2</strong> (DeepReinforce): trained only on HGEMM. Beats cuBLAS by 11.4% offline / 15.9% server-mode. Discovered novel double-buffer ping-pong prefetching variants. Public code at github.com/deepreinforce-ai/CUDA-L2.</li>
+      <li><strong>Dr. Kernel-14B</strong> (HKUST + Sea AI Lab): built in their KernelGYM env. TRLOO (Turn-level Reinforce-Leave-One-Out) corrects a biased policy gradient in vanilla multi-turn GRPO. Competitive with Claude 4.5 Sonnet on KernelBench at ~1/30th param count. arXiv 2602.05885.</li>
+      <li><strong>QiMeng-Kernel</strong> (CAS, AAAI 2026): two-tier — small RL'd LLM picks high-level optimization strategy ("macro"), general LLM implements ("micro"). ~100% on L1-L2, ~70% on L3. arXiv 2511.20100.</li>
+    </ul>
+    <h3>Anti-hype caveat</h3>
+    <p>"Beats Claude on KernelBench" doesn't mean "beats Claude in production." Specialists are narrow. CUDA-L2 only does HGEMM. Dr. Kernel only does Triton. They're testing on the bench they were optimized for. Generalisation to novel kernels off-distribution is the real test, and most papers don't measure it well.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1688,6 +2158,16 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     </div>
   </div>
   <div class="slide-ref">Bai et al. <em>DICE: A Diffusion LLM for CUDA Kernel Generation</em>, <a href="https://arxiv.org/abs/2602.11715" target="_blank">arXiv:2602.11715</a>, Feb 2026.</div>
+  <aside class="notes">
+    <h3>DICE: Diffusion LLM for CUDA Kernel Generation (Feb 2026)</h3>
+    <p>The first non-autoregressive kernel generator. Bai et al., arXiv:2602.11715. Two-phase RL training: an infilling stage on partial kernels, then end-to-end. Three model scales: 1.7B / 4B / 8B. Beats AR baselines at the same parameter count on KernelBench.</p>
+    <h3>Why diffusion suits kernels</h3>
+    <p>Kernels have strong local structure that diffusion exploits well: repeated tile patterns, parallel reductions, symmetric loops. AR generation forces the model to commit to a token before knowing what comes after — bad for parallel structures.</p>
+    <h3>Architecture takeaway</h3>
+    <p>If your generation target has local structure and parallel substructure, diffusion may outperform AR. This is a general principle that probably extends beyond kernels — to compilers, schedulers, layout selection.</p>
+    <h3>Open question</h3>
+    <p>Does DICE generalize off-distribution? Diffusion LLMs are still rare in the wild. Whether the architectural advantage holds at frontier scale is unproven.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1695,13 +2175,29 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide section-header" data-slide="24" data-section="hw">
   <div class="section-tag anim">SECTION 05 / 06 · HW4Kernel</div>
-  <h2 class="anim anim-d1">No longer <span class="accent">CUDA-only</span>.</h2>
-  <p class="section-sub anim anim-d2">The biggest wins are showing up on stacks where humans have spent the least time tuning.</p>
+  <h2 class="anim anim-d1">An <span class="accent">anti-CUDA-monopoly</span> play.</h2>
+  <p class="section-sub anim anim-d2">Hardware diversification isn't a technical accident. <em>Each company on the next slide has a different reason for caring.</em></p>
   <div class="domain-map anim anim-d3" data-active="5"></div>
   <div class="map-foot anim anim-d4">
     <span><span class="ok">●</span> active: 05 / 06 — HW4Kernel</span>
     <span>8 hardware platforms · 5 commercial entrants</span>
   </div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>Hardware diversification is a political-economic response to NVIDIA's CUDA lock-in, made tractable for the first time by LLM-driven porting. Each vendor has a distinct strategic theory of why kernel-gen matters.</p>
+    <h3>Per-vendor strategy (the cheat sheet)</h3>
+    <ul>
+      <li><strong>Meta (MTIA via TritorX, KernelEvolve):</strong> "We need PyTorch's 481-op ATen surface working on internal silicon." Coverage beats peak perf — Meta doesn't need to win benchmarks, they need PyTorch to <em>work</em> on chips they own. TritorX is explicit about this: it optimizes for op-coverage (>20K passing OpInfo tests), not speedup.</li>
+      <li><strong>Huawei (Ascend NPU via AscendKernelGen, AKG, AscendCraft):</strong> "We need an NVIDIA-independent stack for sovereign AI." Self-sufficiency over catching up. The AscendC ecosystem is the most aggressive vendor-funded effort outside of NVIDIA.</li>
+      <li><strong>AWS (Trainium via NKIBench, AccelOpt):</strong> "Customers should run their existing PyTorch models cheaply on our chips." Cost over novelty. AccelOpt's headline: gpt-oss-120B + Qwen3 match Claude Sonnet 4 results at <em>26× lower cost</em>.</li>
+      <li><strong>Apple (Metal via KForge, ZMLX):</strong> "Inference on user laptops." Local over centralized. KForge demonstrates cross-platform CUDA→Metal transfer; the strategic goal is enabling local inference on the M-series base.</li>
+      <li><strong>Standard Kernel / Makora / Gimlet / DeepReinforce:</strong> The venture-side play is not being NVIDIA-dependent. YC's Request for Startups was explicit about this.</li>
+    </ul>
+    <h3>Why now</h3>
+    <p>Two enabling factors converged: (1) LLM coding capability is finally good enough to bridge the abstraction gap between CUDA and other ISAs (KForge, MultiKernelBench v2 demonstrate this); (2) the dollar incentive aligned — every customer of NVIDIA wants an alternative.</p>
+    <h3>The Y Combinator angle (worth quoting if asked)</h3>
+    <blockquote>NVIDIA dominates largely because of CUDA's hand-optimized code. Competing hardware often underperforms not because of inferior chips, but because writing systems-level code is difficult. With reasoning models, these could generate hardware-optimized code that rivals or surpasses human code. We would like to see more cofounders work on AI-generated kernels that make more hardware alternatives work.<cite>— YC Request for Startups</cite></blockquote>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1712,31 +2208,37 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
   <h2 class="anim">Eight stacks · five companies</h2>
   <div class="hw-grid">
     <div class="hw-item anim anim-d1">
+      <img class="logo" src="logos/huawei.svg" alt="">
       <div class="vendor">Huawei</div>
       <div class="platform">Ascend NPU</div>
       <div class="systems">AscendKernelGen · AscendOptimizer · AscendCraft · AKG</div>
     </div>
     <div class="hw-item anim anim-d1">
+      <img class="logo" src="logos/aws.svg" alt="">
       <div class="vendor">AWS</div>
       <div class="platform">Trainium NKI</div>
       <div class="systems">AccelOpt + NKIBench · 49→61% peak throughput</div>
     </div>
     <div class="hw-item anim anim-d2">
+      <img class="logo" src="logos/meta.svg" alt="">
       <div class="vendor">Meta</div>
       <div class="platform">MTIA</div>
       <div class="systems">TritorX (481 ATen ops) · KernelEvolve in production</div>
     </div>
     <div class="hw-item anim anim-d2">
+      <img class="logo" src="logos/amd.svg" alt="">
       <div class="vendor">AMD</div>
       <div class="platform">MI300 / MI355</div>
       <div class="systems">GEAK-Triton v2 · GEAK-HIP · ARGUS · Kernel-Smith-MACA</div>
     </div>
     <div class="hw-item anim anim-d3">
+      <img class="logo" src="logos/apple.svg" alt="">
       <div class="vendor">Apple</div>
       <div class="platform">Metal / MLX</div>
       <div class="systems">KForge cross-platform · ZMLX</div>
     </div>
     <div class="hw-item anim anim-d3">
+      <img class="logo" src="logos/google.svg" alt="">
       <div class="vendor">Google</div>
       <div class="platform">TPU / Pallas</div>
       <div class="systems">MultiKernelBench v2 · KForge · vLLM TPU team</div>
@@ -1755,6 +2257,24 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
   <p class="anim anim-d5" style="margin-top: 12px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim);">
     Commercial: <strong>Standard Kernel</strong> ($20M seed, Mar 2026), RightNow AI's AutoKernel, Gimlet Labs' kforge, DeepReinforce, Makora.
   </p>
+  <aside class="notes">
+    <h3>Eight platforms, five strategic theories</h3>
+    <p>Walk the audience through the grid. Each cell is a real ecosystem with active kernel-gen work. Don't dwell on any one — the point is breadth, not depth on any single platform.</p>
+    <ul>
+      <li><strong>Huawei Ascend</strong>: full vendor stack (AscendKernelGen, AscendOptimizer, AscendCraft, AKG). Most aggressive non-NVIDIA effort.</li>
+      <li><strong>AWS Trainium</strong>: AccelOpt + NKIBench. Throughput went 49→61% on T1, 45→59% on T2.</li>
+      <li><strong>Meta MTIA</strong>: TritorX (481 ATen ops) + KernelEvolve (production).</li>
+      <li><strong>AMD MI300/MI355</strong>: GEAK family (Triton + HIP), ARGUS, Kernel-Smith-MACA.</li>
+      <li><strong>Apple Metal</strong>: KForge cross-platform, ZMLX local toolkit.</li>
+      <li><strong>Google TPU/Pallas</strong>: MultiKernelBench v2, KForge, vLLM TPU team. Pallas API hallucination is a known issue (only ~6% pass on Qwen3-235B).</li>
+      <li><strong>SYCL</strong> (Intel-led): KernelFoundry's MAP-Elites QD search.</li>
+      <li><strong>Emerging ISAs</strong>: KernelCraft on PLENA / AMD NPU / Coral.</li>
+    </ul>
+    <h3>Commercial line</h3>
+    <p>Standard Kernel ($20M seed Mar 2026), RightNow AI's AutoKernel, Gimlet Labs' kforge, DeepReinforce, Makora. The venture capital is following the strategic thesis from the previous slide.</p>
+    <h3>What's NOT here yet</h3>
+    <p>No serious kernel-gen on Cerebras, Tenstorrent, Groq, or SambaNova as of writing. Either too niche or too vendor-locked-in for public research.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1769,6 +2289,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <span><span class="ok">●</span> active: 06 / 06 — Open Frontier</span>
     <span>3 open problems → leave with ideas</span>
   </div>
+  <aside class="notes">
+    <h3>Section transition</h3>
+    <p>Last section before the close. Three open problems. These are the questions I'd want a room of systems people to argue about for an hour.</p>
+    <h3>Setup</h3>
+    <p>Tell the audience: I'm going to be opinionated here. These are problems where the answer isn't obvious and where I have my own bets.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1776,14 +2302,14 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="27" data-section="open">
   <div class="section-marker-inline anim">06.1 — abstractions</div>
-  <h2 class="anim">Are we generating in the <span class="amber">wrong language</span>?</h2>
+  <h2 class="anim">Triton was designed <span class="amber">for humans</span></h2>
   <div class="split equal" style="margin-top: 8px;">
     <div>
       <ul>
-        <li class="anim anim-d1">Most systems still target <span class="highlight">raw CUDA / Triton</span>. Triton has bank-conflict issues and is often stale on the latest hardware.</li>
-        <li class="anim anim-d2">Training corpora over-index on whatever's <em>available</em> — and a lot of available CUDA on GitHub is bad CUDA.</li>
-        <li class="anim anim-d3">2026 winners point higher up the stack: <strong>CuTe</strong>, <strong>PTX</strong>, invariant-guided IRs, "Unified Sketch" representations.</li>
-        <li class="anim anim-d4">Real question: <span class="highlight">should we design DSLs <em>for LLMs</em>?</span> The right abstraction for a compiler-team is not the right abstraction for a model.</li>
+        <li class="anim anim-d1">Triton's optimization target in 2021 was <em>"can a human kernel engineer be productive?"</em>. That's the wrong target if your author is an LLM.</li>
+        <li class="anim anim-d2">LLMs prefer different things: <span class="highlight">compositionality</span> (kernels as strategy trees), <span class="highlight">verifiability</span> (compile-time checks), and <span class="highlight">hardware-faithful semantics</span> (instruction-level mapping).</li>
+        <li class="anim anim-d3">2026 winners point higher up the stack — toward <strong>CuTe</strong>, <strong>PTX</strong>, invariant-guided IRs, Unified-Sketch representations.</li>
+        <li class="anim anim-d4"><em>PL design for LLMs is its own open problem</em>. We haven't really had this category before.</li>
       </ul>
     </div>
     <div class="anim anim-d3">
@@ -1798,6 +2324,22 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       </div>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>PL design for LLMs is its own open problem — we haven't really had this category before. The right abstraction for a human kernel engineer is not the right abstraction for a model.</p>
+    <h3>What LLMs want from a DSL (vs what humans want)</h3>
+    <ul>
+      <li><strong>Compositionality.</strong> Humans tolerate stateful, side-effect-heavy code because they have working memory. LLMs do better with kernels described as a tree of strategies (tile size + memory layout + reduction shape) rather than imperative blocks. CUTLASS / CuTeDSL takes this approach.</li>
+      <li><strong>Verifiability.</strong> Humans use type checkers as a hint. LLMs need compile-time guarantees that the IR is sound, because their output rate is high and their failure modes are silent. Invariant-guided IRs (ARGUS) provide this.</li>
+      <li><strong>Hardware-faithful semantics.</strong> Humans want abstraction over hardware quirks. LLMs benefit from explicit mapping to instructions because the optimization space is the instruction space. PTX is the limit case.</li>
+    </ul>
+    <h3>The Triton-stale problem</h3>
+    <p>From the user's notes: "Triton has bank conflicts, not up to date on hardware." The compiler-team that maintains Triton is small; new silicon ships every ~12 months; Triton lags. Models trained on Triton inherit Triton's blindspots.</p>
+    <h3>The author-as-founder pattern (again)</h3>
+    <p>CuTeGen's authors include Anne Ouyang (KernelBench lead author, Standard Kernel founder). The pattern repeats: people who built the benchmark are now designing the abstractions they think LLMs need. Strong signal that this is where they think the wins are.</p>
+    <h3>For Q&A</h3>
+    <p>If asked "isn't this just compiler intermediate representation?" — partly yes, but with two differences: (1) it's designed to be <em>generated</em> not just consumed, (2) the verification properties are first-class. Closer to Coq tactic languages than to LLVM IR.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1815,6 +2357,17 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
   <blockquote class="anim anim-d4" style="margin-top: 14px;">
     What does it even <em>mean</em> for an automatic kernel-generation system to be "good"<br>when half its training distribution will be obsolete in a year?
   </blockquote>
+  <aside class="notes">
+    <h3>The benchmark is racing the hardware roadmap</h3>
+    <p>KernelBench v1 was based on architectures from ~2023-2024. By the time it hit 100% L3, those architectures were getting deprecated in production. The MLSys 2026 contests target B200 (Blackwell, March 2024 silicon). The benchmark cadence has to match the hardware cadence.</p>
+    <h3>What 6-12 months brings</h3>
+    <p>Already on the horizon, all kernel-relevant: multi-GPU collective kernels, MoE routing, sparse attention variants, speculative decoding heuristics, KV-cache compression schemes, quantized attention (FP8, MXFP4). None of these were in KernelBench v1.</p>
+    <h3>The Sholto Douglas calibration (revisited)</h3>
+    <blockquote>Underrated dynamic in the next ~12-18 months is we should expect models to get as good at kernel writing as competition math/code contests.</blockquote>
+    <p>If true, we'll need rolling benchmarks that retire and replace tasks. The current eval-the-finished-kernel-once model breaks down.</p>
+    <h3>From the user's own notes</h3>
+    <blockquote>Kernels we care about today may not be what we will care about in 6-12 months. E.g. multi-GPU kernels.</blockquote>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1822,21 +2375,35 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 ============================================================ -->
 <div class="slide" data-slide="29" data-section="open">
   <div class="section-marker-inline anim">06.3 — kernel gen ≅ arch search</div>
-  <h2 class="anim">Kernel gen <em>is</em> architecture search</h2>
+  <h2 class="anim">NAS, but the <span class="accent">kernel</span> is the variable</h2>
   <div class="split right-text" style="margin-top: 8px;">
     <div class="anim anim-d1">
-      <img class="fig" src="kg-gru.png" alt="GRU vs LSTM" style="max-height: 42vh;">
+      <img class="fig" src="kg-gru.png" alt="GRU vs LSTM" style="max-height: 38vh;">
       <p class="fig-caption">— architecture choices and kernel choices are entangled</p>
     </div>
     <div>
       <ul>
         <li class="anim anim-d2"><strong>Mamba, RWKV, gated linear attention</strong>: the wall-clock speedup is in the <em>architecture</em>, not the implementation.</li>
-        <li class="anim anim-d3">If we get really good at automatic kernels, the question shifts: <span class="highlight">what arch <em>should</em> we run, given what we can compile?</span></li>
-        <li class="anim anim-d4">For known architectures: kernel gen at PTX or IR is a search over assembly variants. Closer to <em>superoptimization</em> than to software engineering.</li>
-        <li class="anim anim-d5">For new architectures: <strong>hardware-first</strong> models, designed jointly with the kernels they'd compile to. Plausibly where this actually goes.</li>
+        <li class="anim anim-d3">NAS searches models given fixed kernels. <span class="highlight">Kernel-gen flips it</span> — search implementations given fixed model.</li>
+        <li class="anim anim-d4">Once both work, the combined search opens up: <em>which model architectures have implementations that compile fast on this chip?</em></li>
+        <li class="anim anim-d5">AlphaEvolve already shipped that pattern. Novel TPU Pallas tilings → ~1% Gemini training-speed gain. Single kernel discovery, real result.</li>
       </ul>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Thesis</h3>
+    <p>Model + kernel co-design is where this actually goes. NAS searches model architectures for accuracy/efficiency given fixed kernel libraries. Kernel-gen flips the search direction. Once both are reliable, the combined search becomes possible: search architectures whose implementations compile to fast kernels on a target chip.</p>
+    <h3>The Mamba/RWKV calibration</h3>
+    <p>Mamba (2023) and RWKV showed that architectural choices outweigh implementation tuning for certain workloads. Their wall-clock wins came from O(N) state-space dynamics, not from a clever attention kernel. From the user's own notes:</p>
+    <blockquote>Wall clock speed up not necessarily in hardware implementation. Hardware-first AI model from the ground up — better to work with abstractions.</blockquote>
+    <h3>AlphaEvolve as the existence proof</h3>
+    <p>DeepMind's AlphaEvolve (May 2025) is the cleanest demonstration of the combined pattern in action: it searched the TPU Pallas implementation space for matmul tilings, found a novel one, and shipped a ~1% Gemini training-speed reduction. That's not academic — it's a deployed cost win on Google's flagship model.</p>
+    <p>The paper authors explicitly call out: this works because the kernel space is searchable, the eval is automated, and the production system can integrate the result. All three properties extend to model+kernel co-design.</p>
+    <h3>Why this changes ML systems engineering</h3>
+    <p>Today's ML system designer picks a model, picks a chip, lets the kernel team optimize, and accepts the perf they get. If kernel-gen is reliable, the designer can search jointly: try architecture variants, get a kernel-aware perf prediction, pick the joint best. The "free lunch" is in attention variants — there are many that compile to better kernel mappings on a given chip than vanilla MHA.</p>
+    <h3>Anti-hype caveat</h3>
+    <p>This requires kernel-gen to be reliable, fast, and good. Today, all three are partial. Don't expect production model+kernel co-design tomorrow. But the trajectory is clear and AlphaEvolve already covers a meaningful slice.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1867,35 +2434,52 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       </div>
     </div>
   </div>
+  <aside class="notes">
+    <h3>Discussion prompt</h3>
+    <p>This is the audience-engagement slide. After 25 minutes of survey, ask the room: where would you put your compute? The four options are real research directions; people in the room may have informed opinions.</p>
+    <h3>The four options, with cross-links to earlier slides</h3>
+    <ul>
+      <li><strong>[A] Synthesize:</strong> see slide 22 (synthetic data scales). DRTriton, CUDA Agent, Ascend-CoT all bet here.</li>
+      <li><strong>[B] Post-train:</strong> see slide 23 (specialists beat frontier). Dr. Kernel, CUDA-L2, QiMeng-Kernel.</li>
+      <li><strong>[C] Inference-time scale:</strong> see slide 18 (agent loop). KernelEvolve, CUDA Agent's agentic RL setup.</li>
+      <li><strong>[D] Teach the profiler:</strong> the underexplored option. Train models to USE Nsight Compute well, and make profiler calls cheap enough to be in the inner loop. PRAGMA gestures at this.</li>
+    </ul>
+    <h3>Karpathy's "compiler" framing as the meta-frame</h3>
+    <p>If you accept Karpathy's framing — the LLM IS the new compiler — then [D] is the most natural answer. The compiler should know its hardware deeply. Today's LLMs don't.</p>
+    <h3>For Q&A</h3>
+    <p>Be ready to argue for any of the four. My personal bet: A + D combined. Synthesize the curriculum that includes profiler interaction. Train the model to read profiler output as a first-class skill.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
      32 · Hackathon hook
 ============================================================ -->
 <div class="slide" data-slide="31" data-section="closing">
-  <div class="section-marker-inline anim">what's next for this group</div>
-  <h2 class="anim">What's next: a May 15 hackathon</h2>
-  <div class="split right-text" style="margin-top: 8px;">
+  <div class="section-marker-inline anim">proposal</div>
+  <h2 class="anim">Want to <em>do this together</em>?</h2>
+  <div class="split left-text" style="margin-top: 10px;">
+    <div class="anim anim-d1" style="display: flex; align-items: center; justify-content: center;">
+      <img src="hackathon.png" alt="Humanity's Last Hackathon — Mac Metal Kernel Challenge, starts May 15" style="max-height: min(46vh, 360px); width: 100%; max-width: 520px; border: 1px solid var(--border); border-radius: 4px;">
+    </div>
     <div>
       <div class="preamble anim anim-d1" style="margin-bottom: 14px;">
-        <span class="tag">GPU MODE × OpenAI Codex</span>
+        <span class="tag amber">May 15 · Codex × HuggingFace × GPU MODE</span>
       </div>
-      <h3 class="anim anim-d2 accent" style="font-size: clamp(20px, 2.2vw, 30px);">Apple Metal kernel hackathon</h3>
-      <ul style="margin-top: 8px;">
-        <li class="anim anim-d3"><strong>May 15.</strong> Beginner-friendly. Bring yourself.</li>
-        <li class="anim anim-d4">Use Codex to build &amp; optimize Metal kernels for local inference on Apple Silicon.</li>
-        <li class="anim anim-d5">Infra from <strong>GPU MODE</strong>, credits from <strong>OpenAI</strong>. Submissions through GPU MODE.</li>
-        <li class="anim anim-d5">We'll cover the basics — PyTorch ↔ kernel integration, profilers, memory- vs compute-bound algorithms, how to think about the optimization space.</li>
-      </ul>
-    </div>
-    <div class="anim anim-d2">
-      <div class="card tagged amber" style="background: linear-gradient(160deg, var(--bg-card) 0%, var(--amber-soft) 200%); padding: 22px;">
-        <div style="font-size: 10px; color: var(--text-muted); letter-spacing: 0.18em; text-transform: uppercase;">Toronto ML Systems Group · Vol. 02</div>
-        <h3 style="font-size: clamp(28px, 3vw, 44px); color: var(--amber); margin: 8px 0; font-weight: 800; letter-spacing: -0.03em;">2026.05.15</h3>
-        <p style="font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); line-height: 1.5;">Metal kernels on the GPU sitting in your laptop. No prior CUDA experience needed.</p>
-      </div>
+      <p class="anim anim-d2" style="font-size: clamp(13px, 1.2vw, 17px); margin-bottom: 12px; line-height: 1.55;"><strong>Humanity's Last Hackathon</strong> launches May 15th. The mission: optimize AI models on hardware using agents. Codex builds Metal kernels for local inference, you submit through GPU MODE, climb the leaderboard, top performers qualify for the final.</p>
+      <blockquote class="anim anim-d3" style="font-size: clamp(12px, 1.15vw, 15px); margin: 10px 0 14px;">"This is not a normal hackathon. You will be judged on the context, not code."</blockquote>
+      <p class="anim anim-d4" style="font-size: clamp(13px, 1.2vw, 17px); line-height: 1.55;"><strong>My pitch:</strong> let's hack on it as a group. I'll walk through the basics of writing Metal kernels, then we work on the GPU MODE submission together — in person. Show of hands?</p>
+      <p class="anim anim-d5" style="font-size: clamp(11px, 1.05vw, 13px); color: var(--text-dim); margin-top: 10px;">Sign-up: <a href="https://humanitys-last-hackathon-signup.hf.space/" target="_blank">humanitys-last-hackathon-signup.hf.space</a></p>
     </div>
   </div>
+  <aside class="notes">
+    <h3>The proposal</h3>
+    <p>Humanity's Last Hackathon launches May 15. Codex × HuggingFace × GPU MODE. The mission: optimize AI models on hardware using agents — specifically, Mac Metal kernels for local inference. Submit through GPU MODE's leaderboard; top performers qualify for a final round.</p>
+    <p>What I'm pitching the group: rather than everyone hacking solo, let's meet in person. I'll cover Metal kernel basics for anyone who hasn't written one, then we work on the GPU MODE submission together. Date and venue TBD if enough hands go up.</p>
+    <h3>Ask the room</h3>
+    <p>Show of hands — who would actually come if I set this up? Five-plus and I'll find a space and a date.</p>
+    <h3>Registration</h3>
+    <p>https://humanitys-last-hackathon-signup.hf.space/ — open now. People can also sign up solo if the group thing doesn't pan out.</p>
+  </aside>
 </div>
 
 <!-- ============================================================
@@ -1917,9 +2501,37 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       Post-Oct-2025 catalog: <em>Towards Automated Kernel Generation in the Era of LLMs</em> (arXiv 2601.15727)
     </p>
   </div>
+  <aside class="notes">
+    <h3>Q&A prep</h3>
+    <p>Common questions to expect:</p>
+    <ul>
+      <li>"What's the most overrated paper in this space?" — pick one carefully. Sakana's first AI CUDA Engineer is the safe answer. Less safe: any single-paper "we beat cuBLAS" claim without contention-controlled timing.</li>
+      <li>"Will frontier models catch up to specialists?" — Sholto's 12-18 month prediction says yes. Counter-argument: data quality bottleneck doesn't go away.</li>
+      <li>"What about closed systems we don't see?" — Google, Anthropic, OpenAI almost certainly have internal kernel-gen efforts. We see the academic and open-source slice.</li>
+      <li>"What about non-NVIDIA hardware?" — see slide 26.</li>
+      <li>"What's the failure mode that worries you most?" — reward hacking that we don't catch (the "we don't know what we don't know" version of Sakana).</li>
+    </ul>
+  </aside>
 </div>
 
 </div><!-- /.deck -->
+
+<!-- ============================================================
+     PRESENTER VIEW — only visible when ?presenter=1
+============================================================ -->
+<div id="presenter-view" aria-hidden="true">
+  <div class="pv-header">
+    <div class="pv-counter">SLIDE <span class="cur">01</span> / 33</div>
+    <div class="pv-title">—</div>
+    <div class="pv-section"><span class="num">─</span> setup</div>
+  </div>
+  <div class="pv-notes">Loading speaker notes…</div>
+  <div class="pv-footer">
+    <div class="pv-next">NEXT <b>—</b></div>
+    <div class="pv-clock"><span class="lab">elapsed</span><span class="val elapsed">00:00</span></div>
+    <div class="pv-clock"><span class="lab">time</span><span class="val time">--:--</span></div>
+  </div>
+</div>
 
 <script>
 // ===========================================================================
@@ -2013,11 +2625,11 @@ document.querySelectorAll('.domain-map').forEach(el => {
     // svg += `<text x="${(mx + dx).toFixed(2)}" y="${(my + dy).toFixed(2)}" class="active-marker" text-anchor="${anchor}">▸ NOW</text>`;
   }
 
-  // hub — center "AI Kernels"
+  // hub — center "AI + Kernels", three stacked lines balanced around y=0
   svg += `<circle class="hub" cx="0" cy="0" r="${rIn - 14}" />`;
   svg += `<circle class="hub-inner-ring" cx="0" cy="0" r="${rIn - 22}" />`;
-  // svg += `<text class="hub-text small" x="0" y="-22" text-anchor="middle" dominant-baseline="middle">// CORE</text>`;
-  svg += `<text class="hub-text large" x="0" y="-2" text-anchor="middle" dominant-baseline="middle">AI</text>`;
+  svg += `<text class="hub-text large" x="0" y="-20" text-anchor="middle" dominant-baseline="middle">AI</text>`;
+  svg += `<text class="hub-text large" x="0" y="0" text-anchor="middle" dominant-baseline="middle" style="fill: var(--amber);">+</text>`;
   svg += `<text class="hub-text large" x="0" y="20" text-anchor="middle" dominant-baseline="middle">Kernels</text>`;
 
   svg += `</svg>`;
@@ -2111,10 +2723,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Home') { e.preventDefault(); goTo(0); }
   if (e.key === 'End')  { e.preventDefault(); goTo(totalSlides - 1); }
   if (e.key === 't' || e.key === 'T') { toggleTheme(); }
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openPresenter(); }
 });
 
 document.addEventListener('click', e => {
-  if (isIframe) return;
+  if (isIframe || isPresenter) return;
   if (e.target.closest('button') || e.target.closest('input') || e.target.closest('a')) return;
   const x = e.clientX / window.innerWidth;
   if (x < 0.3) goTo(current - 1);
@@ -2122,9 +2735,9 @@ document.addEventListener('click', e => {
 });
 
 let touchStartX = 0;
-document.addEventListener('touchstart', e => { if (!isIframe) touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchstart', e => { if (!isIframe && !isPresenter) touchStartX = e.touches[0].clientX; });
 document.addEventListener('touchend', e => {
-  if (isIframe) return;
+  if (isIframe || isPresenter) return;
   const dx = e.changedTouches[0].clientX - touchStartX;
   if (Math.abs(dx) > 50) {
     if (dx < 0) goTo(current + 1);
@@ -2160,6 +2773,118 @@ if (isIframe) {
       }
     }
   });
+}
+
+// ===========================================================================
+// PRESENTER MODE — synced second window with speaker notes
+//
+//   Press N in deck → opens kernel-gen.html?presenter=1 in a second window.
+//   BroadcastChannel keeps both windows in sync. Either can navigate.
+// ===========================================================================
+const isPresenter = new URLSearchParams(location.search).get('presenter') === '1';
+const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('kernel-gen-deck') : null;
+let suppressBroadcast = false;
+let presenterStart = null;
+
+function openPresenter() {
+  if (isPresenter) return;
+  const w = window.open(
+    location.pathname + '?presenter=1' + location.hash,
+    'kernel-gen-presenter',
+    'width=1200,height=820,scrollbars=yes,resizable=yes'
+  );
+  if (w) w.focus();
+}
+
+function getSlideTitle(slide) {
+  if (!slide) return '— end —';
+  const h = slide.querySelector('h2, h1, h3');
+  if (h) {
+    const txt = h.textContent.trim().replace(/\s+/g, ' ');
+    return txt.length > 90 ? txt.slice(0, 88) + '…' : txt;
+  }
+  const tag = slide.querySelector('.section-tag');
+  if (tag) return tag.textContent.trim().replace(/\s+/g, ' ');
+  return slide.dataset.section || '—';
+}
+
+function getSlideNotes(slide) {
+  if (!slide) return '<p style="color: var(--text-muted);"><em>No notes.</em></p>';
+  const aside = slide.querySelector('aside.notes');
+  return aside ? aside.innerHTML
+              : '<p style="color: var(--text-muted);"><em>No notes for this slide.</em></p>';
+}
+
+function renderPresenter() {
+  if (!isPresenter) return;
+  const slide = slides[current];
+  const next  = slides[current + 1];
+  const lbl   = SECTION_LABELS[(slide.dataset.section || 'setup')];
+  document.querySelector('.pv-counter .cur').textContent = pad(current + 1);
+  document.querySelector('.pv-title').textContent = getSlideTitle(slide);
+  document.querySelector('.pv-section').innerHTML =
+    '<span class="num">' + lbl.num + '</span> ' + lbl.name;
+  document.querySelector('.pv-notes').innerHTML = getSlideNotes(slide);
+  document.querySelector('.pv-notes').scrollTop = 0;
+  document.querySelector('.pv-next b').textContent =
+    next ? getSlideTitle(next) : '— end of deck —';
+}
+
+function broadcastSlide(n) {
+  if (!channel || suppressBroadcast) return;
+  channel.postMessage({ type: 'goto', slide: n });
+}
+
+// Wrap goTo so each navigation broadcasts and re-renders presenter view
+const _origGoTo = goTo;
+goTo = function(n) {
+  if (n < 0 || n >= totalSlides || n === current) return;
+  _origGoTo(n);
+  broadcastSlide(current);
+  renderPresenter();
+};
+
+if (channel) {
+  channel.onmessage = function(e) {
+    if (!e.data) return;
+    if (e.data.type === 'goto') {
+      if (e.data.slide !== current) {
+        suppressBroadcast = true;
+        goTo(e.data.slide);
+        suppressBroadcast = false;
+      }
+    } else if (e.data.type === 'request-state' && !isPresenter) {
+      channel.postMessage({ type: 'goto', slide: current });
+    }
+  };
+}
+
+if (isPresenter) {
+  document.documentElement.classList.add('presenter-mode');
+  document.title = '🎤 Presenter — kernel-gen';
+  renderPresenter();
+  // Ask the main window what slide it's on (so we sync if presenter opened later)
+  if (channel) channel.postMessage({ type: 'request-state' });
+}
+
+// Clocks (presenter only)
+function updateClocks() {
+  if (!isPresenter) return;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const tEl = document.querySelector('.pv-clock .val.time');
+  if (tEl) tEl.textContent = hh + ':' + mm;
+  if (presenterStart === null) presenterStart = Date.now();
+  const elapsed = Math.floor((Date.now() - presenterStart) / 1000);
+  const em = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const es = String(elapsed % 60).padStart(2, '0');
+  const eEl = document.querySelector('.pv-clock .val.elapsed');
+  if (eEl) eEl.textContent = em + ':' + es;
+}
+if (isPresenter) {
+  updateClocks();
+  setInterval(updateClocks, 1000);
 }
 </script>
 </body>
