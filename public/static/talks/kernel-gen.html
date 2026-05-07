@@ -1856,7 +1856,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
 <div class="slide section-header" data-slide="13" data-section="bench">
   <div class="section-tag anim">SECTION 02 / 06 · Bench4Kernel</div>
   <h2 class="anim anim-d1">KernelBench got <span class="accent">surrounded</span>, not replaced.</h2>
-  <p class="section-sub anim anim-d2">A year ago: one benchmark, one stack. Now: ~30 benchmarks across every silicon you can name — and the original got harder, not retired.</p>
+  <p class="section-sub anim anim-d2">A year ago: one benchmark, one stack. Now: ~30 benchmarks across every silicon stack on the market. The original got harder, not retired.</p>
   <div class="domain-map anim anim-d3" data-active="2"></div>
   <div class="map-foot anim anim-d4">
     <span><span class="ok">●</span> active: 02 / 06 — Bench4Kernel</span>
@@ -1866,9 +1866,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <h3>Section transition</h3>
     <p>Four-slide arc. First, why the bench layer had to grow at all (saturation). Then the two axes of growth — wider (silicon stacks) and deeper (rigor). Land on the first public competition arena (MLSys 2026), which sets up Agent4Kernel.</p>
     <h3>The map highlight</h3>
-    <p>Bench4Kernel is highlighted in green. Pause briefly so the audience can orient — then dive in.</p>
-    <h3>Why the new framing</h3>
-    <p>Earlier drafts said "benchmarks went horizontal." That undersold half the story. The deeper claim — that the original benchmark didn't go away, it grew armor — is the through-line that makes the rest of the section land.</p>
+    <p>Bench4Kernel is highlighted in green. Pause briefly so the audience can orient. Then keep moving.</p>
   </aside>
 </div>
 
@@ -1902,7 +1900,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     </div>
   </div>
   <p class="anim anim-d3" style="margin-top: 18px; font-size: clamp(13px, 1.2vw, 17px); color: var(--text);"><strong>17 months. The hardest level, solved.</strong></p>
-  <p class="anim anim-d4" style="margin-top: 8px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); line-height: 1.5;">When a benchmark saturates, you either declare victory or build new ones. The field built new ones — along two axes. <span class="highlight">Wider</span>: every silicon stack got its own. <span class="highlight">Deeper</span>: rigor went up.</p>
+  <p class="anim anim-d4" style="margin-top: 8px; font-size: clamp(12px, 1.1vw, 15px); color: var(--text-dim); line-height: 1.5;">When a benchmark saturates, you either declare victory or build new ones. The field built new ones, along two axes. <span class="highlight">Wider</span>: every silicon stack got its own. <span class="highlight">Deeper</span>: rigor went up.</p>
   <div class="slide-ref">Ouyang et al. <em>KernelBench</em> (Dec 2024) · Kevin-32B (Jul 2025) · CUDA Agent <a href="https://arxiv.org/abs/2602.24286" target="_blank">arXiv:2602.24286</a> · KernelEvolve / KernelSkill <a href="https://arxiv.org/abs/2603.10085" target="_blank">arXiv:2603.10085</a></div>
   <aside class="notes">
     <h3>The arc this slide opens</h3>
@@ -1964,7 +1962,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
     <h3>The pattern: vendor-sponsored benchmarks</h3>
     <p>NPUKernelBench is Huawei. NKIBench is AWS. KForge is Apple-leaning (kforge.ai). KernelCraft and NPUEval target emerging-accelerator vendors and AMD. Each new bench has a sponsor with skin on that platform. That's why the framing line says "as commercial as academic" — it's a real shift from KernelBench's pure-academic origin.</p>
     <h3>Why these two as deep dives</h3>
-    <p>NPUKernelBench is the strongest "domain-specific data wins" story in the post-Oct-2025 corpus: a corpus + bench combination took compile rate from 0% to 95.5%. KForge is the most evocative for a Mac-heavy ML audience: their laptop is now a kernel-gen target.</p>
+    <p>NPUKernelBench is the cleanest "domain-specific data wins" story in the post-Oct-2025 corpus: a corpus + bench combination took compile rate from 0% to 95.5%. KForge is the most evocative for a Mac-heavy ML audience: their laptop is now a kernel-gen target.</p>
     <h3>Asymmetry in the roll-call</h3>
     <p>NPUs and Metal needed full-stack benches because frontier models started from 0%. CUDA-extending benches like MSKernelBench and MultiKernelBench v2 are about <em>coverage</em> — sparse / scientific / numerical kernels and Pallas — not feasibility.</p>
     <h3>The Pallas hallucination number</h3>
@@ -2002,7 +2000,7 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
         <ul style="font-size: clamp(10px, 0.95vw, 12px); padding-left: 16px; margin: 0; line-height: 1.6;">
           <li><strong>KernelBench-v2</strong> (community fork) — Triton parity, unified CUDA/Triton metrics, Docker, 15+ runtime/compile error classes, Modal cloud flow.</li>
           <li><strong>Red Hat reproducible Triton bench</strong> — Sangiorgi &amp; Kesem · Feb 2026 · vendor-neutral comparison across NVIDIA + AMD; KernelLLM, Makora Generate, Helion, torch.compile, hand-tuned Triton.</li>
-          <li><strong>KernelGYM</strong> — Dr. Kernel's RL env with reward-hack safeguards · usable standalone · <a href="https://arxiv.org/abs/2602.05885" target="_blank">2602.05885</a></li>
+          <li><strong>KernelGYM</strong> — Dr. Kernel's RL env with built-in reward-hack safeguards · works on its own · <a href="https://arxiv.org/abs/2602.05885" target="_blank">2602.05885</a></li>
         </ul>
         <p style="font-size: clamp(10px, 0.95vw, 12px); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5;">The bar for what counts as a benchmark went up: Triton parity, container reproducibility, and adversarial defenses are now the default.</p>
       </div>
@@ -2048,12 +2046,12 @@ y = <span style="color: var(--blue);">F.softmax</span>(x, dim=-<span style="colo
       </ul>
     </div>
   </div>
-  <p class="anim anim-d4" style="margin-top: 18px; font-size: clamp(13px, 1.2vw, 17px); color: var(--text); line-height: 1.5;">For the first time, kernel-gen agents compete in public — same hardware, same baselines, same eval harness. <span class="highlight">As of today, finals haven't run yet.</span></p>
+  <p class="anim anim-d4" style="margin-top: 18px; font-size: clamp(13px, 1.2vw, 17px); color: var(--text); line-height: 1.5;">For the first time, kernel-gen agents compete in public. Same hardware, same baselines, same eval harness. <span class="highlight">As of today, finals haven't run yet.</span></p>
   <p class="anim anim-d5" style="margin-top: 10px; font-size: clamp(13px, 1.25vw, 18px); color: var(--text-dim); font-style: italic;">So: how do agents win on these?</p>
   <div class="slide-ref"><a href="https://mlsys26.flashinfer.ai/" target="_blank">mlsys26.flashinfer.ai</a> · <a href="https://github.com/flashinfer-ai/flashinfer-bench-starter-kit" target="_blank">flashinfer-bench-starter-kit</a></div>
   <aside class="notes">
     <h3>Why this slide closes the section</h3>
-    <p>The whole section argued that the bench layer grew up — wider (silicon) and deeper (rigor). The natural next step is "where do agents now compete?" — and the answer is "in public, for the first time, this year." That sets up Agent4Kernel: the audience now wants to know what an agent that can win on these contests looks like.</p>
+    <p>The whole section argued that the bench layer grew up: wider (silicon) and deeper (rigor). The natural next step is "where do agents now compete?" The answer: in public, for the first time, this year. That sets up Agent4Kernel: the audience now wants to know what an agent that can win on these contests looks like.</p>
     <h3>The "we don't know yet" hook</h3>
     <p>Live talks rarely get a true cliffhanger. This is one. As of May 2026 the finals haven't run; the audience can't look up the results yet. Mention this — it's the kind of thing that makes people follow up after the talk.</p>
     <h3>Starter kit details, worth knowing</h3>
